@@ -160,9 +160,9 @@
     "starts_after": "T-010",
     "task": "Restructure the backend into `core`, `jobs` and `providers` packages as a pure move",
     "acceptance": "Same tests pass, same count, no logic edits",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Merged as c90e381. Diff is three renames plus ten import lines; 30 mock tests pass after merge. providers.py left in place (no lane needs a providers package)"
   },
   {
     "id": "T-101",
@@ -175,7 +175,7 @@
     "starts_after": "T-106",
     "task": "PostgreSQL in Docker and a `DATABASE_URL` setting",
     "acceptance": "Database starts from documented steps; secrets come only from the environment",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
     "evidence": ""
   },
@@ -190,7 +190,7 @@
     "starts_after": "T-101",
     "task": "SQLAlchemy models and first Alembic migration for `jobs`",
     "acceptance": "A fresh database is built by migrations alone",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
     "evidence": ""
   },
@@ -250,7 +250,7 @@
     "starts_after": "T-010",
     "task": "Router, app shell, feature folders and style tokens",
     "acceptance": "App behaves as before; type check and lint pass",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
     "evidence": ""
   },
