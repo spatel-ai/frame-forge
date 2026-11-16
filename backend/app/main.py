@@ -7,10 +7,10 @@ from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
-from .config import Settings
-from .db import JobStore
+from .core.config import Settings
+from .jobs.db import JobStore
 from .providers import Provider, build_provider
-from .service import Conflict, JobService, ValidationError
+from .jobs.service import Conflict, JobService, ValidationError
 
 logging.basicConfig(level=logging.INFO)
 
