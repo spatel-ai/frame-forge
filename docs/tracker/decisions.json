@@ -24,8 +24,8 @@
   {
     "id": "D-003",
     "decision": "First-party login with server-side sessions",
-    "status": "Needs owner",
-    "waiting_on": "Q-02",
+    "status": "Confirmed (owner chose email and password, 2026-11-17)",
+    "waiting_on": "",
     "area": "Both",
     "choice": "Email and password. Passwords hashed with Argon2id. A random session token in an `HttpOnly`, `Secure`, `SameSite=Lax` cookie, with only its hash stored in the database. Email verification and password reset by emailed single-use link.",
     "trade_off": "We own password storage, reset flows and brute-force protection, and need an email provider (Q-04).",

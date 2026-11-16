@@ -51,7 +51,7 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 ## D-003 — First-party login with server-side sessions
 
-**Status:** Needs owner (Q-02) · 2026-11-17 · Area: both
+**Status:** Confirmed (owner chose email and password, 2026-11-17) · 2026-11-17 · Area: both
 
 **Choice:** Email and password. Passwords hashed with Argon2id. A random session token in an `HttpOnly`, `Secure`, `SameSite=Lax` cookie, with only its hash stored in the database. Email verification and password reset by emailed single-use link.
 

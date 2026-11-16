@@ -15,9 +15,10 @@
     "why_it_matters": "It decides what is built in M2 and which outside services are needed (email sender, SMS sender, Google project).",
     "default_if_unanswered": "Email and password with email verification (decision D-003). Not started without your answer.",
     "escalation": "Security",
-    "handling": "Needs your answer",
+    "handling": "Answered by the owner",
     "blocks": "M2",
-    "status": "Open"
+    "status": "Answered",
+    "answer": "Email and password (owner, 2026-11-17). Decision D-003 confirmed."
   },
   {
     "id": "Q-03",

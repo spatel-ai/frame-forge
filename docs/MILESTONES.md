@@ -115,7 +115,7 @@ section 8, shown by a browser run at 1440 px and 390 px in mock mode.
 
 ## M2 — Accounts and login
 
-**Gate A needs:** Q-02 answered. **Gate C:** none.
+**Gate A needs:** Q-02 answered (done 2026-11-17: email and password, D-003). **Gate C:** none.
 
 **Exit evidence:** An access-control test matrix shows that every job, media and account route
 refuses anonymous users and refuses other users' resources.

@@ -400,9 +400,9 @@
     "starts_after": "T-105",
     "task": "Input errors name the field at fault (`fields`, decision D-029)",
     "acceptance": "Every 422 from the jobs API carries `fields`; a contract test asserts it; API types regenerated",
-    "status": "In progress",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Merged 9f81600. 422 errors carry `fields` keyed by image/script/language; 404/405/409 do not. backend/check.sh: 70 passed (14 new contract tests). Frontend npm run check: 32 passed; API types regenerated with `fields`."
   },
   {
     "id": "T-156",
