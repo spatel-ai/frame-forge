@@ -9,12 +9,12 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from app import db
-from app.config import Settings
-from app.db import JobStore
+from app.jobs import db
+from app.core.config import Settings
+from app.jobs.db import JobStore
 from app.main import create_app
 from app.providers import MockProvider, ProviderError, VideoPoll
-from app.service import Conflict, JobService, ValidationError
+from app.jobs.service import Conflict, JobService, ValidationError
 
 
 def png(size=(512, 512)) -> bytes:

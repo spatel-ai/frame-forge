@@ -11,9 +11,9 @@ from pathlib import Path
 from PIL import Image
 
 from . import db
-from .config import Settings
+from ..core.config import Settings
 from .db import JobStore
-from .providers import Provider, ProviderError
+from ..providers import Provider, ProviderError
 
 log = logging.getLogger("avatar")
 

@@ -14,7 +14,7 @@ from typing import Protocol
 
 import httpx
 
-from .config import Settings
+from .core.config import Settings
 
 
 class ProviderError(Exception):
