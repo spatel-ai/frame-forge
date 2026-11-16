@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Design system</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700&display=swap">
+<style>
+body{margin:0}
+a{color:#3626D9}a:hover{color:#14182B}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1100px; box-sizing: border-box; overflow: hidden; padding: 48px; display: flex; flex-direction: column; gap: 24px; background: #FFFFFF; color: #14182B; font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5">
+<header style="display: flex; flex-direction: column; gap: 8px">
+<h1 style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 28px; line-height: 1.2">Design system</h1>
+<p style="margin: 0; color: #4B5169">Proposed. The name, colours and typefaces await the owner's approval.</p>
+</header>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; align-items: start">
+
+<div style="grid-column: span 2; display: flex; flex-direction: column; gap: 24px; min-width: 0">
+
+<section aria-labelledby="h-colour" style="border: 1px solid #DFE2EC; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<h2 id="h-colour" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">Colour</h2>
+<div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 16px 8px">
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span aria-hidden="true" style="width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; border: 1px solid #DFE2EC; background: #4A3AFF"></span><span style="font-size: 12px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere">primary</span><span style="font-size: 12px; line-height: 1.3; color: #4B5169">#4A3AFF</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span aria-hidden="true" style="width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; border: 1px solid #DFE2EC; background: #3626D9"></span><span style="font-size: 12px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere">primary-strong</span><span style="font-size: 12px; line-height: 1.3; color: #4B5169">#3626D9</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span aria-hidden="true" style="width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; border: 1px solid #DFE2EC; background: #EEECFF"></span><span style="font-size: 12px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere">primary-soft</span><span style="font-size: 12px; line-height: 1.3; color: #4B5169">#EEECFF</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span aria-hidden="true" style="width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; border: 1px solid #DFE2EC; background: #FFB020"></span><span style="font-size: 12px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere">credit</span><span style="font-size: 12px; line-height: 1.3; color: #4B5169">#FFB020</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span aria-hidden="true" style="width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; border: 1px solid #DFE2EC; background: #14182B"></span><span style="font-size: 12px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere">ink</span><span style="font-size: 12px; line-height: 1.3; color: #4B5169">#14182B</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span aria-hidden="true" style="width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; border: 1px solid #DFE2EC; background: #4B5169"></span><span style="font-size: 12px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere">ink-soft</span><span style="font-size: 12px; line-height: 1.3; color: #4B5169">#4B5169</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span aria-hidden="true" style="width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; border: 1px solid #DFE2EC; background: #666C85"></span><span style="font-size: 12px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere">ink-muted</span><span style="font-size: 12px; line-height: 1.3; color: #4B5169">#666C85</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span aria-hidden="true" style="width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; border: 1px solid #DFE2EC; background: #FFFFFF"></span><span style="font-size: 12px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere">surface</span><span style="font-size: 12px; line-height: 1.3; color: #4B5169">#FFFFFF</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span aria-hidden="true" style="width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; border: 1px solid #DFE2EC; background: #F4F5FA"></span><span style="font-size: 12px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere">page</span><span style="font-size: 12px; line-height: 1.3; color: #4B5169">#F4F5FA</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span aria-hidden="true" style="width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; border: 1px solid #DFE2EC; background: #DFE2EC"></span><span style="font-size: 12px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere">line</span><span style="font-size: 12px; line-height: 1.3; color: #4B5169">#DFE2EC</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span aria-hidden="true" style="width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; border: 1px solid #DFE2EC; background: #0B7A55"></span><span style="font-size: 12px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere">success</span><span style="font-size: 12px; line-height: 1.3; color: #4B5169">#0B7A55</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span aria-hidden="true" style="width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; border: 1px solid #DFE2EC; background: #9A5B00"></span><span style="font-size: 12px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere">warning</span><span style="font-size: 12px; line-height: 1.3; color: #4B5169">#9A5B00</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span aria-hidden="true" style="width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; border: 1px solid #DFE2EC; background: #C7322F"></span><span style="font-size: 12px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere">danger</span><span style="font-size: 12px; line-height: 1.3; color: #4B5169">#C7322F</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span aria-hidden="true" style="width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; border: 1px solid #DFE2EC; background: #E3F5EE"></span><span style="font-size: 12px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere">success-soft</span><span style="font-size: 12px; line-height: 1.3; color: #4B5169">#E3F5EE</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span aria-hidden="true" style="width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; border: 1px solid #DFE2EC; background: #FFF1D6"></span><span style="font-size: 12px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere">warning-soft</span><span style="font-size: 12px; line-height: 1.3; color: #4B5169">#FFF1D6</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0"><span aria-hidden="true" style="width: 64px; height: 64px; box-sizing: border-box; border-radius: 8px; border: 1px solid #DFE2EC; background: #FDE8E7"></span><span style="font-size: 12px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere">danger-soft</span><span style="font-size: 12px; line-height: 1.3; color: #4B5169">#FDE8E7</span></div>
+</div>
+<p style="margin: 0; color: #4B5169; font-size: 13px">Every token is named with the prefix --color-, for example --color-primary.</p>
+</section>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start">
+
+<section aria-labelledby="h-inputs" style="border: 1px solid #DFE2EC; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px; min-width: 0">
+<h2 id="h-inputs" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">Inputs</h2>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="ci-name" style="font-weight: 600">Business name</label>
+<input id="ci-name" type="text" value="Verma Sweets" aria-describedby="ci-name-hint" style="min-height: 44px; box-sizing: border-box; padding: 8px 12px; border: 1px solid #8A90A8; border-radius: 8px; background: #FFFFFF; color: #14182B; font: inherit; width: 100%">
+<span id="ci-name-hint" style="color: #4B5169; font-size: 13px">Shown on your invoices.</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="ci-focus" style="font-weight: 600">Business name (focused)</label>
+<input id="ci-focus" type="text" value="Verma Sweets" style="min-height: 44px; box-sizing: border-box; padding: 8px 12px; border: 1px solid #4A3AFF; outline: 2px solid #4A3AFF; outline-offset: 1px; border-radius: 8px; background: #FFFFFF; color: #14182B; font: inherit; width: 100%">
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="ci-err" style="font-weight: 600">Email</label>
+<input id="ci-err" type="text" value="asha@example" aria-invalid="true" aria-describedby="ci-err-msg" style="min-height: 44px; box-sizing: border-box; padding: 8px 12px; border: 1px solid #C7322F; border-radius: 8px; background: #FFFFFF; color: #14182B; font: inherit; width: 100%">
+<p id="ci-err-msg" role="alert" style="margin: 0; display: flex; align-items: flex-start; gap: 6px; color: #C7322F; font-size: 13px"><svg aria-hidden="true" style="flex: none; margin-top: 2px" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>Enter an email like name@example.com.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="ci-lang" style="font-weight: 600">Language</label>
+<select id="ci-lang" style="min-height: 44px; padding: 8px 12px; border: 1px solid #8A90A8; border-radius: 8px; background: #FFFFFF; color: #14182B; font: inherit">
+<option>English</option>
+<option>Hindi</option>
+<option>Punjabi</option>
+</select>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 4px 24px">
+<label for="ci-check-on" style="display: inline-flex; align-items: center; gap: 10px; min-height: 44px"><input id="ci-check-on" type="checkbox" checked style="width: 20px; height: 20px; margin: 0; accent-color: #4A3AFF">Ticked</label>
+<label for="ci-check-off" style="display: inline-flex; align-items: center; gap: 10px; min-height: 44px"><input id="ci-check-off" type="checkbox" style="width: 20px; height: 20px; margin: 0; accent-color: #4A3AFF">Unticked</label>
+</div>
+</section>
+
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+
+<section aria-labelledby="h-pills" style="border: 1px solid #DFE2EC; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<h2 id="h-pills" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">Pills</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: #E3F5EE; color: #0B7A55; font-weight: 600; font-size: 13px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Ready</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: #EEECFF; color: #3626D9; font-weight: 600; font-size: 13px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9"/></svg>Generating</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: #FFF1D6; color: #9A5B00; font-weight: 600; font-size: 13px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 5v14M15 5v14"/></svg>On hold</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: #FDE8E7; color: #C7322F; font-weight: 600; font-size: 13px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>Failed</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: #EEECFF; color: #3626D9; font-weight: 600; font-size: 13px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1"/></svg>Free</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: #F4F5FA; border: 1px solid #DFE2EC; color: #4B5169; font-weight: 600; font-size: 13px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg>AI-generated</span>
+</div>
+</section>
+
+<section aria-labelledby="h-space" style="border: 1px solid #DFE2EC; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<h2 id="h-space" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">Spacing and radius</h2>
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 8px">
+<div style="display: flex; flex-direction: column; gap: 4px"><span aria-hidden="true" style="display: block; width: 4px; height: 24px; background: #4A3AFF; border-radius: 2px"></span><span style="font-size: 13px; color: #4B5169">4</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span aria-hidden="true" style="display: block; width: 8px; height: 24px; background: #4A3AFF; border-radius: 2px"></span><span style="font-size: 13px; color: #4B5169">8</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span aria-hidden="true" style="display: block; width: 12px; height: 24px; background: #4A3AFF; border-radius: 2px"></span><span style="font-size: 13px; color: #4B5169">12</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span aria-hidden="true" style="display: block; width: 16px; height: 24px; background: #4A3AFF; border-radius: 2px"></span><span style="font-size: 13px; color: #4B5169">16</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span aria-hidden="true" style="display: block; width: 24px; height: 24px; background: #4A3AFF; border-radius: 2px"></span><span style="font-size: 13px; color: #4B5169">24</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span aria-hidden="true" style="display: block; width: 32px; height: 24px; background: #4A3AFF; border-radius: 2px"></span><span style="font-size: 13px; color: #4B5169">32</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span aria-hidden="true" style="display: block; width: 48px; height: 24px; background: #4A3AFF; border-radius: 2px"></span><span style="font-size: 13px; color: #4B5169">48</span></div>
+</div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 8px">
+<div style="display: flex; flex-direction: column; gap: 4px"><span aria-hidden="true" style="display: block; width: 56px; height: 56px; box-sizing: border-box; border: 1px solid #8A90A8; background: #F4F5FA; border-radius: 8px"></span><span style="font-size: 13px; color: #4B5169">8</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span aria-hidden="true" style="display: block; width: 56px; height: 56px; box-sizing: border-box; border: 1px solid #8A90A8; background: #F4F5FA; border-radius: 12px"></span><span style="font-size: 13px; color: #4B5169">12</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span aria-hidden="true" style="display: block; width: 56px; height: 56px; box-sizing: border-box; border: 1px solid #8A90A8; background: #F4F5FA; border-radius: 16px"></span><span style="font-size: 13px; color: #4B5169">16</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span aria-hidden="true" style="display: block; width: 56px; height: 56px; box-sizing: border-box; border: 1px solid #8A90A8; background: #F4F5FA; border-radius: 999px"></span><span style="font-size: 13px; color: #4B5169">full</span></div>
+</div>
+</section>
+
+</div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 24px; min-width: 0">
+
+<section aria-labelledby="h-type" style="border: 1px solid #DFE2EC; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<h2 id="h-type" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">Type</h2>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; color: #4B5169">Page title · Plus Jakarta Sans 28 / 700</span><span style="font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 28px; line-height: 1.2">Create a video</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; color: #4B5169">Section heading · Plus Jakarta Sans 20 / 700</span><span style="font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">Recent videos</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; color: #4B5169">Card title, button · Inter 15 / 600</span><span style="font-weight: 600; font-size: 15px">Welcome to our Diwali offer</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; color: #4B5169">Body · Inter 15 / 400, line height 1.5</span><span style="font-size: 15px; line-height: 1.5">Upload a photo, write a script, and listen to the voice first.</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; color: #4B5169">Caption, hint · Inter 13 / 400</span><span style="font-size: 13px">JPEG, PNG or WebP, up to 10 MB</span></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; color: #4B5169">Numbers · Inter, tabular figures</span><span style="font-size: 15px; font-variant-numeric: tabular-nums">1,240 credits · ₹1,240</span></div>
+</section>
+
+<section aria-labelledby="h-buttons" style="border: 1px solid #DFE2EC; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="h-buttons" style="margin: 0 0 4px; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">Buttons</h2>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<span style="flex: 0 0 64px; font-size: 13px; color: #4B5169">Primary</span>
+<button type="button" style="min-height: 44px; padding: 8px 16px; border: 0; border-radius: 8px; background: #4A3AFF; color: #FFFFFF; font: inherit; font-weight: 600; cursor: pointer">Continue</button>
+<button type="button" disabled style="min-height: 44px; padding: 8px 16px; border: 0; border-radius: 8px; background: #E6E8F2; color: #666C85; font: inherit; font-weight: 600; cursor: not-allowed">Disabled</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<span style="flex: 0 0 64px; font-size: 13px; color: #4B5169">Secondary</span>
+<button type="button" style="min-height: 44px; padding: 8px 16px; border: 1px solid #4A3AFF; border-radius: 8px; background: #FFFFFF; color: #3626D9; font: inherit; font-weight: 600; cursor: pointer">Buy credits</button>
+<button type="button" disabled style="min-height: 44px; padding: 8px 16px; border: 1px solid #DFE2EC; border-radius: 8px; background: #FFFFFF; color: #666C85; font: inherit; font-weight: 600; cursor: not-allowed">Disabled</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<span style="flex: 0 0 64px; font-size: 13px; color: #4B5169">Quiet</span>
+<button type="button" style="min-height: 44px; padding: 8px 16px; border: 0; border-radius: 8px; background: transparent; color: #3626D9; font: inherit; font-weight: 600; cursor: pointer">Cancel</button>
+<button type="button" disabled style="min-height: 44px; padding: 8px 16px; border: 0; border-radius: 8px; background: transparent; color: #666C85; font: inherit; font-weight: 600; cursor: not-allowed">Disabled</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<span style="flex: 0 0 64px; font-size: 13px; color: #4B5169">Danger</span>
+<button type="button" style="min-height: 44px; padding: 8px 16px; border: 1px solid #C7322F; border-radius: 8px; background: #FFFFFF; color: #C7322F; font: inherit; font-weight: 600; cursor: pointer">Delete</button>
+<button type="button" disabled style="min-height: 44px; padding: 8px 16px; border: 1px solid #DFE2EC; border-radius: 8px; background: #FFFFFF; color: #666C85; font: inherit; font-weight: 600; cursor: not-allowed">Disabled</button>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+<span style="flex: 0 0 64px; font-size: 13px; color: #4B5169">Busy</span>
+<button type="button" aria-disabled="true" aria-busy="true" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 16px; border: 0; border-radius: 8px; background: #4A3AFF; color: #FFFFFF; font: inherit; font-weight: 600; cursor: default"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9" opacity="0.3"/><path d="M12 3a9 9 0 0 1 9 9"/></svg>Saving…</button>
+</div>
+</section>
+
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

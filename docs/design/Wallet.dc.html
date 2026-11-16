@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wallet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700&display=swap">
+<style>
+body{margin:0}
+a{color:#3626D9}a:hover{color:#14182B}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-wrap: wrap; background: #F4F5FA; color: #14182B; font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5">
+<nav aria-label="Main" style="flex: 1 1 232px; max-width: 100%; box-sizing: border-box; background: #FFFFFF; border-right: 1px solid #DFE2EC; padding: 24px 16px; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 12px 20px">
+<span style="width: 32px; height: 32px; border-radius: 10px; background: #4A3AFF; display: flex; align-items: center; justify-content: center; color: #FFFFFF"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5l12 7-12 7z"/></svg></span>
+<span style="font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 18px">Talking Avatar</span>
+</div>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; color: #4B5169; font-weight: 500; text-decoration: none"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</a>
+<a href="Create-1-Details.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; color: #4B5169; font-weight: 500; text-decoration: none"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Create</a>
+<a href="Videos.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; color: #4B5169; font-weight: 500; text-decoration: none"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>Videos</a>
+<a href="Scripts.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; color: #4B5169; font-weight: 500; text-decoration: none"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/></svg>Scripts</a>
+<a href="Wallet.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 12px; min-height: 44px; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; background: #EEECFF; color: #3626D9; font-weight: 600; text-decoration: none"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M16 12.5h2"/></svg>Wallet</a>
+<a href="Account.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; color: #4B5169; font-weight: 500; text-decoration: none; margin-top: auto"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Account</a>
+</nav>
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 32px; background: #FFFFFF; border-bottom: 1px solid #DFE2EC">
+<h1 style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 28px; line-height: 1.2">Wallet</h1>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<span style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 8px 16px; border: 1px solid #DFE2EC; border-radius: 999px; font-weight: 600; font-variant-numeric: tabular-nums"><span aria-hidden="true" style="width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: #FFB020; border: 2px solid #9A5B00"></span>500 credits</span>
+<a href="Buy-Credits.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box; padding: 8px 16px; border: 1px solid #4A3AFF; border-radius: 8px; color: #3626D9; font-weight: 600; text-decoration: none">Buy credits</a>
+</div>
+</header>
+<main style="padding: 32px; display: flex; flex-direction: column; gap: 32px; max-width: 1120px; width: 100%; box-sizing: border-box">
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: stretch">
+<section aria-labelledby="h-balance" style="flex: 1 1 360px; min-width: 0; background: #FFFFFF; border: 1px solid #DFE2EC; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<h2 id="h-balance" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">Balance</h2>
+<div style="display: flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="width: 28px; height: 28px; flex: none; box-sizing: border-box; border-radius: 50%; background: #FFB020; border: 3px solid #9A5B00"></span>
+<span style="font-size: 32px; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums">500 credits</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; color: #4B5169">
+<span style="font-variant-numeric: tabular-nums">40 credits on hold for a video in progress</span>
+<span style="font-variant-numeric: tabular-nums"><strong style="color: #14182B">460</strong> available</span>
+</div>
+<a href="Buy-Credits.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; min-height: 48px; box-sizing: border-box; padding: 12px 24px; border-radius: 8px; background: #4A3AFF; color: #FFFFFF; font-weight: 600; font-size: 16px; text-decoration: none">Buy credits</a>
+</section>
+<section aria-labelledby="h-how" style="flex: 1 1 360px; min-width: 0; background: #FFFFFF; border: 1px solid #DFE2EC; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<h2 id="h-how" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">How credits work</h2>
+<p style="margin: 0; font-weight: 600">₹1 = 1 credit.</p>
+<p style="margin: 0; color: #4B5169">Credits are held when you approve a voice and taken only when the video is ready.</p>
+<p style="margin: 0; color: #4B5169">If a video fails, the credits come back automatically.</p>
+</section>
+</div>
+<section aria-labelledby="h-tx" style="display: flex; flex-direction: column; gap: 12px">
+<h2 id="h-tx" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">Transactions</h2>
+<div style="background: #FFFFFF; border: 1px solid #DFE2EC; border-radius: 12px; overflow-x: auto">
+<table style="width: 100%; min-width: 640px; border-collapse: collapse; text-align: left">
+<thead>
+<tr>
+<th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #DFE2EC; color: #4B5169; font-size: 13px; font-weight: 600">Date</th>
+<th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #DFE2EC; color: #4B5169; font-size: 13px; font-weight: 600">What</th>
+<th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #DFE2EC; color: #4B5169; font-size: 13px; font-weight: 600; text-align: right">Credits</th>
+<th scope="col" style="padding: 12px 16px; border-bottom: 1px solid #DFE2EC; color: #4B5169; font-size: 13px; font-weight: 600; text-align: right">Balance after</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+<tr>
+<td style="padding: 14px 16px; border-bottom: 1px solid #DFE2EC; white-space: nowrap; color: #4B5169">{{r.date}}</td>
+<td style="padding: 14px 16px; border-bottom: 1px solid #DFE2EC">{{r.what}}</td>
+<td style="{{r.creditsStyle}}">{{r.credits}}</td>
+<td style="padding: 14px 16px; border-bottom: 1px solid #DFE2EC; text-align: right; font-variant-numeric: tabular-nums; color: #4B5169">{{r.balance}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+renderVals() {
+const base = 'padding: 14px 16px; border-bottom: 1px solid #DFE2EC; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; ';
+const gain = base + 'color: #0B7A55';
+const plain = base + 'color: #14182B';
+return { rows: [
+{ date: '17 Nov', what: 'Held for video · Welcome to our Diwali offer…', credits: 'On hold', creditsStyle: plain, balance: '500' },
+{ date: '14 Nov', what: 'Credits bought · ₹500 via Razorpay', credits: '+500', creditsStyle: gain, balance: '500' },
+{ date: '12 Nov', what: 'Video ready · Namaste! Our new store opens…', credits: '−[PRICE]', creditsStyle: plain, balance: '—' },
+{ date: '10 Nov', what: 'Video failed · credits returned', credits: 'Returned', creditsStyle: plain, balance: '—' },
+{ date: '9 Nov', what: 'Video ready · Thank you for 1,000 happy customers…', credits: '−[PRICE]', creditsStyle: plain, balance: '—' },
+{ date: '2 Nov', what: 'Credits bought · ₹500 via Razorpay', credits: '+500', creditsStyle: gain, balance: '500' }
+] };
+}
+}
+</script>
+</body>
+</html>

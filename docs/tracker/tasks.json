@@ -325,9 +325,9 @@
     "starts_after": "T-150",
     "task": "Screen designs on the design canvas",
     "acceptance": "Every planned customer screen at desktop width, the main ones at phone width, plus state and component sheets",
-    "status": "In progress",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "IMPLEMENTED, UNVERIFIED",
+    "evidence": "19 artboards in docs/design/ and on the design canvas (https://claude.ai/artifact/3UF9Uf2hTWHw1TGm3ZERjz). Format rules checked by script (skeleton, no forbidden elements, one filled primary button, links resolve). Not rendered or visually reviewed by anyone yet."
   },
   {
     "id": "T-152",
@@ -340,9 +340,9 @@
     "starts_after": "T-151",
     "task": "Owner reviews and approves the designs and the proposed brand",
     "acceptance": "Changes requested are made; approval recorded",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Blocked",
+    "verification": "BLOCKED",
+    "evidence": "Waiting for the owner to review the canvas and answer Q-20 (designs and brand) and Q-21 (name)."
   },
   {
     "id": "T-153",

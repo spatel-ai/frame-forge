@@ -1,0 +1,44 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-11-16T20:50:00Z"},
+  "title": "Talking Avatar App Designs",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 960, "title": "Home", "expand": "fill"},
+    "Create-1-Details.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 960, "title": "Create 1: photo and script", "expand": "fill"},
+    "Create-2-Banners.dc.html": {"x": 3040, "y": 0, "w": 1440, "h": 960, "title": "Create 2: banners", "expand": "fill"},
+    "Create-3-Review.dc.html": {"x": 4560, "y": 0, "w": 1440, "h": 960, "title": "Create 3: review voice and price", "expand": "fill"},
+    "Create-4-Progress.dc.html": {"x": 6080, "y": 0, "w": 1440, "h": 960, "title": "Create 4: progress", "expand": "fill"},
+    "Create-5-Result.dc.html": {"x": 7600, "y": 0, "w": 1440, "h": 960, "title": "Create 5: result", "expand": "fill"},
+    "Videos.dc.html": {"x": 0, "y": 1400, "w": 1440, "h": 960, "title": "Videos", "expand": "fill"},
+    "Scripts.dc.html": {"x": 1520, "y": 1400, "w": 1440, "h": 960, "title": "My scripts", "expand": "fill"},
+    "Wallet.dc.html": {"x": 3040, "y": 1400, "w": 1440, "h": 960, "title": "Wallet", "expand": "fill"},
+    "Buy-Credits.dc.html": {"x": 4560, "y": 1400, "w": 1440, "h": 960, "title": "Buy credits dialog", "expand": "fill"},
+    "Account.dc.html": {"x": 6080, "y": 1400, "w": 1440, "h": 960, "title": "Account", "expand": "fill"},
+    "Login.dc.html": {"x": 0, "y": 2800, "w": 1440, "h": 960, "title": "Log in", "expand": "fill"},
+    "Signup.dc.html": {"x": 1520, "y": 2800, "w": 1440, "h": 960, "title": "Sign up, with validation", "expand": "fill"},
+    "States.dc.html": {"x": 3040, "y": 2800, "w": 1440, "h": 1100, "title": "States: loading, empty, error, feedback"},
+    "Components.dc.html": {"x": 4560, "y": 2800, "w": 1440, "h": 1100, "title": "Design system: colour, type, components"},
+    "Phone-Home.dc.html": {"x": 0, "y": 4300, "w": 390, "h": 844, "title": "Phone: home"},
+    "Phone-Create.dc.html": {"x": 470, "y": 4300, "w": 390, "h": 844, "title": "Phone: create"},
+    "Phone-Wallet.dc.html": {"x": 940, "y": 4300, "w": 390, "h": 844, "title": "Phone: wallet"},
+    "Phone-Login.dc.html": {"x": 1410, "y": 4300, "w": 390, "h": 844, "title": "Phone: log in"}
+  },
+  "order": [
+    "Main.dc.html", "Create-1-Details.dc.html", "Create-2-Banners.dc.html", "Create-3-Review.dc.html",
+    "Create-4-Progress.dc.html", "Create-5-Result.dc.html", "Videos.dc.html", "Scripts.dc.html",
+    "Wallet.dc.html", "Buy-Credits.dc.html", "Account.dc.html", "Login.dc.html", "Signup.dc.html",
+    "States.dc.html", "Components.dc.html", "Phone-Home.dc.html", "Phone-Create.dc.html",
+    "Phone-Wallet.dc.html", "Phone-Login.dc.html"
+  ],
+  "notes": {
+    "t-flow": {"x": 0, "y": -300, "text": "Home and the create flow", "kind": "title1", "maxW": 9040},
+    "t-library": {"x": 0, "y": 1100, "text": "Library, wallet and account", "kind": "title1", "maxW": 7520},
+    "t-reference": {"x": 0, "y": 2500, "text": "Sign in and reference sheets", "kind": "title1", "maxW": 6000},
+    "t-phone": {"x": 0, "y": 4000, "text": "Phone layouts", "kind": "title1", "maxW": 1800},
+    "n-price": {"x": 9120, "y": 0, "w": 420, "text": "Prices show [PRICE] because the credit rate per second is not decided yet (question Q-01). Balances, names, scripts and dates are example content.", "fill": "orange"},
+    "n-brand": {"x": 6080, "y": 2800, "w": 420, "text": "The name, colours and typefaces are a proposal awaiting your approval (questions Q-20, Q-21). They live in one tokens file, so changing them later is a small edit.", "fill": "purple"}
+  },
+  "designSystems": []
+}

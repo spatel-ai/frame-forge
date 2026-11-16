@@ -85,6 +85,11 @@ Status: VERIFIED | MOCK-VERIFIED | IMPLEMENTED, UNVERIFIED | BLOCKED | DEFERRED
 The screen designs for every customer screen, on a design canvas. UX.md is the written standard;
 the canvas is the picture. The link is private to its owner until shared.
 
+The same 19 screens are kept in [design/](design/) as one `.dc.html` file each, with
+`canvas.json` (the board layout) and `BRIEF.md` (the rules they were drawn to). Agents building a
+screen read the matching file there. The designs await owner approval (Q-20) and have not been
+visually reviewed.
+
 ## Dashboard
 
 [Avatar Platform Tracker](https://claude.ai/artifact/E95obUDjLQk1aJzqNZXuPb)
