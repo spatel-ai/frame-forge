@@ -20,6 +20,7 @@ from .store import AuthStore, EmailTaken
 log = logging.getLogger(__name__)
 
 VERIFY_TOKEN_HOURS = 24
+RESET_TOKEN_MINUTES = 30
 _EMAIL = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
 
 
@@ -202,6 +203,91 @@ class AuthService:
         self.store.set_password_hash(user_id, passwords.hash_password(body.new_password))
         self.store.revoke_user_sessions(user_id, now, except_id=session_id)
         self.store.audit("password_change", now, actor_user_id=user_id, target=user_id)
+
+    # email confirmation and password reset (T-203) -------------------------------------
+
+    @staticmethod
+    def _verify_invalid() -> ApiError:
+        return ApiError(
+            400,
+            "This link has expired or was already used. Ask for a new one.",
+            "verify_link_invalid",
+        )
+
+    @staticmethod
+    def _reset_invalid() -> ApiError:
+        return ApiError(
+            400,
+            "This link has expired or was already used. Ask for a new one.",
+            "reset_link_invalid",
+        )
+
+    def verify_email(self, token: str) -> None:
+        if not self.store.confirm_email(hash_token(token), self.now()):
+            raise self._verify_invalid()
+
+    def resend_verification(self, user_id: str, email: str) -> None:
+        user = self.store.get_user(user_id)
+        if user is None or user["email_verified_at"] is not None:
+            return
+        self.send_verification_email(email, self.create_verification_token(user_id))
+
+    def forgot_password(self, email: str) -> None:
+        """Always returns normally for a well-formed email, whether or not an account exists."""
+        email = email.strip().lower()
+        if len(email) > 254 or not _EMAIL.fullmatch(email):
+            raise _invalid({"email": "Enter a full email address, like name@example.com."})
+        user = self.store.get_user_by_email(email)
+        if user is None or user["status"] != "active":
+            return
+        token = secrets.token_urlsafe(32)
+        now = self.now()
+        self.store.replace_email_token(
+            user["id"],
+            "reset",
+            hash_token(token),
+            now,
+            now + timedelta(minutes=RESET_TOKEN_MINUTES),
+        )
+        link = f"{self.settings.app_base_url}/reset-password?token={token}"
+        body = (
+            "Someone asked to reset the password of your Frameforge account.\n\n"
+            f"Choose a new password by opening this link. It works once, for {RESET_TOKEN_MINUTES} "
+            f"minutes:\n{link}\n\nIf this was not you, you can ignore this email.\n"
+        )
+        self._send_quietly(user["email"], "Reset your password", body, "reset")
+
+    def check_reset_token(self, token: str) -> str:
+        user = self.store.peek_email_token_user("reset", hash_token(token), self.now())
+        if user is None:
+            raise self._reset_invalid()
+        return user["email"]
+
+    def reset_password(self, token: str, password: str) -> None:
+        # Validate first so a too-short password does not burn the link.
+        if problem := _password_problem(password):
+            raise _invalid({"password": problem})
+        user = self.store.reset_password(
+            hash_token(token), passwords.hash_password(password), self.now()
+        )
+        if user is None:
+            raise self._reset_invalid()
+        # A working reset link proves the person owns the address, so the store also sets
+        # email_verified_at when it is null (D-036).
+        self._send_quietly(
+            user["email"],
+            "Your password was changed",
+            "The password of your Frameforge account was just changed, and every device was "
+            "logged out. If this was not you, reset your password again now.\n",
+            "password-changed",
+        )
+
+    def _send_quietly(self, to: str, subject: str, body: str, kind: str) -> None:
+        try:
+            self.email_sender.send(to, subject, body)
+        except Exception:
+            # No address or link in the log; the customer can ask again.
+            log.error("Could not send a %s email", kind, exc_info=True)
 
     # ------------------------------------------------------------------------------------
 
