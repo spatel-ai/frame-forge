@@ -10,8 +10,6 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from ..jobs.service import Conflict, ValidationError
-
 log = logging.getLogger(__name__)
 
 INTERNAL_MESSAGE = "Something went wrong on our side. Please try again."
@@ -57,14 +55,6 @@ async def _api_error(_: Request, exc: ApiError) -> JSONResponse:
     return error_response(exc.status_code, exc.detail, exc.code)
 
 
-async def _invalid_input(_: Request, exc: ValidationError) -> JSONResponse:
-    return error_response(422, str(exc), "invalid_input")
-
-
-async def _wrong_state(_: Request, exc: Conflict) -> JSONResponse:
-    return error_response(409, str(exc), "wrong_state")
-
-
 async def _request_validation(_: Request, exc: RequestValidationError) -> JSONResponse:
     return error_response(422, _flatten_validation(exc), "validation_error")
 
@@ -86,8 +76,6 @@ async def _unhandled(_: Request, exc: Exception) -> JSONResponse:
 
 def register_error_handlers(app: FastAPI) -> None:
     app.add_exception_handler(ApiError, _api_error)
-    app.add_exception_handler(ValidationError, _invalid_input)
-    app.add_exception_handler(Conflict, _wrong_state)
     app.add_exception_handler(RequestValidationError, _request_validation)
     app.add_exception_handler(StarletteHTTPException, _http_exception)
     app.add_exception_handler(Exception, _unhandled)

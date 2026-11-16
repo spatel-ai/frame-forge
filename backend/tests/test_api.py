@@ -1,8 +1,10 @@
 """API contract tests (task T-104): error shape, request ids, health, OpenAPI. Mock provider only."""
 
+import ast
 import logging
 from dataclasses import replace
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -222,6 +224,32 @@ def test_openapi_declares_project_error_shape_for_every_error():
             # A route with path, query or body input can fail validation (422).
             if op.get("parameters") or op.get("requestBody"):
                 assert "422" in errors, f"{where} does not declare 422"
+
+
+def test_core_does_not_import_from_feature_packages():
+    """D-012/D-022: `app.core` stays free of `app.jobs` and `app.providers` so features can be
+    built in parallel without editing shared core files."""
+    core = Path(__file__).resolve().parents[1] / "app" / "core"
+    forbidden = ("jobs", "providers")
+    for source in sorted(core.glob("*.py")):
+        for node in ast.walk(ast.parse(source.read_text(), str(source))):
+            names: list[str] = []
+            if isinstance(node, ast.Import):
+                names = [a.name for a in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                # Relative: `..jobs.x` is level 2, module "jobs.x"; `from .. import jobs` too.
+                base = node.module or ""
+                names = [base] + [f"{base}.{a.name}".strip(".") for a in node.names]
+                if node.level == 1:  # `from . import x` / `from .x import y` stay inside core
+                    continue
+                if node.level == 0 and not base.startswith("app"):
+                    continue
+                if node.level == 0:
+                    base = base.removeprefix("app").lstrip(".")
+                    names = [base] + [f"{base}.{a.name}".strip(".") for a in node.names]
+            for name in names:
+                top = name.removeprefix("app.").split(".")[0]
+                assert top not in forbidden, f"{source.name} imports {name!r}"
 
 
 def test_job_and_config_json_keys_are_unchanged(client):
