@@ -3,11 +3,18 @@
 Upload a photo, type a script (English, Hindi or Punjabi), listen to the generated voice,
 approve it, and get a talking-avatar video of up to 30 seconds.
 
-- `backend/` — FastAPI, SQLite job tracking, files on local disk under `backend/data/`
+- `backend/` — FastAPI, PostgreSQL job tracking (in Docker), files on local disk under `backend/data/`
 - `frontend/` — React (Vite) single page
 - Models (fal.ai): voice `fal-ai/minimax/speech-02-hd` (default) or Kokoro (set `AVATAR_VOICE=kokoro`); Punjabi always uses `fal-ai/gemini-3.1-flash-tts` with the male voice Charon, video `fal-ai/kling-video/ai-avatar/v2/standard`
 
 ## Run in mock mode (free, no network calls)
+
+Start and migrate the database first (see [Start the database](#start-the-database)):
+
+```bash
+docker compose up -d db
+cd backend && uv run alembic upgrade head
+```
 
 ```bash
 cd backend && uv run uvicorn app.main:create_app --factory --port 8000
@@ -23,7 +30,8 @@ is installed, shows the still photo as the video.
 ## Run against fal.ai (paid)
 
 Copy `backend/.env.example` to `backend/.env`, set `AVATAR_PROVIDER=fal` and your
-`FAL_KEY`, then start the backend with the env file:
+`FAL_KEY`. Start and migrate the database as for mock mode, then start the backend
+with the env file:
 
 ```bash
 cd backend && uv run uvicorn app.main:create_app --factory --port 8000 --env-file .env
@@ -34,7 +42,10 @@ each voice generation at about $0.10 per 1,000 characters with MiniMax, or $0.02
 
 ## Start the database
 
-PostgreSQL runs in Docker for local development (the app still stores jobs in SQLite until the job store is ported).
+PostgreSQL runs in Docker for local development and holds the jobs. The backend checks it at
+start-up and refuses to start if it is unreachable or not migrated; it never migrates by itself.
+Run both commands before starting the backend, and the second again after pulling new
+migrations. The tests need only the first.
 
 ```bash
 docker compose up -d db
@@ -49,6 +60,8 @@ The connection URL is `DATABASE_URL` (the default matches `docker-compose.yml`; 
 cd backend && uv run pytest
 ```
 
+The database must be running (`docker compose up -d db`). Each test creates its own schema,
+migrates it, and drops it afterwards, so tests never touch your development data.
 Tests use the mock provider only; they never call fal.ai.
 
 ## How paid requests are protected
