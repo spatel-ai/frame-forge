@@ -535,9 +535,9 @@
     "starts_after": "T-204, T-205",
     "task": "Access-control test matrix",
     "acceptance": "Every route × anonymous / owner / other user / admin",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent building in a worktree (T-206 backend tests and T-211 frontend run in parallel)."
   },
   {
     "id": "T-210",
@@ -565,9 +565,9 @@
     "starts_after": "T-210, T-154",
     "task": "Session bootstrap, guarded routes, handling of 401",
     "acceptance": "Expired session returns the user to log in, then back",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent building in a worktree (T-206 backend tests and T-211 frontend run in parallel)."
   },
   {
     "id": "T-212",
