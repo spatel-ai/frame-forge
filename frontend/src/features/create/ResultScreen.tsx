@@ -1,0 +1,49 @@
+import type { Job } from '../../api/client'
+import { ErrorState, Pill } from '../../components/feedback'
+import { Button } from '../../components/form'
+import { DownloadIcon } from '../../components/icons'
+import styles from './screens.module.css'
+
+export function ResultScreen({ job, onReset }: { job: Job; onReset: () => void }) {
+  if (!job.video_url) {
+    return (
+      <ErrorState
+        title="Your video file is not available"
+        message="The video finished but we could not find its file. Nothing was charged. Start over to try again."
+        action={<Button onClick={onReset}>Start over</Button>}
+      />
+    )
+  }
+  return (
+    <div className={styles.grid}>
+      <section className={`${styles.panel} ${styles.wide}`} aria-label="Your video">
+        <video className={styles.media} controls src={job.video_url} />
+        <div>
+          <Pill icon tone="info">AI-generated</Pill>
+        </div>
+      </section>
+      <section className={styles.panel} aria-labelledby="h-ready">
+        <h2 id="h-ready" className={styles.heading}>Your video is ready</h2>
+        <dl className={styles.facts}>
+          {job.audio_duration_seconds !== null && (
+            <div className={styles.fact}>
+              <dt>Voice length</dt>
+              <dd>{job.audio_duration_seconds.toFixed(1)} seconds</dd>
+            </div>
+          )}
+          <div className={styles.fact}>
+            <dt>Language</dt>
+            <dd>{job.language}</dd>
+          </div>
+        </dl>
+        <div className={styles.actions}>
+          <a className={styles.linkButton} href={job.video_url} download>
+            <DownloadIcon size={18} />
+            Download video
+          </a>
+          <Button variant="secondary" size="large" onClick={onReset}>Create another</Button>
+        </div>
+      </section>
+    </div>
+  )
+}
