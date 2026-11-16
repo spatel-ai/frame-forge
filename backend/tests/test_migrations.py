@@ -7,9 +7,19 @@ from alembic import command
 from sqlalchemy import inspect
 
 EXPECTED_COLUMNS = {
-    "id", "status", "language", "script", "image_file", "audio_file", "video_file",
-    "provider_request_id", "error", "audio_duration_seconds", "video_started_at",
-    "created_at", "updated_at",
+    "id",
+    "status",
+    "language",
+    "script",
+    "image_file",
+    "audio_file",
+    "video_file",
+    "provider_request_id",
+    "error",
+    "audio_duration_seconds",
+    "video_started_at",
+    "created_at",
+    "updated_at",
 }
 
 

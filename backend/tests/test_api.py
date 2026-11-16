@@ -195,17 +195,19 @@ def test_openapi_lists_every_field_and_the_error_model(settings):
     assert set(schemas["ConfigOut"]["properties"]) == set(ConfigOut.model_fields)
     assert set(schemas["ErrorOut"]["properties"]) == {"detail", "code"}
     assert set(schemas["JobOut"]["properties"]["status"]["enum"]) == {
-        "audio_generating", "audio_ready", "video_submitting",
-        "video_generating", "completed", "failed",
+        "audio_generating",
+        "audio_ready",
+        "video_submitting",
+        "video_generating",
+        "completed",
+        "failed",
     }
     paths = spec["paths"]
     assert "/api/v1/config" in paths and "/healthz" in paths
     assert not any(p.startswith("/api/") and not p.startswith("/api/v1/") for p in paths)
     get_job = paths["/api/v1/jobs/{job_id}"]["get"]["responses"]
     assert get_job["404"]["content"]["application/json"]["schema"]["$ref"].endswith("/ErrorOut")
-    assert (
-        get_job["200"]["content"]["application/json"]["schema"]["$ref"].endswith("/JobOut")
-    )
+    assert get_job["200"]["content"]["application/json"]["schema"]["$ref"].endswith("/JobOut")
 
 
 def test_openapi_declares_project_error_shape_for_every_error():
