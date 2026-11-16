@@ -63,10 +63,13 @@ M1 to M3.
 | T-009 | DOC | Fable | Acceptance | R-49 | Audit all documents against the parent CLAUDE.md | Each gap found is corrected |
 | T-007 | DOC | Owner | Acceptance | R-05 | Owner answers the questions blocking M1 to M3: Q-01, Q-02, Q-08, Q-19 | Answers recorded in the tracker |
 | T-008 | DOC | Owner | Acceptance | R-05 | Owner approves the design | Proposed decisions become Confirmed |
+| T-010 | DOC | Owner | Acceptance | R-05 | Owner approves the M1 plan ([M1-PLAN.md](M1-PLAN.md)) | The decisions M1 relies on are Confirmed |
 
 ## M1 — Platform foundation
 
-**Gate A needs:** M0 approved. **Gate C:** none; mock mode only.
+**Gate A needs:** the M1 plan approved (T-010). **Gate C:** none; mock mode only.
+
+The phases, steps and discovery findings for this milestone are in [M1-PLAN.md](M1-PLAN.md).
 
 **Exit evidence:** The existing create-approve-video flow works as before in mock mode, with data
 in PostgreSQL, routes under `/api/v1`, and the frontend split into routed pages. The existing
@@ -74,12 +77,14 @@ backend tests pass against PostgreSQL.
 
 | ID | Area | Owner | Need | Traces to | Task | Accepted when |
 | --- | --- | --- | --- | --- | --- | --- |
-| T-101 | BE | Sonnet | Correctness | R-42, R-58 | Local PostgreSQL and typed settings | App starts from documented steps; secrets come only from the environment |
+| T-106 | BE | Sonnet | Correctness | R-42 | Restructure the backend into `core`, `jobs` and `providers` packages as a pure move | Same tests pass, same count, no logic edits |
+| T-101 | BE | Sonnet | Correctness | R-42, R-58 | PostgreSQL in Docker and a `DATABASE_URL` setting | Database starts from documented steps; secrets come only from the environment |
 | T-102 | BE | Sonnet | Correctness | R-42 | SQLAlchemy models and first Alembic migration for `jobs` | A fresh database is built by migrations alone |
 | T-103 | BE | Opus | Correctness | R-56 | Port the job store to PostgreSQL | Compare-and-set behaviour preserved; existing tests pass |
 | T-104 | BE | Sonnet | Acceptance | R-42 | `/api/v1` prefix, error shape, request-id logging, `/healthz` | Every error matches D-012 |
 | T-105 | BE | Haiku | Acceptance | R-06 | One command that runs lint, type check and mock tests | Documented in `backend/CLAUDE.md` |
-| T-110 | FE | Sonnet | Acceptance | R-42 | Router, app shell, generated API types | Types come from OpenAPI; no hand-written response types |
+| T-110 | FE | Sonnet | Acceptance | R-42 | Router, app shell, feature folders and style tokens | App behaves as before; type check and lint pass |
+| T-113 | FE | Sonnet | Acceptance | R-42 | Generate API types from OpenAPI and switch the client to `/api/v1` | No hand-written response type remains |
 | T-111 | FE | Sonnet | Acceptance | R-08, R-55 | Move the create flow onto routes with TanStack Query | Reload at any step resumes the job |
 | T-112 | FE | Haiku | Acceptance | R-06 | Test setup and first component tests | One command runs lint, type check and tests |
 
@@ -295,14 +300,17 @@ its lane free, can start.
 | T-009 | Docs | — |
 | T-007 | Docs | — |
 | T-008 | Docs | T-007 |
-| T-101 | BE-Core | T-008 |
+| T-010 | Docs | — |
+| T-106 | BE-Core | T-010 |
+| T-101 | BE-Core | T-106 |
 | T-102 | BE-Core | T-101 |
 | T-103 | BE-Jobs | T-102 |
 | T-104 | BE-Core | T-103 |
 | T-105 | BE-Core | T-104 |
-| T-110 | FE-Shell | T-008 |
-| T-111 | FE-Create | T-110, T-104 |
+| T-110 | FE-Shell | T-010 |
+| T-111 | FE-Create | T-113 |
 | T-112 | FE-Shell | T-110 |
+| T-113 | FE-Shell | T-104, T-112 |
 | T-200 | Contract | T-008 |
 | T-201 | BE-Auth | T-104, T-200 |
 | T-202 | BE-Auth | T-201 |
@@ -311,7 +319,7 @@ its lane free, can start.
 | T-205 | BE-Auth | T-203 |
 | T-206 | BE-Auth | T-204, T-205 |
 | T-210 | FE-Auth | T-110, T-200 |
-| T-211 | FE-Shell | T-210, T-112 |
+| T-211 | FE-Shell | T-210, T-113 |
 | T-212 | FE-Account | T-211 |
 | T-300 | Contract | T-200 |
 | T-301 | BE-Wallet | T-202, T-300 |

@@ -5,7 +5,9 @@ choice, the alternatives considered, the reason, the trade-off, and how it will 
 
 A decision has one of three statuses:
 
-- **Confirmed** — stated by the owner. Nothing engineering proposed is ever marked Confirmed.
+- **Confirmed** — stated or approved by the owner. A proposal becomes Confirmed only when the owner
+  approves it; engineering never marks its own proposal Confirmed. D-001, D-002, D-011, D-012 and
+  D-022 were confirmed when the owner approved the M1 plan on 2026-11-17.
 - **Proposed** — recommended by engineering; becomes Confirmed when the owner approves these docs.
 - **Needs owner** — affects cost, privacy, security, consent or core behaviour, so it waits for
   the owner's answer to the linked question in [tracker/questions.json](tracker/questions.json).
@@ -17,7 +19,7 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 ## D-001 — Evolve the POC in place; do not rewrite
 
-**Status:** Proposed · 2026-11-17 · Area: both
+**Status:** Confirmed · 2026-11-17 · Area: both
 
 **Choice:** Keep FastAPI, React, the job state machine and its tests. Add users, wallet and payments around them.
 
@@ -33,7 +35,7 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 ## D-002 — PostgreSQL replaces SQLite, with SQLAlchemy 2 and Alembic
 
-**Status:** Proposed · 2026-11-17 · Area: backend
+**Status:** Confirmed · 2026-11-17 · Area: backend
 
 **Choice:** PostgreSQL for all data. SQLAlchemy 2 for access, Alembic for migrations.
 
@@ -177,7 +179,7 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 ## D-011 — Frontend: keep React + Vite + TypeScript; add routing, server-state caching and generated API types
 
-**Status:** Proposed · 2026-11-17 · Area: frontend
+**Status:** Confirmed · 2026-11-17 · Area: frontend
 
 **Choice:** React Router for pages. TanStack Query for fetching, caching and polling. API types generated from the backend's OpenAPI document. Plain CSS with shared design tokens; no component kit.
 
@@ -193,7 +195,7 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 ## D-012 — One API version prefix and one error shape
 
-**Status:** Proposed · 2026-11-17 · Area: both
+**Status:** Confirmed · 2026-11-17 · Area: both
 
 **Choice:** All routes under `/api/v1`. Every error is `{"detail": "<message for the user>", "code": "<machine_code>"}`. HTTP 401 means not logged in, 402 not enough credits, 403 not allowed, 404 not found or not yours, 409 wrong state, 422 invalid input, 429 too many requests.
 
@@ -353,7 +355,7 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 ## D-022 — Parallel work by lanes with single file ownership
 
-**Status:** Proposed · 2026-11-17 · Area: both
+**Status:** Confirmed · 2026-11-17 · Area: both
 
 **Choice:** Split the codebase into lanes, each a set of files with one worker at a time. Tasks in different lanes run in parallel once the tasks they depend on are done. Shared files (route registration, migrations, dependencies, the frontend route table and API client) belong to one integrator lane on each side. Each parallel task works in its own git worktree; Fable merges one branch at a time and runs the mock tests after each merge. The lanes and each task's dependencies are listed in MILESTONES.md.
 
@@ -364,3 +366,67 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 **Trade-off:** The job-lifecycle lane stays serial and sets the shortest possible schedule. The integrator lanes are a bottleneck for small shared changes. More parallel agents also means more tokens spent at once.
 
 **Validation:** A cross-check that no task depends on a missing task, that dependencies have no cycles, and that tasks able to start together are in different lanes. In practice: mock tests pass after every merge.
+
+---
+
+## D-023 — Synchronous database access; the job store keeps its five methods
+
+**Status:** Proposed · 2026-11-17 · Area: backend
+
+**Choice:** SQLAlchemy in synchronous mode with the psycopg driver. `JobStore` keeps `create`, `get`, `list_by_status`, `transition` and `close`, so the job service and its tests do not change.
+
+**Alternatives:** Asynchronous SQLAlchemy throughout (every store call and every caller would change in the same step as the database move). A full ORM session per request (more structure than one table needs today).
+
+**Why:** The POC already calls a blocking SQLite store from asynchronous code. Keeping that shape makes the move to PostgreSQL a like-for-like swap that the existing tests can judge.
+
+**Trade-off:** A database call blocks the server's event loop for its duration, as it does today. Acceptable for one process and short queries.
+
+**Validation:** The existing tests pass unchanged in behaviour. Revisit if request latency under load is measured as a problem.
+
+---
+
+## D-024 — PostgreSQL runs in Docker for development and tests; one schema per test
+
+**Status:** Proposed · 2026-11-17 · Area: backend
+
+**Choice:** A `docker-compose.yml` starts PostgreSQL for development. Tests use the same server; each test creates its own empty schema and drops it afterwards.
+
+**Alternatives:** PostgreSQL installed with Homebrew (set up by hand on each machine). A hosted database (an account and possible cost). Keeping SQLite for tests (tests would no longer exercise the real database's locking).
+
+**Why:** Docker 29.8.2 with Compose is already installed on the development machine (checked 2026-11-17). One schema per test keeps tests independent without restarting the server.
+
+**Trade-off:** Docker must be running to run the tests. Creating a schema per test adds time to each test.
+
+**Validation:** The test run's duration is recorded before and after the move (T-103).
+
+---
+
+## D-025 — Backend tooling: Ruff, plus a type checker confirmed at install
+
+**Status:** Proposed · 2026-11-17 · Area: backend
+
+**Choice:** Ruff for linting and formatting. A type checker is added in T-105 after confirming it handles the code as written; the choice is recorded here then.
+
+**Alternatives:** Flake8 + Black + isort (three tools for what one does). No tooling (the POC's state today).
+
+**Why:** M1 must end with one command that checks the backend. The existing code already carries formatter hints (`# fmt: skip`), so a formatter is expected.
+
+**Trade-off:** A first formatting pass may touch many lines; it is done in its own commit so it does not hide logic changes.
+
+**Validation:** The check command passes on a clean checkout (T-105).
+
+---
+
+## D-026 — Frontend tests: Vitest, React Testing Library and jsdom; the API module is mocked directly
+
+**Status:** Proposed · 2026-11-17 · Area: frontend
+
+**Choice:** Vitest as the runner, React Testing Library with jsdom for components. Tests replace the one API client module with a mock.
+
+**Alternatives:** Jest (needs separate configuration from Vite). A mock HTTP server such as MSW (another dependency for a single client module).
+
+**Why:** Vitest 5.1.0 declares support for the project's Vite 8 (checked 2026-11-17) and shares its configuration.
+
+**Trade-off:** Mocking the client module does not exercise the real fetch code; that is covered by the Phase 6 browser run.
+
+**Validation:** One command runs lint, type check and tests (T-112).

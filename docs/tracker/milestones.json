@@ -13,7 +13,7 @@
     "milestone": "Platform foundation",
     "outcome": "Same product as today, on PostgreSQL, with routing and a versioned API",
     "depends_on": "M0",
-    "status": "Planned"
+    "status": "In progress"
   },
   {
     "id": "M2",

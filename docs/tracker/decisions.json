@@ -2,7 +2,7 @@
   {
     "id": "D-001",
     "decision": "Evolve the POC in place; do not rewrite",
-    "status": "Proposed",
+    "status": "Confirmed",
     "waiting_on": "",
     "area": "Both",
     "choice": "Keep FastAPI, React, the job state machine and its tests. Add users, wallet and payments around them.",
@@ -13,7 +13,7 @@
   {
     "id": "D-002",
     "decision": "PostgreSQL replaces SQLite, with SQLAlchemy 2 and Alembic",
-    "status": "Proposed",
+    "status": "Confirmed",
     "waiting_on": "",
     "area": "Backend",
     "choice": "PostgreSQL for all data. SQLAlchemy 2 for access, Alembic for migrations.",
@@ -112,7 +112,7 @@
   {
     "id": "D-011",
     "decision": "Frontend: keep React + Vite + TypeScript; add routing, server-state caching and generated API types",
-    "status": "Proposed",
+    "status": "Confirmed",
     "waiting_on": "",
     "area": "Frontend",
     "choice": "React Router for pages. TanStack Query for fetching, caching and polling. API types generated from the backend's OpenAPI document. Plain CSS with shared design tokens; no component kit.",
@@ -123,7 +123,7 @@
   {
     "id": "D-012",
     "decision": "One API version prefix and one error shape",
-    "status": "Proposed",
+    "status": "Confirmed",
     "waiting_on": "",
     "area": "Both",
     "choice": "All routes under `/api/v1`. Every error is `{\"detail\": \"<message for the user>\", \"code\": \"<machine_code>\"}`. HTTP 401 means not logged in, 402 not enough credits, 403 not allowed, 404 not found or not yours, 409 wrong state, 422 invalid input, 429 too many requests.",
@@ -233,12 +233,56 @@
   {
     "id": "D-022",
     "decision": "Parallel work by lanes with single file ownership",
-    "status": "Proposed",
+    "status": "Confirmed",
     "waiting_on": "",
     "area": "Both",
     "choice": "Split the codebase into lanes, each a set of files with one worker at a time. Tasks in different lanes run in parallel once the tasks they depend on are done. Shared files (route registration, migrations, dependencies, the frontend route table and API client) belong to one integrator lane on each side. Each parallel task works in its own git worktree; Fable merges one branch at a time and runs the mock tests after each merge. The lanes and each task's dependencies are listed in MILESTONES.md.",
     "trade_off": "The job-lifecycle lane stays serial and sets the shortest possible schedule. The integrator lanes are a bottleneck for small shared changes. More parallel agents also means more tokens spent at once.",
     "validation": "A cross-check that no task depends on a missing task, that dependencies have no cycles, and that tasks able to start together are in different lanes. In practice: mock tests pass after every merge.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-023",
+    "decision": "Synchronous database access; the job store keeps its five methods",
+    "status": "Proposed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "SQLAlchemy in synchronous mode with the psycopg driver. `JobStore` keeps `create`, `get`, `list_by_status`, `transition` and `close`, so the job service and its tests do not change.",
+    "trade_off": "A database call blocks the server's event loop for its duration, as it does today. Acceptable for one process and short queries.",
+    "validation": "The existing tests pass unchanged in behaviour. Revisit if request latency under load is measured as a problem.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-024",
+    "decision": "PostgreSQL runs in Docker for development and tests; one schema per test",
+    "status": "Proposed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "A `docker-compose.yml` starts PostgreSQL for development. Tests use the same server; each test creates its own empty schema and drops it afterwards.",
+    "trade_off": "Docker must be running to run the tests. Creating a schema per test adds time to each test.",
+    "validation": "The test run's duration is recorded before and after the move (T-103).",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-025",
+    "decision": "Backend tooling: Ruff, plus a type checker confirmed at install",
+    "status": "Proposed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "Ruff for linting and formatting. A type checker is added in T-105 after confirming it handles the code as written; the choice is recorded here then.",
+    "trade_off": "A first formatting pass may touch many lines; it is done in its own commit so it does not hide logic changes.",
+    "validation": "The check command passes on a clean checkout (T-105).",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-026",
+    "decision": "Frontend tests: Vitest, React Testing Library and jsdom; the API module is mocked directly",
+    "status": "Proposed",
+    "waiting_on": "",
+    "area": "Frontend",
+    "choice": "Vitest as the runner, React Testing Library with jsdom for components. Tests replace the one API client module with a mock.",
+    "trade_off": "Mocking the client module does not exercise the real fetch code; that is covered by the Phase 6 browser run.",
+    "validation": "One command runs lint, type check and tests (T-112).",
     "date": "2026-11-17"
   }
 ]

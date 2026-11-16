@@ -7,6 +7,7 @@ The parent [CLAUDE.md](../CLAUDE.md) governs the project. These documents apply 
 | [HLD.md](HLD.md) | What are we building and how do the parts fit together? |
 | [DECISIONS.md](DECISIONS.md) | Why was each choice made, and what else was considered? |
 | [MILESTONES.md](MILESTONES.md) | In what order is it built, who owns each task, and how do we know it is finished? |
+| [M1-PLAN.md](M1-PLAN.md) | The phases, steps and discovery findings for milestone 1 |
 | [tracker/](tracker/) | What is the status right now? |
 | [../backend/CLAUDE.md](../backend/CLAUDE.md) | Rules for backend work |
 | [../frontend/CLAUDE.md](../frontend/CLAUDE.md) | Rules for frontend work |
@@ -22,6 +23,11 @@ The parent [CLAUDE.md](../CLAUDE.md) governs the project. These documents apply 
 | `tracker/requirements.json` | Requirement | class: Confirmed, Assumed, Needs Verification, Deferred, Out of Scope |
 
 Use the values exactly as written; the dashboard counts them by exact text.
+
+After editing MILESTONES.md or DECISIONS.md, run `python3 docs/tracker/sync.py`. It rebuilds
+`tasks.json`, `milestones.json` and `decisions.json` from the markdown, keeps each task's status,
+verification and evidence, and cross-checks every ID, owner, lane and dependency. Edit a task's
+status, verification and evidence directly in `tasks.json`.
 
 ### Verification statuses (parent CLAUDE.md §10)
 
