@@ -535,9 +535,9 @@
     "starts_after": "T-204, T-205",
     "task": "Access-control test matrix",
     "acceptance": "Every route × anonymous / owner / other user / admin",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent building in a worktree (T-206 backend tests and T-211 frontend run in parallel)."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "tests/test_access_matrix.py: 59 tests, every route x anonymous/owner/other/admin/unconfirmed, ownerless jobs, public auth routes; a guard fails if any OpenAPI route lacks a row. All matched the expected table first time. Mutation check by Fable: replacing the owner lookup with a plain id lookup made 15 rows fail; restored, 59 pass. backend/check.sh: 230 passed."
   },
   {
     "id": "T-210",
