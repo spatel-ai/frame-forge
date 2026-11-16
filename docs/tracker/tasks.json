@@ -357,7 +357,7 @@
     "acceptance": "Every component in UX.md section 4 exists, is keyboard accessible, and has tests for its states",
     "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "Tokens, bundled fonts, 25 icons; form (Button, TextField, TextArea, Select, Checkbox, FileDropZone, SelectableCard/Group, Spinner), feedback (Pill, Banner, Toast, Skeleton, ProgressSteps, EmptyState, ErrorState, Dialog, CreditsPill) and layout (Card, Stepper, Pagination). npm run check: 24 files, 203 tests passed, 0 lint errors; no hex colours in components. Review fix: Dialog reports a native close to the parent. Not yet seen in a browser (T-156): real dialog focus trap, container-query Stepper collapse, :has() card states, contrast."
+    "evidence": "Tokens, bundled fonts, 25 icons; form (Button, TextField, TextArea, Select, Checkbox, FileDropZone, SelectableCard/Group, Spinner), feedback (Pill, Banner, Toast, Skeleton, ProgressSteps, EmptyState, ErrorState, Dialog, CreditsPill) and layout (Card, Stepper, Pagination). npm run check: 24 files, 203 tests passed, 0 lint errors; no hex colours in components. Review fix: Dialog reports a native close to the parent. Not yet seen in a browser (T-156): real dialog focus trap, container-query Stepper collapse, :has() card states, contrast. Browser review rendered Button, FileDropZone (empty, error, preview), TextArea, Select, Banner, Pill, Stepper, ProgressSteps, Card; the rest (Dialog, Toast, Checkbox, SelectableCard, TextField, Pagination, EmptyState, CreditsPill) are jsdom-only so far."
   },
   {
     "id": "T-154",
@@ -417,7 +417,7 @@
     "acceptance": "Each rebuilt screen compared with its design at both widths; differences fixed or recorded",
     "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "Browser review in mock mode at 1440/900/390/360 px: full flow, reload resume, no sideways scroll, one h1/main, nav per width, keyboard order and focus, no external requests, no console errors, contrast >= 4.5:1. Three fixes (522921f). Remaining differences listed in M1.5-PLAN.md Phase 5 results."
+    "evidence": "Browser review in mock mode at 1440/900/390/360 px: full flow, reload resume, no sideways scroll, one h1/main, nav per width, keyboard order and focus, no external requests, no console errors, contrast >= 4.5:1. Three fixes (522921f). Remaining differences listed in M1.5-PLAN.md Phase 5 results. Not seen in a browser: server field error, form banner, failed job, poll-error banner, skeletons; focus ring measured on the photo box only."
   },
   {
     "id": "T-200",
