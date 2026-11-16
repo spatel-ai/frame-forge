@@ -3,6 +3,9 @@ import { Outlet } from 'react-router'
 import { getConfig } from '../api/client'
 import type { Config } from '../api/client'
 import { errMsg } from '../lib/util'
+import { Banner } from './feedback'
+import { BottomNav, Sidebar, TopBar } from './shell'
+import styles from './AppShell.module.css'
 
 const RETRY_MS = 3000
 
@@ -25,17 +28,20 @@ export default function AppShell() {
   const context: ShellContext = { config, configError }
 
   return (
-    <main className="app">
-      <header>
-        <h1>Frameforge</h1>
-        {config?.provider === 'mock' && <span className="badge">Mock mode — no real generation, no cost</span>}
-      </header>
-
-      <p className="notice">
-        Internal testing only. Use only a photo of yourself, or of someone who has agreed. The output is AI-generated.
-      </p>
-
-      <Outlet context={context} />
-    </main>
+    <div className={styles.shell}>
+      <a href="#content" className={styles.skip}>Skip to content</a>
+      <Sidebar />
+      <div className={styles.column}>
+        {/* The credits pill (M3) and the signed-in user menu (M2) go into the TopBar as children. */}
+        <TopBar mockMode={config?.provider === 'mock'} />
+        <main id="content" tabIndex={-1} className={styles.content}>
+          <Banner tone="info" title="Internal testing only">
+            Use only a photo of yourself, or of someone who has agreed. The output is AI-generated.
+          </Banner>
+          <Outlet context={context} />
+        </main>
+      </div>
+      <BottomNav />
+    </div>
   )
 }
