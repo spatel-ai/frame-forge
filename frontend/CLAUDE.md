@@ -50,9 +50,9 @@ list are in [docs/MILESTONES.md](../docs/MILESTONES.md), section "Parallel plan"
 
 ## Stack
 
-Today: React 19, Vite 8, TypeScript 7, oxlint, plain CSS. One page, no router, no tests.
-Target (from M1): React Router, TanStack Query, API types generated from the backend's OpenAPI
-document. See D-011.
+React 19, Vite 8, TypeScript 7, React Router 8, TanStack Query 5, oxlint, Vitest with React Testing
+Library and jsdom, plain CSS with tokens. API types are generated from the backend's OpenAPI
+document (D-011).
 
 Do not add a dependency without an entry in the decision log.
 
@@ -60,28 +60,32 @@ Do not add a dependency without an entry in the decision log.
 
 ```bash
 npm run dev      # http://localhost:5173, proxies /api to the backend on :8000
+npm run check    # lint + type check + tests (mocked API, free)
 npm run build    # type check + production build
-npm run lint
+npm run gen:api  # regenerate src/api/openapi.json and src/api/schema.d.ts from the backend
 ```
+
+Run `npm run gen:api` after any backend change to a route or response, and commit both files. The
+generator runs through `npx` at a pinned version; it cannot be installed beside TypeScript 7 and
+must not be added to `package.json`.
 
 ## Layout
 
-Today: `src/App.tsx` (everything), `src/api.ts` (fetch wrapper and types), `src/index.css`.
-
-Target (from M1):
-
 ```text
 src/
-  api/          generated types + one fetch client
+  main.tsx      router and query client
+  routes.tsx    route table
+  api/          client.ts (the one fetch client), schema.d.ts and openapi.json (generated)
+  components/   AppShell, NotFound; shared, presentational
   features/
-    auth/  create/  scripts/  videos/  wallet/  account/  admin/  home/
-  components/   shared, presentational only
-  routes.tsx    route table and guards
+    create/     CreatePage, JobPage, JobForm, JobView, jobQueries, storage, tests
+  lib/          small shared helpers
   styles/       tokens.css + base.css
 ```
 
-A feature folder owns its screens, hooks and tests. Features do not import from each other; shared
-code moves to `components/` or `api/`.
+Later features add their own folder under `features/`: `auth/ scripts/ videos/ wallet/ account/
+admin/ home/`. A feature folder owns its screens, hooks and tests. Features do not import from each
+other; shared code moves to `components/`, `lib/` or `api/`.
 
 ## Screens
 

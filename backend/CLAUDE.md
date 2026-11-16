@@ -53,24 +53,39 @@ list are in [docs/MILESTONES.md](../docs/MILESTONES.md), section "Parallel plan"
 
 ## Stack
 
-Today: Python 3.13+, FastAPI, `uv`, SQLite, files on local disk, pytest, ffmpeg (optional).
-Target: PostgreSQL, SQLAlchemy 2, Alembic from M1 (D-002); ffmpeg required from M5 (D-019).
+Python 3.13+, FastAPI, `uv`, PostgreSQL 17 in Docker, SQLAlchemy 2.1 (synchronous, D-023),
+Alembic, psycopg 3, pytest, Ruff, mypy. Files on local disk. ffmpeg is optional today and required
+from M5 (D-019).
 
 Do not add a dependency without an entry in the decision log.
 
 ## Commands
 
 ```bash
+docker compose up -d db                                    # from the repo root; start PostgreSQL
+uv run alembic upgrade head                                # build or update the tables
 uv run uvicorn app.main:create_app --factory --port 8000   # mock mode, free
-uv run pytest                                              # mock provider only, free
+./check.sh                                                 # Ruff, format check, mypy, tests (mock, free)
+uv run python -m app.export_openapi                        # print the API contract; needs no database
 ```
+
+Tests need the database running. Each test builds and drops its own schema, so they never touch
+development data.
 
 ## Layout
 
-Today: `app/config.py` (settings), `app/db.py` (job store), `app/service.py` (job lifecycle),
-`app/providers.py` (fal and mock), `app/main.py` (routes), `tests/test_jobs.py`.
+```text
+app/main.py            wiring only: app, lifespan, routers, error handlers, middleware
+app/core/              config, database engine, error shape, request-id logging, health
+app/jobs/              db.py (store), service.py (lifecycle), routes.py, schemas.py, errors.py, models.py
+app/providers.py       fal and mock
+migrations/            Alembic; one chain, ordered by the BE-Core lane
+tests/                 conftest.py gives each test a fresh schema
+```
 
-Target modules are listed in HLD §3. Move code only when a milestone task calls for it.
+`core` never imports from a feature package; a test enforces it. A feature registers its own error
+handlers and router from `main.py`. New features follow the `jobs` package's shape. Target modules
+are listed in HLD §3.
 
 ## Rules that protect money
 

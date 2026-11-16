@@ -251,8 +251,8 @@
     "task": "Router, app shell, feature folders and style tokens",
     "acceptance": "App behaves as before; type check and lint pass",
     "status": "Done",
-    "verification": "IMPLEMENTED, UNVERIFIED",
-    "evidence": "Merged 2026-11-17. Build and lint pass on development (one lint warning carried over from the original code). JobForm and JobView bodies unchanged. Not yet seen in a browser: routing, redirect and appearance are checked in the Phase 6 browser run"
+    "verification": "VERIFIED",
+    "evidence": "Merged 2026-11-17. Seen in headless Chrome: \"/\" redirects to /create, unknown paths show the not-found page, the shell shows the mock badge and AI notice, no sideways scroll at 360 px"
   },
   {
     "id": "T-113",
@@ -282,7 +282,7 @@
     "acceptance": "Reload at any step resumes the job",
     "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "Merged 2026-11-17. /create and /create/:jobId with TanStack Query; 32 frontend tests pass against a mocked API, including polling, 404 redirect and approve. Not yet seen in a browser"
+    "evidence": "Merged 2026-11-17. 32 frontend tests pass. Driven in headless Chrome against the real backend and PostgreSQL with the mock provider: create, review audio, approve, video; reload resumes at each step; polling stops when complete; a missing job returns to /create"
   },
   {
     "id": "T-112",

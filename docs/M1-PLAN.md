@@ -167,3 +167,26 @@ Step 5a is tracked as task T-113. The owner's approval is tracked as task T-010.
 Consequence for step 5a (T-113): the generator is run with `npx` at a pinned version from an npm
 script. It is not added to `package.json` dependencies. The generated file is committed, so a
 normal install and build never need the generator.
+
+## Milestone report (2026-11-17)
+
+**Status: MOCK-VERIFIED.** Everything below ran with the mock provider. Nothing reached fal.ai or
+Razorpay. The live fal.ai integration remains unverified, as before M1.
+
+| Point | Report |
+| --- | --- |
+| What was implemented | Backend split into `core` and `jobs` packages; PostgreSQL 17 in Docker with Alembic; the job store on PostgreSQL; routes under `/api/v1` with declared response shapes, one error shape, request ids and `/healthz`; Ruff, mypy and `check.sh`. Frontend: router and shell, feature folders, generated API types, the create flow on `/create` and `/create/:jobId` with TanStack Query, Vitest |
+| Why it was necessary | Login, wallet and payments need a database with row locks, a versioned contract both sides build to, and separate packages so lanes can work in parallel |
+| What was verified | Backend: 56 tests against PostgreSQL, including 12 threads approving one job with exactly one winner; no existing assertion changed. Frontend: 32 tests. In headless Chrome against the real backend and database: 20 checks covering redirect, not-found, validation, create, audio review, approve, video, reload at each step, polling stopping, the stored-job redirect, a missing job, and 360 px width |
+| Which tests were executed | `backend/check.sh` (Ruff, format, mypy, pytest); `npm run check` and `npm run build`; a scripted browser run. All free |
+| What remains unverified | Anything on fal.ai. The picture inside the mock video was not inspected; the file was served and the player loaded it. The 5-second database connect timeout against a host that drops packets. Background-tab polling |
+| Known risks or limitations | Database calls block the event loop briefly (D-023). Tests need Docker running and take about 2.8 s instead of 0.9 s. Tests are not type-checked. One lint warning carried over from the original preview code. Still no login, so the backend must stay on localhost |
+| Next justified action | Owner answers Q-02 (login method) so M2 can pass Gate A. T-200 (auth contract) and T-507 (banner-joining module) depend on nothing else and can start |
+
+Review findings raised and closed inside the milestone: the compose project name (one database
+across worktrees), 422 responses declared with the wrong shape, and `core` importing from a
+feature package. The last two are now guarded by tests.
+
+Deviations from the plan: `providers.py` was left in place rather than moved into a package; the
+stored job id was kept as a fallback next to the address, so a returning visitor still lands on
+their job.
