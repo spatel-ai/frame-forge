@@ -1,0 +1,366 @@
+# Decision Log — Talking Avatar Platform
+
+Every decision records the five parts the parent [CLAUDE.md](../CLAUDE.md) §2 asks for: the
+choice, the alternatives considered, the reason, the trade-off, and how it will be validated.
+
+A decision has one of three statuses:
+
+- **Confirmed** — stated by the owner. Nothing engineering proposed is ever marked Confirmed.
+- **Proposed** — recommended by engineering; becomes Confirmed when the owner approves these docs.
+- **Needs owner** — affects cost, privacy, security, consent or core behaviour, so it waits for
+  the owner's answer to the linked question in [tracker/questions.json](tracker/questions.json).
+
+When a decision changes, add a new entry that supersedes the old one; do not rewrite history.
+Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the same.
+
+---
+
+## D-001 — Evolve the POC in place; do not rewrite
+
+**Status:** Proposed · 2026-11-17 · Area: both
+
+**Choice:** Keep FastAPI, React, the job state machine and its tests. Add users, wallet and payments around them.
+
+**Alternatives:** Start a new codebase on a different stack (for example Next.js + NestJS, or Django).
+
+**Why:** The existing compare-and-set job lifecycle already prevents duplicate paid requests and survives restarts, and its tests pass in mock mode. That is the hardest part to get right. A rewrite would discard it for no requirement we have.
+
+**Trade-off:** We inherit a single-file frontend and a hand-written SQLite store, both reworked in M1.
+
+**Validation:** The existing backend tests pass unchanged in behaviour after each M1 task.
+
+---
+
+## D-002 — PostgreSQL replaces SQLite, with SQLAlchemy 2 and Alembic
+
+**Status:** Proposed · 2026-11-17 · Area: backend
+
+**Choice:** PostgreSQL for all data. SQLAlchemy 2 for access, Alembic for migrations.
+
+**Alternatives:** Stay on SQLite; MySQL.
+
+**Why:** A wallet needs several writers working safely at once: a payment webhook, an approval and the poller can all touch one wallet in the same second. PostgreSQL gives row locks, `CHECK` constraints that hold under concurrency, and standard backups. SQLite allows one writer at a time and the POC guards it with a process-wide lock.
+
+**Trade-off:** Developers need a local PostgreSQL. Tests need a database instead of a temporary file.
+
+**Validation:** The existing job tests pass against PostgreSQL (task T-103).
+
+---
+
+## D-003 — First-party login with server-side sessions
+
+**Status:** Needs owner (Q-02) · 2026-11-17 · Area: both
+
+**Choice:** Email and password. Passwords hashed with Argon2id. A random session token in an `HttpOnly`, `Secure`, `SameSite=Lax` cookie, with only its hash stored in the database. Email verification and password reset by emailed single-use link.
+
+**Alternatives:** Tokens (JWT) kept in browser storage, rejected because script injection can steal them and they cannot be revoked. A hosted identity service (Auth0, Clerk, Cognito, Supabase Auth): less security code to own, but a cost per user and a second system holding customer data. Phone number + OTP: needs an SMS provider and sender registration, which has not been verified. Google sign-in only: smallest build, but excludes customers without a Google account.
+
+**Why:** A session in a cookie the page's scripts cannot read is the simplest design that resists token theft and supports "log out everywhere". Keeping identity in our own database keeps ownership checks beside the wallet they protect.
+
+**Trade-off:** We own password storage, reset flows and brute-force protection, and need an email provider (Q-04).
+
+**Validation:** The access-control test matrix (T-206) and a security review (T-701).
+
+---
+
+## D-004 — The wallet is an append-only ledger plus a locked balance row
+
+**Status:** Proposed · 2026-11-17 · Area: backend
+
+**Choice:** Every change to credits is a new row in `ledger_entries`; rows are never updated or deleted. Each user has one `wallets` row with `balance_credits` and `reserved_credits`. Any change locks that row, writes the ledger entry and updates the row in one transaction. A database `CHECK` forbids a negative available balance. `UNIQUE (kind, ref_type, ref_id)` makes each payment and each job step count once.
+
+**Alternatives:** A single balance column with no history (cannot be audited). Summing the ledger on every read (correct, but needs its own locking and slows over time).
+
+**Why:** Money needs a complete history that can be checked: the stored balance must always equal the sum of the ledger. The uniqueness rule makes "did we already credit this payment?" something the database enforces.
+
+**Trade-off:** Two places hold the balance (the row and the ledger), so a test must prove they always agree.
+
+**Validation:** A test runs many approvals and purchases at once and asserts no overspend and balance = sum of ledger (T-305).
+
+---
+
+## D-005 — Hold at approval, capture on completion, release on failure
+
+**Status:** Needs owner (Q-19) · 2026-11-17 · Area: backend
+
+**Choice:** Credits are reserved when the customer approves the audio, taken when the video is delivered, and returned if it is not. The job status change and the ledger entry are written in one transaction. When a paid request's outcome is unknown, the customer's credits are returned and the job is flagged.
+
+**Alternatives:** Charge at approval and refund on failure: the balance visibly drops and returns, and a crash between the two leaves the customer out of pocket. Charge on completion only: two jobs approved together could each pass the balance check and overspend.
+
+**Why:** A hold stops overspending at once without taking credits for something not yet delivered. It maps one-to-one onto status changes the POC already has.
+
+**Trade-off:** In the unknown-outcome case the company may be billed by fal.ai for a video nobody received. This is why the decision waits for the owner (Q-19).
+
+**Validation:** One test per row of the charging table in HLD §5.2, each asserting the job status and the ledger together.
+
+---
+
+## D-006 — Price is credits per second of AI audio, fixed before approval
+
+**Status:** Needs owner (Q-01) · 2026-11-17 · Area: both
+
+**Choice:** `price = ceil(audio seconds × credits_per_second)`. The price is computed once when the voice is ready, stored on the job, shown to the customer, and that stored value is what is held and captured.
+
+**Alternatives:** A flat price per video (a 5-second video would cost the same as a 30-second one while the fal.ai cost differs sixfold). Price tiers by length.
+
+**Why:** fal.ai bills the video model per second of output ($0.0562 per second, checked 2026-11-17), so a per-second price keeps the margin steady. Storing the price on the job means a later rate change never alters a job in flight.
+
+**Trade-off:** The customer only learns the exact price after the voice is generated; before that they see an estimate.
+
+**Validation:** Tests that the held and captured amounts equal the stored price, including after the rate setting changes.
+
+---
+
+## D-007 — Razorpay is the payment gateway; ₹1 paid = 1 credit
+
+**Status:** Confirmed · 2026-11-17 · Area: both
+
+**Choice:** Customers pay through Razorpay. Each rupee paid adds one credit after the transaction completes.
+
+**Alternatives:** None considered; stated by the owner.
+
+**Why:** Owner requirement (R-02, R-03).
+
+**Trade-off:** Tax on top of the credit amount is undecided (Q-03).
+
+**Validation:** A purchase of N rupees in Razorpay test mode adds exactly N credits (T-407).
+
+---
+
+## D-008 — Keep polling fal.ai for results; do not adopt fal.ai webhooks yet
+
+**Status:** Proposed · 2026-11-17 · Area: backend
+
+**Choice:** Keep the existing poller.
+
+**Alternatives:** fal.ai queue webhooks (documented, signed with ED25519).
+
+**Why:** Polling is already built, mock-tested and survives restarts. Webhooks need a public address (not available in local development), key fetching and signature checks, and would still need polling as a fallback because results expire.
+
+**Trade-off:** One status request to fal.ai per in-flight video every few seconds.
+
+**Validation:** The existing restart and polling tests keep passing. Revisit if polling volume becomes a measured cost.
+
+---
+
+## D-009 — One backend process with an in-process poller, through launch
+
+**Status:** Proposed · 2026-11-17 · Area: backend
+
+**Choice:** Run a single backend instance. The poller and the banner-joining step run inside it.
+
+**Alternatives:** A separate worker with a job queue (Celery, RQ, Arq).
+
+**Why:** Nothing known about load needs a second process, and a queue adds a broker to run and monitor. Correctness does not depend on this choice: status changes are compare-and-set in the database.
+
+**Trade-off:** One process is a single point of failure, and video joining shares its CPU with the API. Do not run two instances without first adding a way for pollers to claim jobs.
+
+**Validation:** The restart tests. Measure joining time during M5 to confirm it does not stall the API.
+
+---
+
+## D-010 — Media stays on local disk behind authorised endpoints until hosting is chosen
+
+**Status:** Proposed · 2026-11-17 · Area: backend
+
+**Choice:** Keep files on local disk during development. Serve them only through endpoints that check the job's owner. Move to object storage in M7 once the hosting target is known (Q-07).
+
+**Alternatives:** Adopt S3-compatible storage now.
+
+**Why:** The storage product depends on where we host, which is undecided. Choosing now would be a guess. The security requirement (only the owner can fetch) is met either way.
+
+**Trade-off:** Storage code is touched twice. Local disk is not acceptable for production; nothing is deployed on it.
+
+**Validation:** The access-control test matrix covers every media route (T-206).
+
+---
+
+## D-011 — Frontend: keep React + Vite + TypeScript; add routing, server-state caching and generated API types
+
+**Status:** Proposed · 2026-11-17 · Area: frontend
+
+**Choice:** React Router for pages. TanStack Query for fetching, caching and polling. API types generated from the backend's OpenAPI document. Plain CSS with shared design tokens; no component kit.
+
+**Alternatives:** Next.js (server rendering is not needed for a logged-in app). Redux (almost all our state is server data). A component kit such as MUI (heavy for a small number of screens).
+
+**Why:** The app grows from one screen to about fifteen and needs routing, guarded pages and consistent loading and error handling. Generated types make the backend contract the single source of truth.
+
+**Trade-off:** Three new dependencies to keep current.
+
+**Validation:** Exact package versions and their APIs are checked at install time in M1; none are assumed here.
+
+---
+
+## D-012 — One API version prefix and one error shape
+
+**Status:** Proposed · 2026-11-17 · Area: both
+
+**Choice:** All routes under `/api/v1`. Every error is `{"detail": "<message for the user>", "code": "<machine_code>"}`. HTTP 401 means not logged in, 402 not enough credits, 403 not allowed, 404 not found or not yours, 409 wrong state, 422 invalid input, 429 too many requests.
+
+**Alternatives:** Keep unversioned `/api` routes and FastAPI's default error bodies.
+
+**Why:** The frontend already reads `detail`; adding `code` lets it react to specific cases without matching on message text.
+
+**Trade-off:** Every existing route and the frontend client change once, in M1.
+
+**Validation:** A test asserts every error response matches the shape (T-104).
+
+---
+
+## D-013 — Docs in the repository are the source of truth; the dashboard displays them
+
+**Status:** Proposed · 2026-11-17 · Area: both
+
+**Choice:** Design lives in `docs/*.md`. Status lives in `docs/tracker/*.json`. The tracking dashboard displays a copy of those JSON files.
+
+**Alternatives:** Track in an external tool (Linear, Jira, Notion).
+
+**Why:** Status beside the code is updated in the same change as the code and is visible to every engineer and agent in the repository.
+
+**Trade-off:** The dashboard does not update itself; the files must be uploaded again after they change.
+
+**Validation:** A cross-check that every ID used in the markdown exists in the tracker files.
+
+---
+
+## D-014 — Money is stored as integers
+
+**Status:** Proposed · 2026-11-17 · Area: both
+
+**Choice:** Credits as whole integers. Rupee amounts in paise as integers. No floating-point arithmetic on money in either codebase.
+
+**Alternatives:** Decimal types; floats.
+
+**Why:** Floating-point rounding errors accumulate in ledgers. Razorpay itself uses paise.
+
+**Trade-off:** Prices round up to a whole credit, so the customer can pay up to one credit more than the exact figure.
+
+**Validation:** Database column types are integers; a test covers rounding at the boundaries.
+
+---
+
+## D-015 — Voice generation is not charged separately
+
+**Status:** Needs owner (Q-08) · 2026-11-17 · Area: both
+
+**Choice:** The video price covers the voice. A job can only be started when the wallet covers its estimated price, and each user has a daily cap on voice generations.
+
+**Alternatives:** Charge a small fee per voice generation.
+
+**Why:** The owner's requirement is to charge per video. Voice costs the company money on every attempt (about $0.10 per 1,000 characters with MiniMax, per the README), so it needs a guard against unlimited free use.
+
+**Trade-off:** The company pays for voices that never become videos, up to the cap.
+
+**Validation:** Tests for the balance check and the cap (T-503).
+
+---
+
+## D-016 — Razorpay Orders + Standard Checkout; credits granted only on server-verified proof
+
+**Status:** Proposed · 2026-11-17 · Area: both
+
+**Choice:** The backend creates a Razorpay order. The browser opens Razorpay Checkout. Credits are granted by one idempotent routine reached from two places: the browser's verify call and the Razorpay webhook. That routine requires a valid signature, payment status `captured`, and an amount equal to the order. A reconciliation task asks Razorpay about orders left unpaid.
+
+**Alternatives:** Trust the browser's success callback (forgeable). Webhook only (the customer waits for the webhook before seeing credits). Payment Links (less control over the flow inside the app).
+
+**Why:** Two independent confirmations with one idempotent crediting step means a closed tab, a late webhook or a duplicate webhook all end in the right balance exactly once.
+
+**Trade-off:** More moving parts than a single callback: a verify route, a webhook route and a reconciliation task.
+
+**Validation:** Signature formula, paise amounts, raw-body webhook verification, event-id dedupe and unordered delivery were checked against Razorpay's documentation on 2026-11-17. Signed-fixture tests (T-406) give MOCK-VERIFIED; a run in Razorpay test mode (T-407) gives VERIFIED. Retry timing: Not verified — requires documentation review, execution, or live integration testing.
+
+---
+
+## D-017 — Script library: private to each customer, saved automatically, copied onto each job
+
+**Status:** Proposed · 2026-11-17 · Area: both
+
+**Choice:** A script is saved to the customer's library the first time it is used. Using identical text in the same language again updates "last used" instead of creating a copy. The customer can delete a saved script. Each job stores its own copy of the script text.
+
+**Alternatives:** Ask the customer to save scripts by hand (history would be incomplete). Have jobs point at the saved script instead of copying it (deleting or changing a script would alter the record of a past video).
+
+**Why:** The owner asked for a history of scripts and a way to pick an earlier one (R-43). Saving automatically makes the history complete without extra clicks. The job's own copy keeps past videos accurate.
+
+**Trade-off:** Script text is stored twice. Scripts are personal content, so they fall under the same access rule and retention answer (Q-09) as photos.
+
+**Validation:** Tests that a repeat use does not duplicate, that deleting a script leaves past jobs unchanged, and that one customer cannot read another's scripts.
+
+---
+
+## D-018 — Banner templates are a company-supplied set of short video clips
+
+**Status:** Confirmed · 2026-11-17 · Area: both
+
+**Choice:** Templates are short video clips of about 2 to 3 seconds, of two kinds: start and end. The company supplies them and an admin adds or retires them. Customers choose from the active set in the customer app; they do not upload their own.
+
+**Alternatives:** Customer uploads; company designs with customer text; still images. The owner chose the company set of clips.
+
+**Why:** Owner requirement (R-44 to R-47).
+
+**Trade-off:** No per-customer branding (deferred, R-72). Clips arrive in whatever format the company supplies, so each one must be checked when added.
+
+**Validation:** A clip is measured with ffprobe when added and refused if it is not a playable video within the length limit.
+
+---
+
+## D-019 — Banners are joined on our server after the AI video arrives
+
+**Status:** Needs owner (Q-17) · 2026-11-17 · Area: backend
+
+**Choice:** A new job step, `video_assembling`, sits between `video_generating` and `completed`. The server measures the AI video, converts the chosen clips to the same picture size, frame rate and sound format, and joins start clip + AI video + end clip with ffmpeg. The step calls no paid service, so it is retried automatically and re-run after a restart. If it still fails, the customer receives the AI video without banners and is charged as normal, and the job is flagged.
+
+**Alternatives:** Let the browser play three files in a row (the download would not contain the banners). Use a paid video-editing service (cost per video and another provider). Fail the whole job when joining fails (the company has already paid fal.ai for the AI video).
+
+**Why:** ffmpeg is already used by the POC, runs on our own server at no charge per video, and produces one downloadable file. Measuring the AI video avoids relying on output formats that are not documented (R-67).
+
+**Trade-off:** ffmpeg becomes a required part of the server (today it is optional). Joining uses server CPU. The fallback charges a customer for a video without the banners they chose, which is why this waits for the owner (Q-17).
+
+**Validation:** Mock-mode tests with small generated clips cover: both banners, one banner, none, a clip with no sound, a retry that succeeds, and the fallback. Whether real model output joins cleanly: Not verified — requires documentation review, execution, or live integration testing.
+
+---
+
+## D-020 — Banner seconds are free
+
+**Status:** Confirmed · 2026-11-17 · Area: both
+
+**Choice:** The price of a video is unchanged by banners. Only AI-generated seconds are priced.
+
+**Alternatives:** Charge banner seconds at the video rate; a flat add-on fee. The owner chose free.
+
+**Why:** Owner requirement (R-48). Banners cost nothing at fal.ai.
+
+**Trade-off:** Joining uses the company's server time without revenue.
+
+**Validation:** A test that a job's price is the same with and without banners.
+
+---
+
+## D-021 — Free mock-mode tests may run; paid or external calls need approval each time
+
+**Status:** Confirmed · 2026-11-17 · Area: both
+
+**Choice:** Tests that use the mock provider and signed fixtures may run during development. Any call to fal.ai, and any call to Razorpay beyond its free test mode, needs the owner's approval for that run. Razorpay test mode still needs the owner to supply the keys.
+
+**Alternatives:** No tests without asking (the owner's first instruction, replaced the same day). No tests at all.
+
+**Why:** The parent CLAUDE.md requires relevant tests before work is called done. Mock tests cost nothing at any provider, so they satisfy that rule without the cost the owner is guarding against.
+
+**Trade-off:** Mock tests prove our logic, not the providers. Live behaviour stays unproven until an approved run.
+
+**Validation:** Work is reported with the parent file's statuses: MOCK-VERIFIED after mock tests, VERIFIED only after an approved real run.
+
+---
+
+## D-022 — Parallel work by lanes with single file ownership
+
+**Status:** Proposed · 2026-11-17 · Area: both
+
+**Choice:** Split the codebase into lanes, each a set of files with one worker at a time. Tasks in different lanes run in parallel once the tasks they depend on are done. Shared files (route registration, migrations, dependencies, the frontend route table and API client) belong to one integrator lane on each side. Each parallel task works in its own git worktree; Fable merges one branch at a time and runs the mock tests after each merge. The lanes and each task's dependencies are listed in MILESTONES.md.
+
+**Alternatives:** Strictly one task at a time (no conflicts, slowest). Free parallel work with conflicts resolved at merge (fast to start, but the job lifecycle and the migration chain would collide repeatedly, and a bad merge in money code is costly).
+
+**Why:** The parent CLAUDE.md allows parallel implementation only for genuinely independent tasks and forbids simultaneous changes to shared files. Lanes make independence checkable: two tasks either share a lane or they do not.
+
+**Trade-off:** The job-lifecycle lane stays serial and sets the shortest possible schedule. The integrator lanes are a bottleneck for small shared changes. More parallel agents also means more tokens spent at once.
+
+**Validation:** A cross-check that no task depends on a missing task, that dependencies have no cycles, and that tasks able to start together are in different lanes. In practice: mock tests pass after every merge.

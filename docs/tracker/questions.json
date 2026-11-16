@@ -1,0 +1,192 @@
+[
+  {
+    "id": "Q-01",
+    "question": "How many credits does one second of AI video cost the customer?",
+    "why_it_matters": "fal.ai charges the company $0.0562 per second of video (about $1.69 for 30 seconds) plus the voice. The rate must cover that, Razorpay's fee, tax and your margin, at a dollar-to-rupee rate you choose.",
+    "default_if_unanswered": "None. The rate is built as a setting with no value; M3 cannot finish without it.",
+    "escalation": "Cost",
+    "handling": "Needs your answer",
+    "blocks": "M3",
+    "status": "Open"
+  },
+  {
+    "id": "Q-02",
+    "question": "How should customers log in: email and password, Google sign-in, phone OTP, or a mix?",
+    "why_it_matters": "It decides what is built in M2 and which outside services are needed (email sender, SMS sender, Google project).",
+    "default_if_unanswered": "Email and password with email verification (decision D-003). Not started without your answer.",
+    "escalation": "Security",
+    "handling": "Needs your answer",
+    "blocks": "M2",
+    "status": "Open"
+  },
+  {
+    "id": "Q-03",
+    "question": "Is GST charged on top of the credit amount, included in it, or not applicable? Are tax invoices required?",
+    "why_it_matters": "It changes what the customer pays for 100 credits and what records each payment must keep. This needs your accountant; engineering cannot decide it.",
+    "default_if_unanswered": "Build charges exactly ₹N for N credits with no tax line. Launch waits for the answer.",
+    "escalation": "Cost",
+    "handling": "Needs your answer",
+    "blocks": "M7",
+    "status": "Open"
+  },
+  {
+    "id": "Q-04",
+    "question": "Which service sends verification and password-reset emails, and from which address?",
+    "why_it_matters": "Needed for real sign-ups. Development prints emails to the console, so this does not block building.",
+    "default_if_unanswered": "Console output in development; choose a provider before launch.",
+    "escalation": "None",
+    "handling": "Default applies unless you object",
+    "blocks": "M7",
+    "status": "Open"
+  },
+  {
+    "id": "Q-05",
+    "question": "What is the refund policy, and do credits expire?",
+    "why_it_matters": "Decides how refunds are handled in M6 and what the terms say.",
+    "default_if_unanswered": "Credits do not expire and cannot be cashed out. Failed videos return credits automatically. Payment refunds are done by an admin in Razorpay and reverse the credits.",
+    "escalation": "Cost",
+    "handling": "Needs your answer",
+    "blocks": "M6",
+    "status": "Open"
+  },
+  {
+    "id": "Q-06",
+    "question": "Can customers buy any amount, or only fixed packs? What are the smallest and largest purchases?",
+    "why_it_matters": "Shapes the buy-credits screen and the server-side limits.",
+    "default_if_unanswered": "Any whole-rupee amount from ₹50 to ₹10,000 per purchase. These two limits are engineering placeholders, not researched figures.",
+    "escalation": "Cost",
+    "handling": "Needs your answer",
+    "blocks": "M4",
+    "status": "Open"
+  },
+  {
+    "id": "Q-07",
+    "question": "Where will the platform be hosted (cloud provider and region)?",
+    "why_it_matters": "Decides where customers' photos and payment records are kept, and the deployment work in M7.",
+    "default_if_unanswered": "Develop locally; nothing is deployed until you choose.",
+    "escalation": "Privacy",
+    "handling": "Needs your answer",
+    "blocks": "M7",
+    "status": "Open"
+  },
+  {
+    "id": "Q-08",
+    "question": "Is listening to the generated voice free with a daily limit, or should each voice generation cost credits?",
+    "why_it_matters": "Each voice generation costs the company money even if the customer never makes the video.",
+    "default_if_unanswered": "Free, only when the wallet covers the estimated video price, capped at 20 voice generations per user per day. The cap of 20 is an engineering placeholder.",
+    "escalation": "Cost",
+    "handling": "Needs your answer",
+    "blocks": "M3",
+    "status": "Open"
+  },
+  {
+    "id": "Q-09",
+    "question": "How long are customers' photos, audio and videos kept?",
+    "why_it_matters": "Photos of people are personal data; storage also costs money.",
+    "default_if_unanswered": "Keep until the customer deletes them. Launch waits for a retention period.",
+    "escalation": "Privacy",
+    "handling": "Needs your answer",
+    "blocks": "M6",
+    "status": "Open"
+  },
+  {
+    "id": "Q-10",
+    "question": "Is there a Razorpay account, and can you provide test-mode keys and a webhook secret?",
+    "why_it_matters": "Payment code can be written and mock-tested without them, but cannot be proven against Razorpay.",
+    "default_if_unanswered": "M4 stops at MOCK-VERIFIED.",
+    "escalation": "None",
+    "handling": "Default applies unless you object",
+    "blocks": "M4",
+    "status": "Open"
+  },
+  {
+    "id": "Q-11",
+    "question": "What exact wording must a customer agree to before using a person's photo, and who are the first admins?",
+    "why_it_matters": "The consent text is stored with every video; admins can change balances.",
+    "default_if_unanswered": "A plain statement that the customer is the person shown or has their permission. Admins are set by a command, not in the interface.",
+    "escalation": "Consent",
+    "handling": "Needs your answer",
+    "blocks": "M5",
+    "status": "Open"
+  },
+  {
+    "id": "Q-12",
+    "question": "Has a lawyer confirmed whether a prepaid credit wallet used only on this platform needs any regulatory registration in India?",
+    "why_it_matters": "Not verified by engineering. It could change whether credits may be refunded or transferred.",
+    "default_if_unanswered": "Credits stay non-transferable and cannot be cashed out. Launch waits for the answer.",
+    "escalation": "Core behaviour",
+    "handling": "Needs your answer",
+    "blocks": "M7",
+    "status": "Open"
+  },
+  {
+    "id": "Q-13",
+    "question": "Do you approve a paid live run of the full voice-and-video flow on fal.ai before launch?",
+    "why_it_matters": "The README says the fal.ai integration has not been run live end to end. No paid call is made without your approval.",
+    "default_if_unanswered": "No live run; everything stays MOCK-VERIFIED.",
+    "escalation": "Cost",
+    "handling": "Needs your answer",
+    "blocks": "M7",
+    "status": "Open"
+  },
+  {
+    "id": "Q-14",
+    "question": "Who supplies the first banner clips, and in what size and format?",
+    "why_it_matters": "The template picker needs real clips to show. Clips are converted to match each AI video, so any common MP4 works.",
+    "default_if_unanswered": "You provide MP4 clips of 2 to 3 seconds; the build uses plain placeholder clips until then.",
+    "escalation": "None",
+    "handling": "Default applies unless you object",
+    "blocks": "M5",
+    "status": "Open"
+  },
+  {
+    "id": "Q-15",
+    "question": "Must every video have banners, or are they optional?",
+    "why_it_matters": "Decides whether the picker offers 'None' and whether the company's branding appears on every video.",
+    "default_if_unanswered": "Optional: none, start only, end only, or both.",
+    "escalation": "Core behaviour",
+    "handling": "Needs your answer",
+    "blocks": "M5",
+    "status": "Open"
+  },
+  {
+    "id": "Q-16",
+    "question": "Should a banner clip's own sound play, or are banners silent?",
+    "why_it_matters": "Decides how clips are prepared and whether the video starts with music or silence.",
+    "default_if_unanswered": "The clip's sound plays if it has any; otherwise that part is silent.",
+    "escalation": "None",
+    "handling": "Default applies unless you object",
+    "blocks": "M5",
+    "status": "Open"
+  },
+  {
+    "id": "Q-17",
+    "question": "If joining the banners fails even after retries, should the customer get the AI video without banners and be charged, or get nothing and be refunded?",
+    "why_it_matters": "By then the company has already paid fal.ai for the AI video. Refunding means the company bears that cost; charging means the customer pays for a video without the banners they chose.",
+    "default_if_unanswered": "Deliver the AI video without banners, charge as normal, tell the customer, and flag the job for staff.",
+    "escalation": "Cost",
+    "handling": "Needs your answer",
+    "blocks": "M5",
+    "status": "Open"
+  },
+  {
+    "id": "Q-18",
+    "question": "What makes a talking-avatar video good enough to sell: how realistic must it be, at what resolution, and is quality or low cost more important?",
+    "why_it_matters": "There are no acceptance criteria for output quality yet. They decide whether the current 'standard' model tier is enough and how the live run in M7 is judged.",
+    "default_if_unanswered": "Keep the current standard-tier model; judge quality with you at the first approved live run.",
+    "escalation": "Core behaviour",
+    "handling": "Needs your answer",
+    "blocks": "M7",
+    "status": "Open"
+  },
+  {
+    "id": "Q-19",
+    "question": "When a paid request to fal.ai is cut off and we cannot tell whether fal.ai accepted it, who bears the cost?",
+    "why_it_matters": "The request is never retried, to avoid paying twice. The customer got no video, but the company may still have been billed.",
+    "default_if_unanswered": "The customer's credits are returned; the company bears any fal.ai charge; the job is flagged for staff (decision D-005).",
+    "escalation": "Cost",
+    "handling": "Needs your answer",
+    "blocks": "M3",
+    "status": "Open"
+  }
+]
