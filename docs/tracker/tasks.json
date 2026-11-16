@@ -520,9 +520,9 @@
     "starts_after": "T-203",
     "task": "Rate limits and origin check",
     "acceptance": "Repeated bad logins are throttled; cross-site POST refused",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent building in a worktree (T-205 backend and T-210 frontend run in parallel)."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "In-process sliding-window limiter (D-035): login 5 failures per email+address per 15 min (success clears; full counter refuses even the right password), sign-up 5 per address per hour, forgot and resend 3 per email and 10 per address per hour each; 429 rate_limited with Retry-After; forgot's 429 identical for real and unknown emails. OriginMiddleware refuses POST/PUT/PATCH/DELETE with a foreign Origin or Sec-Fetch-Site: cross-site (403 origin_refused); AVATAR_ALLOWED_ORIGINS. tests/test_rate_limits.py, tests/test_origin.py; backend/check.sh: 171 passed. Not verified: real browser headers, a real proxy, more than one process; in development all requests share 127.0.0.1."
   },
   {
     "id": "T-206",
