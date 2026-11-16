@@ -1,0 +1,20 @@
+# Local development database. These credentials are for local use only, not secrets.
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: avatar
+      POSTGRES_USER: avatar
+      POSTGRES_PASSWORD: avatar_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - avatar_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U avatar -d avatar"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  avatar_pgdata:

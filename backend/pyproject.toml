@@ -3,11 +3,14 @@ name = "avatar-backend"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
+    "alembic>=1.20.1",
     "fal-client>=1.0.3",
     "fastapi>=0.163.1",
     "httpx>=0.28.1",
     "pillow>=13.0.0",
+    "psycopg[binary]>=3.3.9",
     "python-multipart>=0.0.34",
+    "sqlalchemy>=2.1.8",
     "uvicorn[standard]>=0.54.0",
 ]
 

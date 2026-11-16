@@ -32,6 +32,17 @@ cd backend && uv run uvicorn app.main:create_app --factory --port 8000 --env-fil
 Each approved video is billed by fal.ai at about $0.0562 per second of audio;
 each voice generation at about $0.10 per 1,000 characters with MiniMax, or $0.02 with Kokoro (prices checked 2026-11-16).
 
+## Start the database
+
+PostgreSQL runs in Docker for local development (the app still stores jobs in SQLite until the job store is ported).
+
+```bash
+docker compose up -d db
+cd backend && uv run alembic upgrade head
+```
+
+The connection URL is `DATABASE_URL` (the default matches `docker-compose.yml`; see `backend/.env.example`).
+
 ## Tests
 
 ```bash
