@@ -162,8 +162,12 @@ Phone (below 768 px):
 
 Between 768 and 1023 px the sidebar collapses to icons.
 
-Logged-out screens (log in, sign up, reset password) have no sidebar: a centred card with the
-wordmark above it.
+Logged-out screens (log in, sign up, reset password) have no sidebar. On desktop the screen is
+split: a primary-colour brand panel on the left (wordmark, an illustration of a photo and script
+becoming a video, three factual lines) and the form card on the right over soft decorative shapes.
+On phones the brand panel becomes a header band that the form card overlaps. The illustration is
+inline SVG in the design tokens' colours, hidden from screen readers, and carries no information
+the form needs.
 
 ## 6. Screens
 
