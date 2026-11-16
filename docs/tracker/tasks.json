@@ -295,9 +295,9 @@
     "starts_after": "T-110",
     "task": "Test setup and first component tests",
     "acceptance": "One command runs lint, type check and tests",
-    "status": "In progress",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Merged 2026-11-17. npm run check passes on development: lint, type check, 7 tests against a mocked API. Removing the empty-script rule made 2 tests fail, so the tests do detect a broken rule"
   },
   {
     "id": "T-200",
