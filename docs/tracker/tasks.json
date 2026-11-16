@@ -205,9 +205,9 @@
     "starts_after": "T-102",
     "task": "Port the job store to PostgreSQL",
     "acceptance": "Compare-and-set behaviour preserved; existing tests pass",
-    "status": "In progress",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Merged 2026-11-17. 35 tests pass against PostgreSQL, twice in a row on development; no existing assertion changed. New test: 12 threads approve one job at once and exactly one wins. No test schemas or connections left behind. Test run went from about 0.9 s to about 1.9 s"
   },
   {
     "id": "T-104",
@@ -220,7 +220,7 @@
     "starts_after": "T-103",
     "task": "`/api/v1` prefix, error shape, request-id logging, `/healthz`",
     "acceptance": "Every error matches D-012",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
     "evidence": ""
   },
