@@ -21,7 +21,7 @@
     "milestone": "Design system and UX",
     "outcome": "Approved designs for every customer screen, a component library, and the existing flow rebuilt to them",
     "depends_on": "M1",
-    "status": "In progress"
+    "status": "Done"
   },
   {
     "id": "M2",

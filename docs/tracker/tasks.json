@@ -371,8 +371,8 @@
     "task": "New app shell: sidebar, top bar, phone navigation",
     "acceptance": "Matches the design at 1440 px and 390 px; no sideways scroll from 360 px",
     "status": "Done",
-    "verification": "IMPLEMENTED, UNVERIFIED",
-    "evidence": "Sidebar (>=1024 px), icon rail (768-1023 px), phone bottom bar, top bar with mock badge, skip link, single main#content, data-driven nav (only Create enabled), NotFound restyled. npm run check: 25 files, 210 tests passed; build passes; no hex colours. Behaviour mock-verified in jsdom; breakpoints, 360 px no-scroll and match to the design not yet seen in a browser (T-156). No page h1 until T-155."
+    "verification": "VERIFIED",
+    "evidence": "Sidebar (>=1024 px), icon rail (768-1023 px), phone bottom bar, top bar with mock badge, skip link, single main#content, data-driven nav (only Create enabled), NotFound restyled. npm run check: 25 files, 210 tests passed; build passes; no hex colours. Behaviour mock-verified in jsdom; breakpoints, 360 px no-scroll and match to the design not yet seen in a browser (T-156). No page h1 until T-155. Browser review (T-156): layout confirmed at 1440/900/390/360 px, no sideways scroll."
   },
   {
     "id": "T-155",
@@ -386,8 +386,8 @@
     "task": "Rebuild the create flow to the approved design",
     "acceptance": "Stepper, drop zone with preview, inline validation, progress steps; meets UX.md section 8",
     "status": "Done",
-    "verification": "IMPLEMENTED, UNVERIFIED",
-    "evidence": "Details/Review/Progress/Result/Failed screens rebuilt from the designs with the shared library: 3-step stepper, drop zone with preview, blur-then-live validation, focus to first error, server fields under inputs, busy buttons, skeletons, named progress steps, ErrorState, one h1, no price. Old global classes removed from base.css. npm run check: 26 files, 240 tests passed (mocked API), 2 known hot-reload lint warnings; build passes; no hex colours. Review fix: test titles retagged to the requirement each covers (R-08 flow kept). UX.md section 8 browser points (1440/390 px, 360 px no-scroll, keyboard, contrast) pending T-156."
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Details/Review/Progress/Result/Failed screens rebuilt from the designs with the shared library: 3-step stepper, drop zone with preview, blur-then-live validation, focus to first error, server fields under inputs, busy buttons, skeletons, named progress steps, ErrorState, one h1, no price. Old global classes removed from base.css. npm run check: 26 files, 240 tests passed (mocked API), 2 known hot-reload lint warnings; build passes; no hex colours. Review fix: test titles retagged to the requirement each covers (R-08 flow kept). UX.md section 8 browser points (1440/390 px, 360 px no-scroll, keyboard, contrast) pending T-156. Browser review (T-156): flow works end to end in mock mode at 1440 and 390 px; cards, video frame and focus ring fixed."
   },
   {
     "id": "T-157",
@@ -415,9 +415,9 @@
     "starts_after": "T-155",
     "task": "Browser review against the designs",
     "acceptance": "Each rebuilt screen compared with its design at both widths; differences fixed or recorded",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Browser review in mock mode at 1440/900/390/360 px: full flow, reload resume, no sideways scroll, one h1/main, nav per width, keyboard order and focus, no external requests, no console errors, contrast >= 4.5:1. Three fixes (522921f). Remaining differences listed in M1.5-PLAN.md Phase 5 results."
   },
   {
     "id": "T-200",
