@@ -525,4 +525,4 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 **Trade-off:** Two small development dependencies (or checked-in font files) and a slightly larger first download.
 
-**Validation:** Not verified — the font packages must be shown to install beside the current toolchain (M1.5 plan, Phase 0). The browser review confirms no request leaves for a font host.
+**Validation:** Installed and bundled (`@fontsource-variable/*` 5.3.0, merged with T-153a); the production build contains no Google Fonts reference. Still to confirm in the browser review: fonts render and no request leaves for a font host.

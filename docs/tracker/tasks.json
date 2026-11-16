@@ -357,7 +357,7 @@
     "acceptance": "Every component in UX.md section 4 exists, is keyboard accessible, and has tests for its states",
     "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Phase 1 (tokens, bundled fonts, 25 icons) merged; npm run check 99 passed; build makes no Google font request. Phase 2 (form, feedback and layout components) in progress."
   },
   {
     "id": "T-154",
