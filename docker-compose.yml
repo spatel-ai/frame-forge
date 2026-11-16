@@ -1,4 +1,8 @@
 # Local development database. These credentials are for local use only, not secrets.
+# A fixed project name, so the container and its data volume are the same from
+# any checkout or git worktree of this repository.
+name: avatar
+
 services:
   db:
     image: postgres:17

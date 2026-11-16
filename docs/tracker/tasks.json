@@ -175,9 +175,9 @@
     "starts_after": "T-106",
     "task": "PostgreSQL in Docker and a `DATABASE_URL` setting",
     "acceptance": "Database starts from documented steps; secrets come only from the environment",
-    "status": "In progress",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "VERIFIED",
+    "evidence": "Merged 2026-11-17. PostgreSQL 17 container avatar-db-1 healthy on port 5432, started from the main checkout. The start-up check for an unreachable database moves to T-103, when the app first connects"
   },
   {
     "id": "T-102",
@@ -190,9 +190,9 @@
     "starts_after": "T-101",
     "task": "SQLAlchemy models and first Alembic migration for `jobs`",
     "acceptance": "A fresh database is built by migrations alone",
-    "status": "In progress",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "VERIFIED",
+    "evidence": "Merged 2026-11-17. alembic upgrade head built the jobs table in an empty database; migration test passes; 31 tests pass. Run against the local Docker database"
   },
   {
     "id": "T-103",
@@ -205,7 +205,7 @@
     "starts_after": "T-102",
     "task": "Port the job store to PostgreSQL",
     "acceptance": "Compare-and-set behaviour preserved; existing tests pass",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
     "evidence": ""
   },
