@@ -28,9 +28,11 @@ def settings(tmp_path, database_url):
 
 
 @pytest.fixture
-def client(settings):
+def client(settings, sign_up):
     # start_poller=False: nothing runs in the background, so jobs stay where the test puts them.
-    with TestClient(create_app(settings, start_poller=False)) as c:
+    # https and signed in: job routes need a session (T-204), whose cookie is Secure.
+    with TestClient(create_app(settings, start_poller=False), base_url="https://testserver") as c:
+        sign_up(c)
         yield c
 
 
