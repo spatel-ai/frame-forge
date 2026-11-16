@@ -370,9 +370,9 @@
     "starts_after": "T-153",
     "task": "New app shell: sidebar, top bar, phone navigation",
     "acceptance": "Matches the design at 1440 px and 390 px; no sideways scroll from 360 px",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "IMPLEMENTED, UNVERIFIED",
+    "evidence": "Sidebar (>=1024 px), icon rail (768-1023 px), phone bottom bar, top bar with mock badge, skip link, single main#content, data-driven nav (only Create enabled), NotFound restyled. npm run check: 25 files, 210 tests passed; build passes; no hex colours. Behaviour mock-verified in jsdom; breakpoints, 360 px no-scroll and match to the design not yet seen in a browser (T-156). No page h1 until T-155."
   },
   {
     "id": "T-155",
