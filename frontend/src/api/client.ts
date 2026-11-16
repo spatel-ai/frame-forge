@@ -37,7 +37,7 @@ function detailToMessage(detail: unknown, fallback: string): string {
   return fallback
 }
 
-async function request<T>(url: string, init?: RequestInit): Promise<T> {
+export async function request<T>(url: string, init?: RequestInit): Promise<T> {
   let res: Response
   try {
     res = await fetch(url, { credentials: 'same-origin', ...init })
@@ -58,6 +58,8 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
     }
     throw new ApiError(res.status, detailToMessage(detail, `Request failed (${res.status})`), code, fields)
   }
+  // 202 and 204 answers have no body.
+  if (res.status === 202 || res.status === 204) return undefined as T
   return (await res.json()) as T
 }
 
@@ -75,3 +77,33 @@ export function createJob(image: File, script: string, language: string): Promis
   body.append('language', language)
   return request<Job>('/api/v1/jobs', { method: 'POST', body })
 }
+
+const json = (body: unknown): RequestInit => ({
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body),
+})
+const post: RequestInit = { method: 'POST' }
+
+export type User = components['schemas']['UserOut']
+
+/** TanStack Query key for the logged-in user. One key for the whole app (screens, guard, account). */
+export const meKey = ['me'] as const
+
+// Auth (M2 contract, T-200). The session is an HttpOnly cookie the page cannot read.
+export const signup = (name: string, email: string, password: string) =>
+  request<User>('/api/v1/auth/signup', json({ name, email, password }))
+export const login = (email: string, password: string) =>
+  request<User>('/api/v1/auth/login', json({ email, password }))
+export const logout = () => request<void>('/api/v1/auth/logout', post)
+export const logoutAll = () => request<void>('/api/v1/auth/logout-all', post)
+export const getMe = () => request<User>('/api/v1/auth/me')
+export const verifyEmail = (token: string) => request<void>('/api/v1/auth/verify-email', json({ token }))
+export const resendVerification = () => request<void>('/api/v1/auth/verify-email/resend', post)
+export const forgotPassword = (email: string) => request<void>('/api/v1/auth/password/forgot', json({ email }))
+export const checkResetToken = (token: string) =>
+  request<components['schemas']['ResetCheckOut']>('/api/v1/auth/password/reset/check', json({ token }))
+export const resetPassword = (token: string, password: string) =>
+  request<void>('/api/v1/auth/password/reset', json({ token, password }))
+export const changePassword = (currentPassword: string, newPassword: string) =>
+  request<void>('/api/v1/auth/password/change', json({ current_password: currentPassword, new_password: newPassword }))

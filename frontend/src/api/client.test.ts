@@ -47,3 +47,24 @@ describe('API client errors', () => {
     expect(await caught(getJob('abc'))).toBeInstanceOf(NetworkError)
   })
 })
+
+describe('API client auth calls', () => {
+  it('R-01 sends JSON with the same-origin cookie and returns the user', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ id: 'u1', name: 'Asha' }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    const { login } = await import('./client')
+    await expect(login('asha@example.com', 'correct horse')).resolves.toMatchObject({ id: 'u1' })
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    expect(url).toBe('/api/v1/auth/login')
+    expect(init).toMatchObject({ method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } })
+    expect(JSON.parse(init.body as string)).toEqual({ email: 'asha@example.com', password: 'correct horse' })
+  })
+
+  it('R-01 treats 202 and 204 as success with no body', async () => {
+    const { forgotPassword, logout } = await import('./client')
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 202 })))
+    await expect(forgotPassword('a@b.co')).resolves.toBeUndefined()
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 204 })))
+    await expect(logout()).resolves.toBeUndefined()
+  })
+})
