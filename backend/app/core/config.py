@@ -63,9 +63,5 @@ class Settings:
             raise ValueError(f"Unknown AVATAR_VOICE {self.voice!r}; use 'minimax' or 'kokoro'.")
 
     @property
-    def db_path(self) -> Path:
-        return self.data_dir / "jobs.sqlite3"
-
-    @property
     def jobs_dir(self) -> Path:
         return self.data_dir / "jobs"

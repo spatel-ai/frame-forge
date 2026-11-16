@@ -8,6 +8,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
 from .core.config import Settings
+from .core.database import DatabaseNotReady, check_database
 from .jobs.db import JobStore
 from .providers import Provider, build_provider
 from .jobs.service import Conflict, JobService, ValidationError
@@ -43,7 +44,12 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        store = JobStore(settings.db_path)
+        store = JobStore(settings.database_url)
+        try:
+            check_database(store.engine)
+        except DatabaseNotReady:
+            store.close()
+            raise
         service = JobService(settings, store, provider or build_provider(settings))
         service.recover_interrupted()
         app.state.service = service

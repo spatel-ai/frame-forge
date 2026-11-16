@@ -24,12 +24,33 @@ def png(size=(512, 512)) -> bytes:
 
 
 @pytest.fixture
-def settings(tmp_path):
-    return replace(Settings(), provider="mock", data_dir=tmp_path, poll_interval_seconds=0.05)
+def settings(tmp_path, database_url):
+    # database_url (tests/conftest.py) is a freshly migrated schema private to this test.
+    return replace(
+        Settings(),
+        provider="mock",
+        data_dir=tmp_path,
+        poll_interval_seconds=0.05,
+        database_url=database_url,
+    )
+
+
+# Stores opened by make_service; closed after each test so no connection outlives it.
+_open_stores: list[JobStore] = []
+
+
+@pytest.fixture(autouse=True)
+def _close_stores(settings):
+    # Depends on `settings`, so it is torn down before the test's schema is dropped.
+    yield
+    while _open_stores:
+        _open_stores.pop().close()
 
 
 def make_service(settings, provider=None) -> JobService:
-    return JobService(settings, JobStore(settings.db_path), provider or MockProvider(settings))
+    store = JobStore(settings.database_url)
+    _open_stores.append(store)
+    return JobService(settings, store, provider or MockProvider(settings))
 
 
 async def drain(service: JobService) -> None:
