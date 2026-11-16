@@ -250,9 +250,9 @@
     "starts_after": "T-010",
     "task": "Router, app shell, feature folders and style tokens",
     "acceptance": "App behaves as before; type check and lint pass",
-    "status": "In progress",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "IMPLEMENTED, UNVERIFIED",
+    "evidence": "Merged 2026-11-17. Build and lint pass on development (one lint warning carried over from the original code). JobForm and JobView bodies unchanged. Not yet seen in a browser: routing, redirect and appearance are checked in the Phase 6 browser run"
   },
   {
     "id": "T-113",
@@ -295,7 +295,7 @@
     "starts_after": "T-110",
     "task": "Test setup and first component tests",
     "acceptance": "One command runs lint, type check and tests",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
     "evidence": ""
   },
