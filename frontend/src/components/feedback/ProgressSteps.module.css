@@ -1,0 +1,19 @@
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-4); }
+.step { display: flex; align-items: flex-start; gap: var(--space-3); color: var(--color-ink-muted); }
+.marker {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: var(--space-5); height: var(--space-5); border-radius: 50%;
+  border: var(--line-width) solid var(--color-line); background: var(--color-surface);
+}
+.text { display: flex; flex-direction: column; }
+.label { font-weight: var(--text-title-weight); }
+.word, .hint { font-size: var(--text-caption-size); color: var(--color-ink-muted); }
+.done .marker { background: var(--color-success); border-color: var(--color-success); color: var(--color-surface); }
+.done .label { color: var(--color-ink); }
+.current .marker { border-color: var(--color-primary); }
+.current .label { color: var(--color-primary-strong); }
+.dot { width: var(--space-2); height: var(--space-2); border-radius: 50%; background: var(--color-primary); animation: pulse 1.4s ease-in-out infinite; }
+.failed .marker { background: var(--color-danger-soft); border-color: var(--color-danger); color: var(--color-danger); }
+.failed .label, .failed .word { color: var(--color-danger); }
+@keyframes pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
