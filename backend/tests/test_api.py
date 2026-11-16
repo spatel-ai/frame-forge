@@ -206,6 +206,24 @@ def test_openapi_lists_every_field_and_the_error_model(settings):
     )
 
 
+def test_openapi_declares_project_error_shape_for_every_error():
+    """D-012: every declared 4xx/5xx is ErrorOut; no FastAPI default validation schema remains."""
+    doc = create_app().openapi()
+    schemas = doc["components"]["schemas"]
+    assert "HTTPValidationError" not in schemas and "ValidationError" not in schemas
+    error_ref = "#/components/schemas/ErrorOut"
+    for path, methods in doc["paths"].items():
+        for method, op in methods.items():
+            where = f"{method.upper()} {path}"
+            errors = {c: r for c, r in op["responses"].items() if c[:1] in ("4", "5")}
+            for code, response in errors.items():
+                ref = response.get("content", {}).get("application/json", {}).get("schema", {})
+                assert ref.get("$ref") == error_ref, f"{where} {code}"
+            # A route with path, query or body input can fail validation (422).
+            if op.get("parameters") or op.get("requestBody"):
+                assert "422" in errors, f"{where} does not declare 422"
+
+
 def test_job_and_config_json_keys_are_unchanged(client):
     """R-42: the response bodies keep exactly the keys clients already use."""
     assert set(client.get("/api/v1/config").json()) == set(ConfigOut.model_fields)

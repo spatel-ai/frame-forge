@@ -10,8 +10,8 @@ from .service import JobService
 
 router = APIRouter(prefix="/api/v1")
 
-_NOT_FOUND = {404: {"model": ErrorOut}}
 _INVALID = {422: {"model": ErrorOut}}
+_NOT_FOUND = {404: {"model": ErrorOut}, **_INVALID}
 
 
 def _service(request: Request) -> JobService:
