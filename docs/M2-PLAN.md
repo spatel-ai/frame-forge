@@ -124,5 +124,5 @@ only by Fable at merge.
 | Item | Check | Result |
 | --- | --- | --- |
 | Secure cookie on `http://localhost` | A test server set `Secure; HttpOnly; SameSite=Lax`; Chromium (Playwright 1.65.1) loaded it at `localhost` and `127.0.0.1` | Cookie kept and sent back on both; page scripts cannot read it. No development-only setting needed. Other browsers not checked |
-| Confirm-email screens (T-207) | Three desktop boards drawn on the canvas under "Confirm email (awaiting approval)": notice on Create, email confirmed, link expired; copies in `design/` | Awaiting the owner's approval |
+| Confirm-email screens (T-207) | Three desktop boards drawn on the canvas: notice on Create, email confirmed, link expired; copies in `design/` | Approved by the owner, 2026-11-17 |
 | `argon2-cffi` | PyPI | 25.1.0, MIT, Python 3.8 or newer |

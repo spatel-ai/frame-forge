@@ -281,15 +281,15 @@
     },
     "t-confirm": {
       "kind": "title1",
-      "text": "Confirm email (awaiting approval)",
+      "text": "Confirm email",
       "x": 0,
       "y": 6700,
       "maxW": 4480,
       "w": 240
     },
     "n-confirm": {
-      "fill": "orange",
-      "text": "New in M2, awaiting the owner's approval (task T-207, decision D-036). Customers can log in before confirming, but cannot make a voice or video until they do. Confirmation links work once and expire after 24 hours. Desktop only (D-033).",
+      "fill": "green",
+      "text": "New in M2, approved by the owner on 2026-11-17 (task T-207, decision D-036). Customers can log in before confirming, but cannot make a voice or video until they do. Confirmation links work once and expire after 24 hours. Desktop only (D-033).",
       "w": 420,
       "x": 4560,
       "y": 7000

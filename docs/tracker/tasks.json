@@ -475,9 +475,9 @@
     "starts_after": "T-156",
     "task": "Draw the confirm-email screens (no design existed)",
     "acceptance": "Owner approves the boards on the canvas",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Three desktop boards drawn on the canvas (Confirm email section); copies in docs/design/. Awaiting owner approval."
+    "status": "Done",
+    "verification": "VERIFIED",
+    "evidence": "Owner approved the three confirm-email boards on 2026-11-17."
   },
   {
     "id": "T-203",
@@ -490,9 +490,9 @@
     "starts_after": "T-202",
     "task": "Email verification and password reset, as in HLD section 5.5",
     "acceptance": "Single-use tokens stored hashed, reset links expire in 30 minutes; the forgot route answers the same for unknown emails; a reset revokes every session; emails printed to the console in development; an unverified account cannot create or approve a job (D-036)",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent building in a worktree (parallel with T-204)."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Verify-email, resend, forgot, reset/check, reset per HLD 5.5: tokens stored as SHA-256, consumed by one compare-and-set UPDATE (race test: one winner); reset is one transaction (token, hash, sessions revoked, audit) and rolls back as a whole; 24 h / 30 min expiry tested at the boundary; forgot answers identically for unknown, suspended and real accounts; a reset also confirms the email. tests/test_auth_tokens.py (24); backend/check.sh: 138 passed. Not covered: timing of forgot for real vs unknown accounts; no real email provider."
   },
   {
     "id": "T-204",
