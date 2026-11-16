@@ -1,0 +1,26 @@
+.area {
+  resize: vertical;
+  line-height: var(--text-body-line);
+  min-height: calc(var(--target-min) * 2);
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+}
+
+.counter {
+  align-self: flex-end;
+  font-size: var(--text-caption-size);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink-muted);
+}
+
+.near {
+  color: var(--color-warning);
+}
+
+.over {
+  color: var(--color-danger);
+  font-weight: var(--text-title-weight);
+}
