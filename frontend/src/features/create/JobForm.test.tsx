@@ -82,7 +82,7 @@ describe('JobForm fields', () => {
 })
 
 describe('JobForm client validation', () => {
-  it('R-80: validates the script when it loses focus, not while typing the first attempt', async () => {
+  it('R-79: validates the script when it loses focus, not while typing the first attempt', async () => {
     const { user } = renderForm()
     await user.click(scriptBox())
     expect(screen.queryByRole('alert')).toBeNull()
@@ -90,7 +90,7 @@ describe('JobForm client validation', () => {
     expect(screen.getByRole('alert').textContent).toBe('Please enter a script.')
   })
 
-  it('R-80: after a first error the script is validated live and the message clears', async () => {
+  it('R-79: after a first error the script is validated live and the message clears', async () => {
     const { user } = renderForm()
     await user.click(scriptBox())
     await user.tab()
@@ -101,7 +101,7 @@ describe('JobForm client validation', () => {
     expect(screen.getByRole('alert').textContent).toContain('too long')
   })
 
-  it('R-80: submitting with no photo and no script shows both messages and focuses the first invalid field', async () => {
+  it('R-79: submitting with no photo and no script shows both messages and focuses the first invalid field', async () => {
     const { onCreated, user } = renderForm()
     await user.click(submit())
     const alerts = screen.getAllByRole('alert').map((a) => a.textContent)
@@ -111,7 +111,7 @@ describe('JobForm client validation', () => {
     expect(onCreated).not.toHaveBeenCalled()
   })
 
-  it('R-80: with a photo but no script, focus moves to the script', async () => {
+  it('R-79: with a photo but no script, focus moves to the script', async () => {
     const { user } = renderForm()
     await user.upload(photoInput(), photo())
     await user.click(submit())
@@ -120,7 +120,7 @@ describe('JobForm client validation', () => {
     expect(createJob).not.toHaveBeenCalled()
   })
 
-  it('R-80: a whitespace-only script is rejected', async () => {
+  it('R-79: a whitespace-only script is rejected', async () => {
     const { user } = renderForm()
     await user.upload(photoInput(), photo())
     await user.type(scriptBox(), '     ')
@@ -129,7 +129,7 @@ describe('JobForm client validation', () => {
     expect(createJob).not.toHaveBeenCalled()
   })
 
-  it('R-80: a script over the limit says by how many characters and is not sent', async () => {
+  it('R-79: a script over the limit says by how many characters and is not sent', async () => {
     const { user } = renderForm()
     await user.upload(photoInput(), photo())
     await user.type(scriptBox(), 'a'.repeat(12))
@@ -138,7 +138,7 @@ describe('JobForm client validation', () => {
     expect(createJob).not.toHaveBeenCalled()
   })
 
-  it('R-80: a photo over the size limit is rejected when chosen, before any upload', async () => {
+  it('R-79: a photo over the size limit is rejected when chosen, before any upload', async () => {
     const { user } = renderForm()
     await user.upload(photoInput(), photo(1024 * 1024 + 1))
     expect(screen.getByRole('alert').textContent).toContain('Choose one up to 1 MB')
@@ -147,7 +147,7 @@ describe('JobForm client validation', () => {
 })
 
 describe('JobForm submit', () => {
-  it('R-79: calls createJob once with the photo, the trimmed script and the language, then reports the created job', async () => {
+  it('R-08: calls createJob once with the photo, the trimmed script and the language, then reports the created job', async () => {
     vi.mocked(createJob).mockResolvedValue(job)
     const { onCreated, user } = renderForm()
     const file = photo()
@@ -160,7 +160,7 @@ describe('JobForm submit', () => {
     await vi.waitFor(() => expect(onCreated).toHaveBeenCalledWith(job))
   })
 
-  it('R-81: the button is busy while the request runs and cannot be submitted twice', async () => {
+  it('R-80: the button is busy while the request runs and cannot be submitted twice', async () => {
     let resolve!: (j: Job) => void
     vi.mocked(createJob).mockReturnValue(new Promise<Job>((r) => (resolve = r)))
     const { onCreated, user } = renderForm()
@@ -176,7 +176,7 @@ describe('JobForm submit', () => {
     expect(onCreated).toHaveBeenCalledTimes(1)
   })
 
-  it('R-80: a server 422 with fields.script shows under the script field and keeps what was typed', async () => {
+  it('R-79: a server 422 with fields.script shows under the script field and keeps what was typed', async () => {
     vi.mocked(createJob).mockRejectedValue(
       new ApiError(422, 'Invalid input', 'validation_error', { script: 'This script is written in Hindi.' }),
     )
@@ -195,7 +195,7 @@ describe('JobForm submit', () => {
     expect(screen.queryByText('We could not generate the voice')).toBeNull()
   })
 
-  it('R-80: server fields.image and fields.language show under their fields', async () => {
+  it('R-79: server fields.image and fields.language show under their fields', async () => {
     vi.mocked(createJob).mockRejectedValue(
       new ApiError(422, 'Invalid input', 'validation_error', { image: 'Not a real image.', language: 'Unsupported language.' }),
     )

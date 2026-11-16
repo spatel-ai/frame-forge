@@ -385,9 +385,9 @@
     "starts_after": "T-154, T-111, T-157",
     "task": "Rebuild the create flow to the approved design",
     "acceptance": "Stepper, drop zone with preview, inline validation, progress steps; meets UX.md section 8",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent building in a worktree. Prerequisite done: ApiError.fields in the client (a3a12c5)."
+    "status": "Done",
+    "verification": "IMPLEMENTED, UNVERIFIED",
+    "evidence": "Details/Review/Progress/Result/Failed screens rebuilt from the designs with the shared library: 3-step stepper, drop zone with preview, blur-then-live validation, focus to first error, server fields under inputs, busy buttons, skeletons, named progress steps, ErrorState, one h1, no price. Old global classes removed from base.css. npm run check: 26 files, 240 tests passed (mocked API), 2 known hot-reload lint warnings; build passes; no hex colours. Review fix: test titles retagged to the requirement each covers (R-08 flow kept). UX.md section 8 browser points (1440/390 px, 360 px no-scroll, keyboard, contrast) pending T-156."
   },
   {
     "id": "T-157",
