@@ -1,0 +1,17 @@
+.wrap {
+  position: relative;
+}
+
+.select {
+  appearance: none;
+  padding-inline-end: var(--space-7);
+}
+
+.chevron {
+  position: absolute;
+  inset-inline-end: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+  color: var(--color-ink-soft);
+  pointer-events: none;
+}
