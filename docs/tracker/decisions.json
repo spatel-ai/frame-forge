@@ -361,5 +361,49 @@
     "trade_off": "Customers on phones get a working create flow but a desktop-only layout for every later screen (log in, wallet, videos, scripts, account), which may need sideways scrolling or look cramped. Assumed: new screens stay usable down to 1024 px wide, where the full sidebar starts; narrower widths are not checked. The M5 exit evidence no longer includes a phone-width run.",
     "validation": "Each new screen's browser check runs at 1440 px (and 1024 px for the narrowest supported desktop). Revisit if the owner wants phone customers again.",
     "date": "2026-11-17"
+  },
+  {
+    "id": "D-034",
+    "decision": "Passwords are hashed with argon2-cffi (Argon2id)",
+    "status": "Proposed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "`argon2-cffi` 25.1.0 with its default Argon2id parameters. Hashes are re-made at the next login if the library's defaults change. When a login names an email that has no account, a fixed dummy hash is still checked, so the answer takes about as long as a wrong password and does not reveal which emails have accounts. Passwords are 10 to 128 characters (the approved designs say \"at least 10\"), with no rules about symbols or capitals.",
+    "trade_off": "Hashing costs tens of milliseconds of server time on every login and sign-up, by design; rate limits (D-035) keep that from being abused.",
+    "validation": "PyPI checked 2026-11-17: version 25.1.0, MIT, Python 3.8 or newer. Tests check the stored value starts with `$argon2id$`, never equals the password, and that login with an unknown email still calls the verifier.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-035",
+    "decision": "Rate limits and the origin check run inside the one backend process",
+    "status": "Proposed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "Counters in memory, keyed by email and by network address. Log in: 5 failures per email and address in 15 minutes. Sign up: 5 per address per hour. Forgot password and resend confirmation: 3 per email and 10 per address per hour. Over the limit: HTTP 429, code `rate_limited`, with a `Retry-After` header. Every state-changing request (`POST`, `PUT`, `PATCH`, `DELETE`) whose `Origin` header is not on the allowed list, or which says `Sec-Fetch-Site: cross-site`, gets 403 `origin_refused`. The allowed list is a setting; it defaults to the development addresses.",
+    "trade_off": "Counters reset when the server restarts, and stop working correctly if a second process is ever added. Revisit together with D-009.",
+    "validation": "Tests drive each limit past its threshold and check 429; a request with a foreign `Origin` gets 403; a request from the allowed origin passes.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-036",
+    "decision": "Unconfirmed accounts can log in but cannot make videos",
+    "status": "Confirmed (owner, 2026-11-17)",
+    "waiting_on": "",
+    "area": "Both",
+    "choice": "After sign-up the customer is logged in straight away and sent a confirmation link. Until they confirm, `POST /jobs` and approving a voice return 403 `email_not_verified`, and the app shows a notice with a \"send the link again\" action. Confirming needs no login: the link works on any device.",
+    "trade_off": "Until an email provider is chosen (Q-04), confirmation links exist only in the server log, so only someone with server access can confirm an account.",
+    "validation": "Tests: an unconfirmed account gets 403 on create and approve; after confirming, the same requests succeed.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-037",
+    "decision": "Emails go through one small sender; development writes them to the server log",
+    "status": "Proposed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "One `EmailSender` interface with a single method to send a plain-text message. The development sender writes the message, including the link, to the server log. A real provider is added when Q-04 is answered; until then, a server started with a production setting refuses to start rather than silently dropping emails.",
+    "trade_off": "Confirmation and reset links appear in development logs. Those logs must never be shared outside the team.",
+    "validation": "Tests capture the sent messages through a test sender and read the link from them.",
+    "date": "2026-11-17"
   }
 ]

@@ -116,7 +116,7 @@ All money columns are integers: credits as whole credits, rupee amounts in paise
 
 | Table | Key columns | Notes |
 | --- | --- | --- |
-| `users` | id, email (unique, case-insensitive), password_hash, email_verified_at, role (`user`/`admin`), status | |
+| `users` | id, name, email (unique, stored lower-case), password_hash, email_verified_at, role (`user`/`admin`), status, created_at | Name from the sign-up design |
 | `sessions` | id, user_id, token_hash, expires_at, revoked_at | Only the hash of the session token is stored |
 | `email_tokens` | id, user_id, purpose (`verify`/`reset`), token_hash, expires_at, used_at | Single use |
 | `wallets` | user_id, balance_credits, reserved_credits | `CHECK (reserved_credits >= 0 AND balance_credits >= reserved_credits)` |
@@ -265,7 +265,7 @@ into the OpenAPI document before backend or frontend work begins.
 
 | Area | Routes |
 | --- | --- |
-| Auth | `POST /auth/signup`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`, `POST /auth/verify-email`, `POST /auth/password/forgot`, `POST /auth/password/reset` |
+| Auth | `POST /auth/signup`, `POST /auth/login`, `POST /auth/logout`, `POST /auth/logout-all`, `GET /auth/me`, `POST /auth/verify-email`, `POST /auth/verify-email/resend`, `POST /auth/password/forgot`, `POST /auth/password/reset/check`, `POST /auth/password/reset`, `POST /auth/password/change` (M2 contract in [M2-PLAN.md](M2-PLAN.md)) |
 | Wallet | `GET /wallet`, `GET /wallet/transactions` |
 | Payments | `POST /payments/orders`, `POST /payments/verify`, `POST /webhooks/razorpay` |
 | Scripts | `GET /scripts`, `GET /scripts/{id}`, `DELETE /scripts/{id}` |

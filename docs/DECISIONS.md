@@ -542,3 +542,67 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 **Trade-off:** Customers on phones get a working create flow but a desktop-only layout for every later screen (log in, wallet, videos, scripts, account), which may need sideways scrolling or look cramped. Assumed: new screens stay usable down to 1024 px wide, where the full sidebar starts; narrower widths are not checked. The M5 exit evidence no longer includes a phone-width run.
 
 **Validation:** Each new screen's browser check runs at 1440 px (and 1024 px for the narrowest supported desktop). Revisit if the owner wants phone customers again.
+
+---
+
+## D-034 — Passwords are hashed with argon2-cffi (Argon2id)
+
+**Status:** Proposed · 2026-11-17 · Area: backend
+
+**Choice:** `argon2-cffi` 25.1.0 with its default Argon2id parameters. Hashes are re-made at the next login if the library's defaults change. When a login names an email that has no account, a fixed dummy hash is still checked, so the answer takes about as long as a wrong password and does not reveal which emails have accounts. Passwords are 10 to 128 characters (the approved designs say "at least 10"), with no rules about symbols or capitals.
+
+**Alternatives:** `passlib` (unmaintained since 2020), `pwdlib` (a thin wrapper over the same library), bcrypt (72-byte password limit), a hosted identity service (rejected in D-003).
+
+**Why:** Argon2id is the hash D-003 chose. `argon2-cffi` is the reference Python binding, MIT-licensed, maintained, and has no other dependencies beyond its own C binding.
+
+**Trade-off:** Hashing costs tens of milliseconds of server time on every login and sign-up, by design; rate limits (D-035) keep that from being abused.
+
+**Validation:** PyPI checked 2026-11-17: version 25.1.0, MIT, Python 3.8 or newer. Tests check the stored value starts with `$argon2id$`, never equals the password, and that login with an unknown email still calls the verifier.
+
+---
+
+## D-035 — Rate limits and the origin check run inside the one backend process
+
+**Status:** Proposed · 2026-11-17 · Area: backend
+
+**Choice:** Counters in memory, keyed by email and by network address. Log in: 5 failures per email and address in 15 minutes. Sign up: 5 per address per hour. Forgot password and resend confirmation: 3 per email and 10 per address per hour. Over the limit: HTTP 429, code `rate_limited`, with a `Retry-After` header. Every state-changing request (`POST`, `PUT`, `PATCH`, `DELETE`) whose `Origin` header is not on the allowed list, or which says `Sec-Fetch-Site: cross-site`, gets 403 `origin_refused`. The allowed list is a setting; it defaults to the development addresses.
+
+**Alternatives:** A rate-limit table in PostgreSQL. Redis. A rate-limiting library. CSRF tokens in every form.
+
+**Why:** There is one backend process until launch (D-009), so memory is shared by every request. `SameSite=Lax` cookies plus an origin check stop cross-site form posts without tokens in every form.
+
+**Trade-off:** Counters reset when the server restarts, and stop working correctly if a second process is ever added. Revisit together with D-009.
+
+**Validation:** Tests drive each limit past its threshold and check 429; a request with a foreign `Origin` gets 403; a request from the allowed origin passes.
+
+---
+
+## D-036 — Unconfirmed accounts can log in but cannot make videos
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: both
+
+**Choice:** After sign-up the customer is logged in straight away and sent a confirmation link. Until they confirm, `POST /jobs` and approving a voice return 403 `email_not_verified`, and the app shows a notice with a "send the link again" action. Confirming needs no login: the link works on any device.
+
+**Alternatives:** No access until confirmed. Confirmation optional.
+
+**Why:** The owner chose it. Generating a voice costs the company money (Q-08), so throwaway accounts should not reach it, while a customer who has not opened the email yet can still look around.
+
+**Trade-off:** Until an email provider is chosen (Q-04), confirmation links exist only in the server log, so only someone with server access can confirm an account.
+
+**Validation:** Tests: an unconfirmed account gets 403 on create and approve; after confirming, the same requests succeed.
+
+---
+
+## D-037 — Emails go through one small sender; development writes them to the server log
+
+**Status:** Proposed · 2026-11-17 · Area: backend
+
+**Choice:** One `EmailSender` interface with a single method to send a plain-text message. The development sender writes the message, including the link, to the server log. A real provider is added when Q-04 is answered; until then, a server started with a production setting refuses to start rather than silently dropping emails.
+
+**Alternatives:** Choose a provider now. Print to standard output without an interface.
+
+**Why:** Building does not need a provider (Q-04 default), and one interface keeps the later switch to a single file.
+
+**Trade-off:** Confirmation and reset links appear in development logs. Those logs must never be shared outside the team.
+
+**Validation:** Tests capture the sent messages through a test sender and read the link from them.

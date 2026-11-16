@@ -115,7 +115,8 @@ section 8, shown by a browser run at 1440 px and 390 px in mock mode.
 
 ## M2 — Accounts and login
 
-**Gate A needs:** Q-02 answered (done 2026-11-17: email and password, D-003). **Gate C:** none.
+**Gate A needs:** Q-02 answered (done 2026-11-17: email and password, D-003). Owner approved the M2
+plan on 2026-11-17 ([M2-PLAN.md](M2-PLAN.md)), with four answers recorded there. **Gate C:** none.
 
 **Exit evidence:** An access-control test matrix shows that every job, media and account route
 refuses anonymous users and refuses other users' resources.
@@ -124,12 +125,13 @@ refuses anonymous users and refuses other users' resources.
 | --- | --- | --- | --- | --- | --- | --- |
 | T-200 | BE | Fable | Correctness | R-01 | Agree the auth API contract before building | Routes, bodies and error codes written into the OpenAPI document |
 | T-201 | BE | Sonnet | Correctness | R-01 | `users`, `sessions`, `email_tokens` tables | Migration applies cleanly |
-| T-202 | BE | Sonnet | Safety | R-01 | Sign up, log in, log out, current user | Argon2id; cookie flags per D-003; session revocable |
-| T-203 | BE | Sonnet | Safety | R-01 | Email verification and password reset, as in HLD section 5.5 | Single-use tokens stored hashed, reset links expire in 30 minutes; the forgot route answers the same for unknown emails; a reset revokes every session; emails printed to the console in development |
+| T-202 | BE | Sonnet | Safety | R-01 | Sign up, log in, log out, log out everywhere, current user, change password | Argon2id; cookie flags per D-003; session revocable; changing the password logs out other devices |
+| T-207 | DOC | Fable | Acceptance | R-01, R-78 | Draw the confirm-email screens (no design existed) | Owner approves the boards on the canvas |
+| T-203 | BE | Sonnet | Safety | R-01 | Email verification and password reset, as in HLD section 5.5 | Single-use tokens stored hashed, reset links expire in 30 minutes; the forgot route answers the same for unknown emails; a reset revokes every session; emails printed to the console in development; an unverified account cannot create or approve a job (D-036) |
 | T-204 | BE | Sonnet | Safety | R-12 | Jobs belong to a user; protect every job and media route | Another user's job returns 404 |
 | T-205 | BE | Sonnet | Safety | R-01 | Rate limits and origin check | Repeated bad logins are throttled; cross-site POST refused |
 | T-206 | BE | Haiku | Safety | R-12 | Access-control test matrix | Every route × anonymous / owner / other user / admin |
-| T-210 | FE | Sonnet | Acceptance | R-01 | Sign-up, log-in, verify, forgot and reset screens, built from their designs | Matches the designs (including the four password-reset screens); meets UX.md section 8 |
+| T-210 | FE | Sonnet | Acceptance | R-01 | Sign-up, log-in, confirm-email, forgot and reset screens, built from their designs | Matches the desktop designs (including the four password-reset screens and the T-207 boards); meets UX.md section 8 |
 | T-211 | FE | Sonnet | Safety | R-01 | Session bootstrap, guarded routes, handling of 401 | Expired session returns the user to log in, then back |
 | T-212 | FE | Sonnet | Acceptance | R-01 | Account page | Change password; log out everywhere |
 
@@ -344,14 +346,15 @@ its lane free, can start.
 | T-157 | BE-Core | T-105 |
 | T-155 | FE-Create | T-154, T-111, T-157 |
 | T-156 | Review | T-155 |
-| T-200 | Contract | T-008 |
+| T-200 | Contract | T-156 |
 | T-201 | BE-Auth | T-104, T-200 |
 | T-202 | BE-Auth | T-201 |
 | T-203 | BE-Auth | T-202 |
 | T-204 | BE-Jobs | T-202 |
 | T-205 | BE-Auth | T-203 |
 | T-206 | BE-Auth | T-204, T-205 |
-| T-210 | FE-Auth | T-154, T-200 |
+| T-207 | Docs | T-156 |
+| T-210 | FE-Auth | T-154, T-200, T-207 |
 | T-211 | FE-Shell | T-210, T-154 |
 | T-212 | FE-Account | T-211 |
 | T-300 | Contract | T-200 |
