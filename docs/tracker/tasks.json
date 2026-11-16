@@ -385,9 +385,9 @@
     "starts_after": "T-154, T-111, T-157",
     "task": "Rebuild the create flow to the approved design",
     "acceptance": "Stepper, drop zone with preview, inline validation, progress steps; meets UX.md section 8",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent building in a worktree. Prerequisite done: ApiError.fields in the client (a3a12c5)."
   },
   {
     "id": "T-157",
