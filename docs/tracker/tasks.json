@@ -520,9 +520,9 @@
     "starts_after": "T-203",
     "task": "Rate limits and origin check",
     "acceptance": "Repeated bad logins are throttled; cross-site POST refused",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent building in a worktree (T-205 backend and T-210 frontend run in parallel)."
   },
   {
     "id": "T-206",
@@ -550,9 +550,9 @@
     "starts_after": "T-154, T-200, T-207",
     "task": "Sign-up, log-in, confirm-email, forgot and reset screens, built from their designs",
     "acceptance": "Matches the desktop designs (including the four password-reset screens and the T-207 boards); meets UX.md section 8",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent building in a worktree (T-205 backend and T-210 frontend run in parallel)."
   },
   {
     "id": "T-211",
