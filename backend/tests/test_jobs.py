@@ -350,7 +350,7 @@ def test_gif_is_rejected(settings):
 def wait_for(client, job_id, status, timeout=10.0):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        job = client.get(f"/api/jobs/{job_id}").json()
+        job = client.get(f"/api/v1/jobs/{job_id}").json()
         if job["status"] == status:
             return job
         time.sleep(0.05)
@@ -359,10 +359,10 @@ def wait_for(client, job_id, status, timeout=10.0):
 
 def test_http_flow_end_to_end(settings):
     with TestClient(create_app(settings)) as client:
-        assert client.get("/api/config").json()["provider"] == "mock"
+        assert client.get("/api/v1/config").json()["provider"] == "mock"
 
         created = client.post(
-            "/api/jobs",
+            "/api/v1/jobs",
             files={"image": ("me.png", png(), "image/png")},
             data={"script": "Hello from the test suite.", "language": "Hindi"},
         )
@@ -374,10 +374,10 @@ def test_http_flow_end_to_end(settings):
             job["audio_duration_seconds"] * 0.0562, 2
         )
         assert client.get(job["audio_url"]).status_code == 200
-        assert client.get(f"/api/jobs/{job_id}/video").status_code == 404
+        assert client.get(f"/api/v1/jobs/{job_id}/video").status_code == 404
 
-        assert client.post(f"/api/jobs/{job_id}/approve").status_code == 200
-        assert client.post(f"/api/jobs/{job_id}/approve").status_code == 409
+        assert client.post(f"/api/v1/jobs/{job_id}/approve").status_code == 200
+        assert client.post(f"/api/v1/jobs/{job_id}/approve").status_code == 409
 
         job = wait_for(client, job_id, "completed")
         video = client.get(job["video_url"])
@@ -386,17 +386,17 @@ def test_http_flow_end_to_end(settings):
 
 def test_http_errors(settings):
     with TestClient(create_app(settings)) as client:
-        assert client.get("/api/jobs/nope").status_code == 404
-        assert client.post("/api/jobs/nope/approve").status_code == 404
+        assert client.get("/api/v1/jobs/nope").status_code == 404
+        assert client.post("/api/v1/jobs/nope/approve").status_code == 404
         bad = client.post(
-            "/api/jobs",
+            "/api/v1/jobs",
             files={"image": ("x.png", b"junk", "image/png")},
             data={"script": "hi", "language": "English"},
         )
         assert bad.status_code == 422
         assert bad.json()["detail"] == "The file is not a readable image."
         too_big = client.post(
-            "/api/jobs",
+            "/api/v1/jobs",
             files={"image": ("x.png", b"0" * (10 * 1024 * 1024 + 1), "image/png")},
             data={"script": "hi", "language": "English"},
         )
