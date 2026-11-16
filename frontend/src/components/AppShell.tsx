@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Outlet } from 'react-router'
 import { getConfig } from '../api/client'
 import type { Config } from '../api/client'
@@ -9,30 +9,18 @@ const RETRY_MS = 3000
 export type ShellContext = { config: Config | null; configError: string | null }
 
 export default function AppShell() {
-  const [config, setConfig] = useState<Config | null>(null)
-  const [configError, setConfigError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    const load = () =>
-      getConfig().then(
-        (c) => {
-          if (!cancelled) {
-            setConfig(c)
-            setConfigError(null)
-          }
-        },
-        (e) => {
-          if (cancelled) return
-          setConfigError(errMsg(e))
-          setTimeout(load, RETRY_MS)
-        },
-      )
-    load()
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  const query = useQuery({
+    queryKey: ['config'],
+    queryFn: getConfig,
+    retry: false,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    // While the configuration has not loaded, try again every few seconds.
+    refetchInterval: (q) => (q.state.data ? false : RETRY_MS),
+    refetchIntervalInBackground: true,
+  })
+  const config = query.data ?? null
+  const configError = query.error && !config ? errMsg(query.error) : null
 
   const context: ShellContext = { config, configError }
 
