@@ -1,8 +1,12 @@
 """One error shape for the whole API: {"detail": "<message>", "code": "<machine_code>"}.
 
+An input error adds `"fields": {"<input name>": "<message>"}` so the interface can show the message
+under the input at fault (D-029). `fields` is omitted entirely (never null) for any other error.
+
 `detail` is always a string. Internal errors never expose exception text or a stack trace."""
 
 import logging
+from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -18,22 +22,34 @@ INTERNAL_MESSAGE = "Something went wrong on our side. Please try again."
 class ErrorOut(BaseModel):
     detail: str
     code: str
+    # Present only for input errors (422); omitted from the JSON otherwise.
+    fields: dict[str, str] | None = None
 
 
 class ApiError(Exception):
     """Raised by routes for an expected error with a stable machine code."""
 
-    def __init__(self, status_code: int, detail: str, code: str) -> None:
+    def __init__(
+        self, status_code: int, detail: str, code: str, fields: dict[str, str] | None = None
+    ) -> None:
         super().__init__(detail)
+        self.fields = fields
         self.status_code = status_code
         self.detail = detail
         self.code = code
 
 
 def error_response(
-    status_code: int, detail: str, code: str, headers: dict[str, str] | None = None
+    status_code: int,
+    detail: str,
+    code: str,
+    headers: dict[str, str] | None = None,
+    fields: dict[str, str] | None = None,
 ) -> JSONResponse:
-    return JSONResponse({"detail": detail, "code": code}, status_code=status_code, headers=headers)
+    body: dict[str, Any] = {"detail": detail, "code": code}
+    if fields:
+        body["fields"] = fields
+    return JSONResponse(body, status_code=status_code, headers=headers)
 
 
 def internal_error_response() -> JSONResponse:
@@ -51,12 +67,28 @@ def _flatten_validation(exc: RequestValidationError) -> str:
     return "The request is not valid. " + "; ".join(parts) + "."
 
 
+def _field_messages(exc: RequestValidationError) -> dict[str, str]:
+    """One plain-language message per input, keyed by the name the client sent."""
+    fields: dict[str, str] = {}
+    for err in exc.errors():
+        loc = [str(p) for p in err.get("loc", ())]
+        if loc and loc[0] in ("body", "query", "path", "form"):
+            loc = loc[1:]
+        if not loc:
+            continue
+        message = "This is required." if err.get("type") == "missing" else "This is not valid."
+        fields.setdefault(loc[0], message)
+    return fields
+
+
 async def _api_error(_: Request, exc: ApiError) -> JSONResponse:
-    return error_response(exc.status_code, exc.detail, exc.code)
+    return error_response(exc.status_code, exc.detail, exc.code, fields=exc.fields)
 
 
 async def _request_validation(_: Request, exc: RequestValidationError) -> JSONResponse:
-    return error_response(422, _flatten_validation(exc), "validation_error")
+    return error_response(
+        422, _flatten_validation(exc), "validation_error", fields=_field_messages(exc)
+    )
 
 
 async def _http_exception(_: Request, exc: StarletteHTTPException) -> JSONResponse:

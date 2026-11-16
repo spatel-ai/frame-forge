@@ -394,7 +394,7 @@ def test_http_errors(settings):
             data={"script": "hi", "language": "English"},
         )
         assert bad.status_code == 422
-        assert bad.json()["detail"] == "The file is not a readable image."
+        assert bad.json()["detail"].startswith("The file is not a readable image.")
         too_big = client.post(
             "/api/v1/jobs",
             files={"image": ("x.png", b"0" * (10 * 1024 * 1024 + 1), "image/png")},

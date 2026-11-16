@@ -79,6 +79,20 @@
           "detail": {
             "title": "Detail",
             "type": "string"
+          },
+          "fields": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fields"
           }
         },
         "required": [

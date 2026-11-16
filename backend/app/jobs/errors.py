@@ -8,7 +8,7 @@ from .service import Conflict, ValidationError
 
 
 async def _invalid_input(_: Request, exc: ValidationError) -> JSONResponse:
-    return error_response(422, str(exc), "invalid_input")
+    return error_response(422, str(exc), "invalid_input", fields={exc.field: str(exc)})
 
 
 async def _wrong_state(_: Request, exc: Conflict) -> JSONResponse:

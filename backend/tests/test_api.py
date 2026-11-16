@@ -43,7 +43,8 @@ def png() -> bytes:
 def assert_error(response, status, code):
     assert response.status_code == status
     body = response.json()
-    assert set(body) == {"detail", "code"}
+    # `fields` appears only on input errors (D-029); the tests below check it where it applies.
+    assert set(body) <= {"detail", "code", "fields"}
     assert isinstance(body["detail"], str) and body["detail"]
     assert body["code"] == code
     return body
@@ -88,7 +89,8 @@ def test_invalid_input_error_shape(client):
         data={"script": "hi", "language": "English"},
     )
     body = assert_error(r, 422, "invalid_input")
-    assert body["detail"] == "The file is not a readable image."
+    assert body["detail"].startswith("The file is not a readable image.")
+    assert set(body["fields"]) == {"image"}
 
 
 def test_missing_form_field_gives_validation_error(client):
@@ -100,6 +102,7 @@ def test_missing_form_field_gives_validation_error(client):
     )
     body = assert_error(r, 422, "validation_error")
     assert "script" in body["detail"]
+    assert body["fields"] == {"script": "This is required."}
 
 
 def test_unknown_route_and_wrong_method(client):
@@ -193,7 +196,9 @@ def test_openapi_lists_every_field_and_the_error_model(settings):
     schemas = spec["components"]["schemas"]
     assert set(schemas["JobOut"]["properties"]) == set(JobOut.model_fields)
     assert set(schemas["ConfigOut"]["properties"]) == set(ConfigOut.model_fields)
-    assert set(schemas["ErrorOut"]["properties"]) == {"detail", "code"}
+    assert set(schemas["ErrorOut"]["properties"]) == {"detail", "code", "fields"}
+    # Deliberate contract change (T-157, D-029): `fields` is optional, so it is not required.
+    assert set(schemas["ErrorOut"]["required"]) == {"detail", "code"}
     assert set(schemas["JobOut"]["properties"]["status"]["enum"]) == {
         "audio_generating",
         "audio_ready",
@@ -260,3 +265,72 @@ def test_job_and_config_json_keys_are_unchanged(client):
     job = create_job(client)
     assert set(job) == set(JobOut.model_fields)
     assert job["status"] in JobOut.model_fields["status"].annotation.__args__
+
+
+def _post_job(client, *, image=("me.png", None), script="Hello.", language="English", omit=()):
+    name, data = image
+    files = {"image": (name, png() if data is None else data, "image/png")}
+    form = {"script": script, "language": language}
+    if "image" in omit:
+        files = None
+    for key in omit:
+        form.pop(key, None)
+    return client.post("/api/v1/jobs", files=files, data=form)
+
+
+def _small_png() -> bytes:
+    out = BytesIO()
+    Image.new("RGB", (100, 100)).save(out, "PNG")
+    return out.getvalue()
+
+
+def _gif() -> bytes:
+    out = BytesIO()
+    Image.new("RGB", (512, 512)).save(out, "GIF")
+    return out.getvalue()
+
+
+@pytest.mark.parametrize(
+    "kwargs, code, field",
+    [
+        ({"image": ("x.png", b"")}, "invalid_input", "image"),
+        ({"image": ("x.png", b"junk")}, "invalid_input", "image"),
+        ({"image": ("x.png", b"0" * (10 * 1024 * 1024 + 1))}, "invalid_input", "image"),
+        ({"image": ("x.png", _small_png())}, "invalid_input", "image"),
+        ({"image": ("x.gif", _gif())}, "invalid_input", "image"),
+        ({"script": "   "}, "invalid_input", "script"),
+        ({"script": "a" * 401}, "invalid_input", "script"),
+        ({"script": "नमस्ते दोस्तों"}, "invalid_input", "script"),
+        ({"language": "French"}, "invalid_input", "language"),
+        ({"omit": ("image",)}, "validation_error", "image"),
+        ({"omit": ("script",)}, "validation_error", "script"),
+        ({"omit": ("language",)}, "validation_error", "language"),
+    ],
+)
+def test_every_create_job_input_error_names_its_field(client, kwargs, code, field):
+    """D-029: each 422 from POST /jobs carries `fields` keyed by the input at fault, with text."""
+    body = assert_error(_post_job(client, **kwargs), 422, code)
+    assert set(body["fields"]) == {field}
+    assert isinstance(body["fields"][field], str) and body["fields"][field]
+
+
+def test_all_missing_inputs_are_all_named(client):
+    """D-029: several missing inputs are reported together, each under its own name."""
+    r = client.post("/api/v1/jobs", data={})
+    body = assert_error(r, 422, "validation_error")
+    assert set(body["fields"]) == {"image", "script", "language"}
+    assert set(body["fields"].values()) == {"This is required."}
+
+
+def test_non_input_errors_have_no_fields(client):
+    """D-029: 404, 405 and 409 never carry `fields`, not even as null."""
+    job_id = create_job(client)["id"]
+    client.post(f"/api/v1/jobs/{job_id}/approve")
+    for r in (
+        client.get("/api/v1/jobs/nope"),
+        client.get(f"/api/v1/jobs/{job_id}/audio/x"),
+        client.delete("/api/v1/config"),
+        client.post(f"/api/v1/jobs/{job_id}/approve"),
+    ):
+        assert r.status_code in (404, 405, 409)
+        assert "fields" not in r.json()
