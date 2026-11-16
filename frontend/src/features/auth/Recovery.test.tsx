@@ -33,7 +33,8 @@ describe('Forgot password (R-01)', () => {
     await u.click(screen.getByRole('button', { name: 'Send reset link' }))
     await waitFor(() => expect(at(router)).toBe('/forgot-password/sent'))
     expect(forgotPassword).toHaveBeenCalledWith('asha@example.com')
-    expect(screen.getByText('Check your email')).toBeTruthy()
+    // The router reports the new location a tick before the new screen renders; wait for it.
+    expect(await screen.findByText('Check your email')).toBeTruthy()
     expect(screen.getByText('asha@example.com')).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Back to log in' }).getAttribute('href')).toBe('/login')
   })

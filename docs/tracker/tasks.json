@@ -550,9 +550,9 @@
     "starts_after": "T-154, T-200, T-207",
     "task": "Sign-up, log-in, confirm-email, forgot and reset screens, built from their designs",
     "acceptance": "Matches the desktop designs (including the four password-reset screens and the T-207 boards); meets UX.md section 8",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent building in a worktree (T-205 backend and T-210 frontend run in parallel)."
+    "status": "Done",
+    "verification": "IMPLEMENTED, UNVERIFIED",
+    "evidence": "features/auth: log in, sign up (no Terms checkbox, owner), forgot, check-your-email (60 s resend), set new password (token removed from the address bar, check called once), reset link expired, email confirmed / link expired (verify called once under StrictMode); shared AuthLayout with a token-coloured SVG brand panel; PasswordField added to the library; safe `next` redirects. 43 tests; npm run check 285 passed; build passes; no hex colours. Review fix: one flaky test (read the new screen before it rendered). Not mounted in routes.tsx yet (T-211). Layout and match to the designs unverified until the browser review."
   },
   {
     "id": "T-211",
