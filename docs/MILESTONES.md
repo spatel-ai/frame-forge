@@ -184,7 +184,7 @@ only after T-407.
 
 **Exit evidence:** A new user can sign up, buy credits, pick a saved script and banners, make a
 video that plays start banner, AI video, end banner in one file, and find it again later, on a
-phone-width and a desktop-width screen. All in mock mode.
+desktop-width screen (D-033). All in mock mode.
 
 | ID | Area | Owner | Need | Traces to | Task | Accepted when |
 | --- | --- | --- | --- | --- | --- | --- |

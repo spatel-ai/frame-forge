@@ -173,10 +173,11 @@ building or changing a screen. They are acceptance criteria, not suggestions.
 - **Every failure:** says what happened, what was not charged, and what to do next.
 - **Live state:** follow the refetch table in UX.md section 7. Money shows only what the server
   returned.
-- **Both widths:** 1440 px and 390 px, no sideways scroll from 360 px.
+- **Desktop width only (D-033):** new screens are built for 1440 px and checked at 1440 and 1024 px;
+  no phone layout. Do not break the phone layouts M1.5 already built (app frame, create flow).
 
 A task is done only when it meets the nine points of UX.md section 8, including being seen in a
-real browser at both widths.
+real browser at desktop width.
 
 ## Tests
 

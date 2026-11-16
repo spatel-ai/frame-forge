@@ -25,7 +25,7 @@ for validation, loading and feedback, so that every later screen is built to the
 | Design direction | Inspired by how Canva and similar creative tools are laid out, with our own identity. Not a copy of any product's branding |
 | Brand | None exists; engineering proposes one |
 | Scope of design | All planned customer screens, designed before they are built |
-| Device priority | Desktop first; every screen also works on a phone |
+| Device priority | Desktop only for new screens (D-033). The phone layouts built in M1.5 stay |
 
 ### What comparable tools do
 
@@ -174,17 +174,17 @@ the form needs.
 
 | Screen | Route | Primary action | Designed |
 | --- | --- | --- | --- |
-| Home | `/` | Create a video | Desktop, phone |
-| Create 1: photo and script | `/create` | Continue | Desktop, phone |
+| Home | `/` | Create a video | Desktop (phone drawn, not built: D-033) |
+| Create 1: photo and script | `/create` | Continue | Desktop, phone (built in M1.5) |
 | Create 2: banners | `/create/:id/banners` | Generate voice | Desktop |
 | Create 3: review voice and price | `/create/:id` | Approve and generate video | Desktop |
 | Create 4: progress | `/create/:id` | none (waiting) | Desktop |
 | Create 5: result | `/create/:id` | Download | Desktop |
 | Videos | `/videos` | Create a video | Desktop |
 | Scripts | `/scripts` | Use this script | Desktop |
-| Wallet | `/wallet` | Buy credits | Desktop, phone |
+| Wallet | `/wallet` | Buy credits | Desktop (phone drawn, not built: D-033) |
 | Buy credits | dialog on any screen | Pay | Desktop |
-| Log in, Sign up | `/login`, `/signup` | Log in, Create account | Desktop, phone (log in) |
+| Log in, Sign up | `/login`, `/signup` | Log in, Create account | Desktop (phone log in drawn, not built: D-033) |
 | Account | `/account` | Save | Desktop |
 | States and components | reference sheets | — | Desktop |
 
@@ -268,14 +268,16 @@ returned.
 
 ### Responsive
 
-- Works from 360 px to 1920 px wide with no sideways scrolling.
-- Designed at 1440 px and 390 px; checked at 768 px as well.
+- New screens (M2 on, D-033): designed and built at 1440 px, checked at 1440 px and 1024 px. No
+  phone layout.
+- The screens built in M1.5 (app frame, create flow, not-found) keep working from 360 px to 1920 px
+  with no sideways scrolling; changes to them must not break that.
 
 ## 8. Definition of done for a screen
 
 A frontend task is finished only when all of these are true:
 
-1. It matches its design on the canvas at 1440 px and 390 px.
+1. It matches its design on the canvas at 1440 px (D-033: no phone design for new screens).
 2. It uses only the shared components and tokens; no one-off colours, sizes or spacing.
 3. It has designed loading, empty and error states.
 4. Every input follows the validation rules in section 7.
@@ -283,4 +285,5 @@ A frontend task is finished only when all of these are true:
 6. Data that can change updates without a refresh, per the table in section 7.
 7. It passes the keyboard and contrast checks in section 7.
 8. Its tests cover: loading, success, empty, each error code, and each validation rule.
-9. It has been seen in a real browser at both widths before being called verified.
+9. It has been seen in a real browser at 1440 px and 1024 px before being called verified (and at
+   390 px too if it changes an M1.5 screen).

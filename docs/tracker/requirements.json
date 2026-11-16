@@ -131,8 +131,8 @@
     "id": "R-77",
     "class": "Confirmed",
     "area": "Design",
-    "requirement": "Screens are designed for desktop first and also work on a phone.",
-    "source": "Owner, 2026-11-17",
+    "requirement": "Screens are built for desktop width. The phone layouts built in M1.5 stay; new screens get no phone layout (D-033).",
+    "source": "Owner, 2026-11-17 (narrowed the same day: desktop only from M2 on)",
     "discovery_item": ""
   },
   {

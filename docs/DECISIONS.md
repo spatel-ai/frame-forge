@@ -525,4 +525,20 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 **Trade-off:** Two small development dependencies (or checked-in font files) and a slightly larger first download.
 
-**Validation:** Installed and bundled (`@fontsource-variable/*` 5.3.0, merged with T-153a); the production build contains no Google Fonts reference. Still to confirm in the browser review: fonts render and no request leaves for a font host.
+**Validation:** Installed and bundled (`@fontsource-variable/*` 5.3.0, merged with T-153a); the production build contains no Google Fonts reference. Browser review (T-156, 2026-11-17): fonts render, and no request leaves the machine at any width.
+
+---
+
+## D-033 — New screens are built for desktop width only
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: frontend
+
+**Choice:** From M2 on, every new screen is designed, built and checked at desktop width (1440 px) only. No phone layout is drawn or built for new screens. What M1.5 already built for phones (the bottom navigation bar, the phone layouts of the app frame, the create flow and the not-found page) stays as it is and is not removed.
+
+**Alternatives:** Keep designing and building every screen at both 1440 px and 390 px (the previous rule, UX.md section 8). Remove the phone support already built.
+
+**Why:** The owner asked for it: "the screens you have developed so far for the app is okay, but moving forward, do not develop screens for the app. Develop only for dashboard", clarified as "only for desktop width". It also halves design and review work per screen.
+
+**Trade-off:** Customers on phones get a working create flow but a desktop-only layout for every later screen (log in, wallet, videos, scripts, account), which may need sideways scrolling or look cramped. Assumed: new screens stay usable down to 1024 px wide, where the full sidebar starts; narrower widths are not checked. The M5 exit evidence no longer includes a phone-width run.
+
+**Validation:** Each new screen's browser check runs at 1440 px (and 1024 px for the narrowest supported desktop). Revisit if the owner wants phone customers again.
