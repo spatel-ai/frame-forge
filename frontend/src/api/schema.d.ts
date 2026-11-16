@@ -160,6 +160,10 @@ export interface components {
             code: string;
             /** Detail */
             detail: string;
+            /** Fields */
+            fields?: {
+                [key: string]: string;
+            } | null;
         };
         /** HealthOut */
         HealthOut: {

@@ -26,7 +26,12 @@ _SCRIPT_RANGES = {"Hindi": ("\u0904", "\u0939"), "Punjabi": ("\u0a05", "\u0a39")
 
 
 class ValidationError(Exception):
-    pass
+    """A create-job input is not acceptable. `field` names the input as the client sends it
+    (`image`, `script` or `language`) so the interface can show the message under it."""
+
+    def __init__(self, message: str, field: str) -> None:
+        super().__init__(message)
+        self.field = field
 
 
 class Conflict(Exception):
@@ -54,20 +59,28 @@ class JobService:
         """Validate an upload and re-encode it, so only pixels we decoded
         ourselves are stored or sent to the provider."""
         if not raw:
-            raise ValidationError("The image file is empty.")
+            raise ValidationError("The image file is empty. Choose a photo and try again.", "image")
         if len(raw) > self.settings.max_image_mb * 1024 * 1024:
-            raise ValidationError(f"The image is larger than {self.settings.max_image_mb} MB.")
+            raise ValidationError(
+                f"The image is larger than {self.settings.max_image_mb} MB. "
+                "Choose a smaller photo.",
+                "image",
+            )
         try:
             image = Image.open(BytesIO(raw))
             image_format = image.format
             image.load()
         except Exception:
-            raise ValidationError("The file is not a readable image.") from None
+            raise ValidationError(
+                "The file is not a readable image. Choose a JPEG, PNG or WebP photo.", "image"
+            ) from None
         if image_format not in _IMAGE_FORMATS:
-            raise ValidationError("Use a JPEG, PNG or WebP image.")
+            raise ValidationError("Use a JPEG, PNG or WebP image.", "image")
         if min(image.size) < self.settings.min_image_side_px:
             raise ValidationError(
-                f"The image must be at least {self.settings.min_image_side_px} pixels on each side."
+                f"The image must be at least {self.settings.min_image_side_px} pixels on each "
+                "side. Choose a larger photo.",
+                "image",
             )
         out = BytesIO()
         if image_format == "JPEG":
@@ -81,20 +94,27 @@ class JobService:
     def create_job(self, image_bytes: bytes, script: str, language: str) -> dict:
         script = script.strip()
         if not script:
-            raise ValidationError("The script is empty.")
+            raise ValidationError("The script is empty. Type what the avatar should say.", "script")
         if len(script) > self.settings.max_script_chars:
             raise ValidationError(
-                f"The script is longer than {self.settings.max_script_chars} characters."
+                f"The script is longer than {self.settings.max_script_chars} characters. "
+                "Shorten it and try again.",
+                "script",
             )
         if language not in self.settings.languages:
-            raise ValidationError(f"Language must be one of: {', '.join(self.settings.languages)}.")
+            raise ValidationError(
+                f"Language must be one of: {', '.join(self.settings.languages)}. "
+                "Choose one from the list.",
+                "language",
+            )
         # A voice model reading a script it does not know produces paid-for
         # nonsense, so a script in another language's alphabet is refused.
         for name, (first, last) in _SCRIPT_RANGES.items():
             if name != language and any(first <= ch <= last for ch in script):
                 raise ValidationError(
                     f"The script is written in {name}, but the selected language is "
-                    f"{language}. Select {name} in the language list and try again."
+                    f"{language}. Select {name} in the language list and try again.",
+                    "script",
                 )
         clean, extension = self._clean_image(image_bytes)
 
