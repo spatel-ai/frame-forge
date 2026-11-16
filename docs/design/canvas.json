@@ -1,44 +1,244 @@
 {
   "v": 3,
-  "createdOnFiles": {"v": 1, "at": "2026-11-16T20:50:00Z"},
-  "title": "Frameforge App Designs",
-  "launch": {"view": "canvas"},
-  "pages": [],
+  "attachments": {},
   "boards": {
-    "Main.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 960, "title": "Home", "expand": "fill"},
-    "Create-1-Details.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 960, "title": "Create 1: photo and script", "expand": "fill"},
-    "Create-2-Banners.dc.html": {"x": 3040, "y": 0, "w": 1440, "h": 960, "title": "Create 2: banners", "expand": "fill"},
-    "Create-3-Review.dc.html": {"x": 4560, "y": 0, "w": 1440, "h": 960, "title": "Create 3: review voice and price", "expand": "fill"},
-    "Create-4-Progress.dc.html": {"x": 6080, "y": 0, "w": 1440, "h": 960, "title": "Create 4: progress", "expand": "fill"},
-    "Create-5-Result.dc.html": {"x": 7600, "y": 0, "w": 1440, "h": 960, "title": "Create 5: result", "expand": "fill"},
-    "Videos.dc.html": {"x": 0, "y": 1400, "w": 1440, "h": 960, "title": "Videos", "expand": "fill"},
-    "Scripts.dc.html": {"x": 1520, "y": 1400, "w": 1440, "h": 960, "title": "My scripts", "expand": "fill"},
-    "Wallet.dc.html": {"x": 3040, "y": 1400, "w": 1440, "h": 960, "title": "Wallet", "expand": "fill"},
-    "Buy-Credits.dc.html": {"x": 4560, "y": 1400, "w": 1440, "h": 960, "title": "Buy credits dialog", "expand": "fill"},
-    "Account.dc.html": {"x": 6080, "y": 1400, "w": 1440, "h": 960, "title": "Account", "expand": "fill"},
-    "Login.dc.html": {"x": 0, "y": 2800, "w": 1440, "h": 960, "title": "Log in", "expand": "fill"},
-    "Signup.dc.html": {"x": 1520, "y": 2800, "w": 1440, "h": 960, "title": "Sign up, with validation", "expand": "fill"},
-    "States.dc.html": {"x": 3040, "y": 2800, "w": 1440, "h": 1100, "title": "States: loading, empty, error, feedback"},
-    "Components.dc.html": {"x": 4560, "y": 2800, "w": 1440, "h": 1100, "title": "Design system: colour, type, components"},
-    "Phone-Home.dc.html": {"x": 0, "y": 4300, "w": 390, "h": 844, "title": "Phone: home"},
-    "Phone-Create.dc.html": {"x": 470, "y": 4300, "w": 390, "h": 844, "title": "Phone: create"},
-    "Phone-Wallet.dc.html": {"x": 940, "y": 4300, "w": 390, "h": 844, "title": "Phone: wallet"},
-    "Phone-Login.dc.html": {"x": 1410, "y": 4300, "w": 390, "h": 844, "title": "Phone: log in"}
+    "Account.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "title": "Account",
+      "w": 1440,
+      "x": 6080,
+      "y": 1400
+    },
+    "Buy-Credits.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "title": "Buy credits dialog",
+      "w": 1440,
+      "x": 4560,
+      "y": 1400
+    },
+    "Components.dc.html": {
+      "h": 1100,
+      "title": "Design system: colour, type, components",
+      "w": 1440,
+      "x": 4560,
+      "y": 2800
+    },
+    "Create-1-Details.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "title": "Create 1: photo and script",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Create-2-Banners.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "title": "Create 2: banners",
+      "w": 1440,
+      "x": 3040,
+      "y": 0
+    },
+    "Create-3-Review.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "title": "Create 3: review voice and price",
+      "w": 1440,
+      "x": 4560,
+      "y": 0
+    },
+    "Create-4-Progress.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "title": "Create 4: progress",
+      "w": 1440,
+      "x": 6080,
+      "y": 0
+    },
+    "Create-5-Result.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "title": "Create 5: result",
+      "w": 1440,
+      "x": 7600,
+      "y": 0
+    },
+    "Login.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "title": "Log in",
+      "w": 1440,
+      "x": 0,
+      "y": 2800
+    },
+    "Main.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "title": "Home",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Phone-Create.dc.html": {
+      "h": 844,
+      "title": "Phone: create",
+      "w": 390,
+      "x": 470,
+      "y": 4300
+    },
+    "Phone-Home.dc.html": {
+      "h": 844,
+      "title": "Phone: home",
+      "w": 390,
+      "x": 0,
+      "y": 4300
+    },
+    "Phone-Login.dc.html": {
+      "h": 844,
+      "title": "Phone: log in",
+      "w": 390,
+      "x": 1410,
+      "y": 4300
+    },
+    "Phone-Wallet.dc.html": {
+      "h": 844,
+      "title": "Phone: wallet",
+      "w": 390,
+      "x": 940,
+      "y": 4300
+    },
+    "Scripts.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "title": "My scripts",
+      "w": 1440,
+      "x": 1520,
+      "y": 1400
+    },
+    "Signup.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "title": "Sign up, with validation",
+      "w": 1440,
+      "x": 1520,
+      "y": 2800
+    },
+    "States.dc.html": {
+      "h": 1100,
+      "title": "States: loading, empty, error, feedback",
+      "w": 1440,
+      "x": 3040,
+      "y": 2800
+    },
+    "Videos.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "title": "Videos",
+      "w": 1440,
+      "x": 0,
+      "y": 1400
+    },
+    "Wallet.dc.html": {
+      "expand": "fill",
+      "h": 960,
+      "title": "Wallet",
+      "w": 1440,
+      "x": 3040,
+      "y": 1400
+    }
   },
-  "order": [
-    "Main.dc.html", "Create-1-Details.dc.html", "Create-2-Banners.dc.html", "Create-3-Review.dc.html",
-    "Create-4-Progress.dc.html", "Create-5-Result.dc.html", "Videos.dc.html", "Scripts.dc.html",
-    "Wallet.dc.html", "Buy-Credits.dc.html", "Account.dc.html", "Login.dc.html", "Signup.dc.html",
-    "States.dc.html", "Components.dc.html", "Phone-Home.dc.html", "Phone-Create.dc.html",
-    "Phone-Wallet.dc.html", "Phone-Login.dc.html"
+  "createdOnFiles": {
+    "at": "2026-11-16T20:50:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "noteOrder": [
+    "t-flow",
+    "t-library",
+    "t-reference",
+    "t-phone",
+    "n-price",
+    "n-brand"
   ],
   "notes": {
-    "t-flow": {"x": 0, "y": -300, "text": "Home and the create flow", "kind": "title1", "maxW": 9040},
-    "t-library": {"x": 0, "y": 1100, "text": "Library, wallet and account", "kind": "title1", "maxW": 7520},
-    "t-reference": {"x": 0, "y": 2500, "text": "Sign in and reference sheets", "kind": "title1", "maxW": 6000},
-    "t-phone": {"x": 0, "y": 4000, "text": "Phone layouts", "kind": "title1", "maxW": 1800},
-    "n-price": {"x": 9120, "y": 0, "w": 420, "text": "Prices show [PRICE] because the credit rate per second is not decided yet (question Q-01). Balances, names, scripts and dates are example content.", "fill": "orange"},
-    "n-brand": {"x": 6080, "y": 2800, "w": 420, "text": "The name, colours and typefaces are a proposal awaiting your approval (questions Q-20, Q-21). They live in one tokens file, so changing them later is a small edit.", "fill": "purple"}
+    "n-brand": {
+      "fill": "purple",
+      "text": "The name Frameforge and these designs are approved by the owner (decision D-031, question Q-20). Colours and typefaces live in one tokens file, so changing them later is a small edit.",
+      "w": 420,
+      "x": 6080,
+      "y": 2800
+    },
+    "n-price": {
+      "fill": "orange",
+      "text": "Prices show [PRICE] because the credit rate per second is not decided yet (question Q-01). Balances, names, scripts and dates are example content.",
+      "w": 420,
+      "x": 9120,
+      "y": 0
+    },
+    "t-flow": {
+      "kind": "title1",
+      "maxW": 8000,
+      "text": "Home and the create flow",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    },
+    "t-library": {
+      "kind": "title1",
+      "maxW": 7520,
+      "text": "Library, wallet and account",
+      "w": 240,
+      "x": 0,
+      "y": 1100
+    },
+    "t-phone": {
+      "kind": "title1",
+      "maxW": 1800,
+      "text": "Phone layouts",
+      "w": 240,
+      "x": 0,
+      "y": 4000
+    },
+    "t-reference": {
+      "kind": "title1",
+      "maxW": 6000,
+      "text": "Sign in and reference sheets",
+      "w": 240,
+      "x": 0,
+      "y": 2500
+    }
   },
-  "designSystems": []
+  "order": [
+    "Main.dc.html",
+    "Create-1-Details.dc.html",
+    "Create-2-Banners.dc.html",
+    "Create-3-Review.dc.html",
+    "Create-4-Progress.dc.html",
+    "Create-5-Result.dc.html",
+    "Videos.dc.html",
+    "Scripts.dc.html",
+    "Wallet.dc.html",
+    "Buy-Credits.dc.html",
+    "Account.dc.html",
+    "Login.dc.html",
+    "Signup.dc.html",
+    "States.dc.html",
+    "Components.dc.html",
+    "Phone-Home.dc.html",
+    "Phone-Create.dc.html",
+    "Phone-Wallet.dc.html",
+    "Phone-Login.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Page 1"
+    }
+  ],
+  "title": "Frameforge App Designs"
 }

@@ -95,7 +95,8 @@ backend tests pass against PostgreSQL.
 own identity, a proposed brand, all planned screens, desktop first). **Gate C:** none.
 
 The standards for this milestone and every later screen are in [UX.md](UX.md). No screen is
-rebuilt until the owner approves the designs (T-152).
+rebuilt until the owner approves the designs (T-152). The owner approved them on 2026-11-17; the
+step-by-step build plan is in [M1.5-PLAN.md](M1.5-PLAN.md).
 
 **Exit evidence:** The owner has approved the designs. The component library exists with tests.
 The existing create flow, rebuilt to the approved design, passes the definition of done in UX.md
@@ -109,6 +110,7 @@ section 8, shown by a browser run at 1440 px and 390 px in mock mode.
 | T-153 | FE | Sonnet | Acceptance | R-76, R-79, R-80 | Design tokens and the component library, with tests | Every component in UX.md section 4 exists, is keyboard accessible, and has tests for its states |
 | T-154 | FE | Sonnet | Acceptance | R-76, R-77 | New app shell: sidebar, top bar, phone navigation | Matches the design at 1440 px and 390 px; no sideways scroll from 360 px |
 | T-155 | FE | Sonnet | Acceptance | R-79, R-80, R-81 | Rebuild the create flow to the approved design | Stepper, drop zone with preview, inline validation, progress steps; meets UX.md section 8 |
+| T-157 | BE | Sonnet | Acceptance | R-79 | Input errors name the field at fault (`fields`, decision D-029) | Every 422 from the jobs API carries `fields`; a contract test asserts it; API types regenerated |
 | T-156 | FE | Fable | Acceptance | R-75 | Browser review against the designs | Each rebuilt screen compared with its design at both widths; differences fixed or recorded |
 
 ## M2 — Accounts and login
@@ -339,7 +341,8 @@ its lane free, can start.
 | T-152 | Docs | T-151 |
 | T-153 | FE-Shell | T-152, T-113 |
 | T-154 | FE-Shell | T-153 |
-| T-155 | FE-Create | T-154, T-111 |
+| T-157 | BE-Core | T-105 |
+| T-155 | FE-Create | T-154, T-111, T-157 |
 | T-156 | Review | T-155 |
 | T-200 | Contract | T-008 |
 | T-201 | BE-Auth | T-104, T-200 |

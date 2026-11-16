@@ -340,9 +340,9 @@
     "starts_after": "T-151",
     "task": "Owner reviews and approves the designs and the proposed brand",
     "acceptance": "Changes requested are made; approval recorded",
-    "status": "Blocked",
-    "verification": "BLOCKED",
-    "evidence": "Waiting for the owner to review the canvas and answer Q-20 (designs and brand) and Q-21 (name)."
+    "status": "Done",
+    "verification": "VERIFIED",
+    "evidence": "Owner reviewed the canvas, asked for illustrated login and sign-up backgrounds (done, commit 8bd7c2e), then approved the designs on 2026-11-17. Name set to Frameforge (D-031)."
   },
   {
     "id": "T-153",
@@ -382,9 +382,24 @@
     "owner": "Sonnet",
     "need": "Acceptance",
     "traces_to": "R-79, R-80, R-81",
-    "starts_after": "T-154, T-111",
+    "starts_after": "T-154, T-111, T-157",
     "task": "Rebuild the create flow to the approved design",
     "acceptance": "Stepper, drop zone with preview, inline validation, progress steps; meets UX.md section 8",
+    "status": "To do",
+    "verification": "",
+    "evidence": ""
+  },
+  {
+    "id": "T-157",
+    "milestone": "M1.5",
+    "area": "Backend",
+    "lane": "BE-Core",
+    "owner": "Sonnet",
+    "need": "Acceptance",
+    "traces_to": "R-79",
+    "starts_after": "T-105",
+    "task": "Input errors name the field at fault (`fields`, decision D-029)",
+    "acceptance": "Every 422 from the jobs API carries `fields`; a contract test asserts it; API types regenerated",
     "status": "To do",
     "verification": "",
     "evidence": ""

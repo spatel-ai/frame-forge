@@ -90,9 +90,10 @@ Seen in the M1 browser run screenshots.
    first action.
 7. **Plain words.** "Not enough credits. You need 40 more." not "Insufficient balance".
 
-## 4. Design system (proposed)
+## 4. Design system
 
-Name: **Frameforge** (owner decision D-031). The colours and typefaces are proposals (Q-20).
+Name: **Frameforge** (owner decision D-031). The colours and typefaces were approved by the
+owner with the designs on 2026-11-17 (D-028).
 They live in one tokens file, so changing them later is a small edit.
 
 ### Colour

@@ -451,7 +451,7 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 ## D-028 — Proposed brand and design tokens
 
-**Status:** Needs owner (Q-20) · 2026-11-17 · Area: frontend
+**Status:** Confirmed (owner approved the designs, 2026-11-17) · 2026-11-17 · Area: frontend
 
 **Choice:** The name is settled separately (D-031: Frameforge). A vivid blue-violet primary (`#4A3AFF`), a marigold used only for credits (`#FFB020`), a cool neutral page, Plus Jakarta Sans for headings and Inter for text, a 4 px spacing scale, 8 to 16 px corners. All values live in one tokens file. Light theme only at launch. The full table is in UX.md section 4.
 
@@ -510,3 +510,19 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 **Trade-off:** "avatar" lives on in internal names, which can confuse a newcomer. The parent `CLAUDE.md` still says "Talking Avatar POC"; it is never edited, and it refers to this same product. Trademark, domain and app-store availability of "Frameforge" have not been checked.
 
 **Validation:** A search of the repository finds "Talking Avatar" only in the parent `CLAUDE.md` and in history. Not verified — the name's legal availability requires a trademark and domain search before launch.
+
+---
+
+## D-032 — The typefaces ship with the app instead of loading from Google
+
+**Status:** Proposed · 2026-11-17 · Area: frontend
+
+**Choice:** Plus Jakarta Sans and Inter are bundled with Frameforge Web as font files served from our own address. The design files on the canvas keep their Google Fonts link; that is a drawing tool, not the product.
+
+**Alternatives:** Load both from Google Fonts at view time, as the designs do. Use the device's system fonts only.
+
+**Why:** Loading from Google sends every customer's network address to a third party on each visit and makes the look depend on an outside service. Bundling avoids both and works offline. System fonts would drop the approved look.
+
+**Trade-off:** Two small development dependencies (or checked-in font files) and a slightly larger first download.
+
+**Validation:** Not verified — the font packages must be shown to install beside the current toolchain (M1.5 plan, Phase 0). The browser review confirms no request leaves for a font host.

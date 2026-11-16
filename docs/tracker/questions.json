@@ -195,9 +195,10 @@
     "why_it_matters": "No screen is rebuilt until you approve. The palette and typefaces are engineering's proposal, not a brand you chose.",
     "default_if_unanswered": "None. The component library and every later screen wait for your approval.",
     "escalation": "Core behaviour",
-    "handling": "Needs your answer",
+    "handling": "Answered by the owner",
     "blocks": "M1.5",
-    "status": "Open"
+    "status": "Answered",
+    "answer": "Approved (owner, 2026-11-17), after the login and sign-up screens were given an illustrated brand panel at the owner's request."
   },
   {
     "id": "Q-21",
@@ -209,5 +210,15 @@
     "blocks": "M7",
     "status": "Answered",
     "answer": "Frameforge. Backend: Frameforge API. Frontend: Frameforge Web (owner, 2026-11-17; decision D-031)."
+  },
+  {
+    "id": "Q-22",
+    "question": "Should customers be able to reset a forgotten password by email?",
+    "why_it_matters": "The login design has a 'Forgot password?' link but no reset screen or flow is planned. Without one, a locked-out paying customer needs manual help. It also requires the system to send email.",
+    "default_if_unanswered": "Yes: add a reset screen and an emailed link to M2.",
+    "escalation": "None",
+    "handling": "Default applies unless you object",
+    "blocks": "M2",
+    "status": "Open"
   }
 ]
