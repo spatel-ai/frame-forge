@@ -445,9 +445,9 @@
     "starts_after": "T-104, T-200",
     "task": "`users`, `sessions`, `email_tokens` tables",
     "acceptance": "Migration applies cleanly",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent building T-201 and T-202 together in a worktree (BE-Auth lane)."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Migration 0002 builds users, sessions, email_tokens, audit_log; test_migrations checks it. Review fix: start-up refuses a database not at the newest migration (tests/test_startup_check.py). backend/check.sh: 114 passed."
   },
   {
     "id": "T-202",
@@ -460,9 +460,9 @@
     "starts_after": "T-201",
     "task": "Sign up, log in, log out, log out everywhere, current user, change password",
     "acceptance": "Argon2id; cookie flags per D-003; session revocable; changing the password logs out other devices",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent building T-201 and T-202 together in a worktree (BE-Auth lane)."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Sign up, log in, log out, log out everywhere, me, change password per the T-200 contract; Argon2id (argon2-cffi 25.1.0); session token stored as SHA-256; cookie HttpOnly, Secure, SameSite=Lax, Path=/, 30 days; identical 401 for unknown email and wrong password, with a real Argon2 check on the unknown path; password change ends other sessions only; audit rows carry no email or password; confirmation email with a 24-hour token sent through the log sender. tests/test_auth.py; backend/check.sh: 114 passed. No browser check yet."
   },
   {
     "id": "T-207",
