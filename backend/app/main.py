@@ -7,6 +7,7 @@ from fastapi import FastAPI
 
 from .auth import routes as auth_routes
 from .auth.email import EmailSender, build_email_sender
+from .auth.ratelimit import register_rate_limit_handler
 from .auth.service import AuthService
 from .auth.store import AuthStore
 from .core import health
@@ -14,6 +15,7 @@ from .core.config import Settings
 from .core.database import DatabaseNotReady, check_database
 from .core.errors import register_error_handlers
 from .core.logging import RequestIdMiddleware, configure_logging
+from .core.origin import OriginMiddleware
 from .jobs import routes as job_routes
 from .jobs.db import JobStore
 from .jobs.errors import register_job_error_handlers
@@ -59,6 +61,8 @@ def create_app(
     app.state.settings = settings
     register_error_handlers(app)
     register_job_error_handlers(app)
+    register_rate_limit_handler(app)
+    app.add_middleware(OriginMiddleware, allowed_origins=settings.allowed_origins)
     app.add_middleware(RequestIdMiddleware)
     app.include_router(auth_routes.router)
     app.include_router(job_routes.router)

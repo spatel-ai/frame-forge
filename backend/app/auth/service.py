@@ -14,6 +14,7 @@ from ..core.config import Settings
 from ..core.errors import ApiError
 from . import passwords
 from .email import EmailSender
+from .ratelimit import HOUR, MINUTE, RateLimited, RateLimiter, Rule, key_part
 from .schemas import ChangePasswordIn, LoginIn, SignupIn, UserOut
 from .store import AuthStore, EmailTaken
 
@@ -60,6 +61,8 @@ class AuthService:
         self.store = store
         self.email_sender = email_sender
         self.now = clock
+        # Reads self.now at call time so a test that moves the clock moves the limits too.
+        self.limiter = RateLimiter(lambda: self.now().timestamp())
 
     @property
     def session_seconds(self) -> int:
@@ -67,8 +70,10 @@ class AuthService:
 
     # sign up / log in ------------------------------------------------------------------
 
-    def signup(self, body: SignupIn) -> tuple[UserOut, str]:
+    def signup(self, body: SignupIn, client: str = "unknown") -> tuple[UserOut, str]:
         """Returns the new user and the session token to put in the cookie."""
+        # Every attempt counts, valid or not (D-035).
+        self._limit(Rule(f"signup:{client}", 5, HOUR))
         name = body.name.strip()
         email = body.email.strip().lower()
         errors: dict[str, str] = {}
@@ -137,9 +142,28 @@ class AuthService:
             # The account exists; the customer can ask for another email. No address in the log.
             log.error("Could not send a confirmation email", exc_info=True)
 
-    def login(self, body: LoginIn) -> tuple[UserOut, str]:
+    def _limit(self, *rules: Rule) -> None:
+        wait = self.limiter.hit(*rules)
+        if wait is not None:
+            raise RateLimited(wait)
+
+    def login(self, body: LoginIn, client: str = "unknown") -> tuple[UserOut, str]:
         email = body.email.strip().lower()
         password = body.password
+        # Only failures count; a full counter refuses even the right password (D-035).
+        fails = Rule(f"login:{key_part(email)}|{client}", 5, 15 * MINUTE)
+        if (wait := self.limiter.blocked(fails)) is not None:
+            raise RateLimited(wait)
+        try:
+            result = self._login(email, password)
+        except ApiError as exc:
+            if exc.code == "invalid_credentials":
+                self.limiter.record(fails)
+            raise
+        self.limiter.clear(fails.key)
+        return result
+
+    def _login(self, email: str, password: str) -> tuple[UserOut, str]:
         user = self.store.get_user_by_email(email) if len(password) <= 128 else None
         if user is None:
             passwords.burn_verification_time(password[:128])
@@ -226,17 +250,28 @@ class AuthService:
         if not self.store.confirm_email(hash_token(token), self.now()):
             raise self._verify_invalid()
 
-    def resend_verification(self, user_id: str, email: str) -> None:
+    def resend_verification(self, user_id: str, email: str, client: str = "unknown") -> None:
+        self._limit(*self._mail_rules("resend", email, client))
         user = self.store.get_user(user_id)
         if user is None or user["email_verified_at"] is not None:
             return
         self.send_verification_email(email, self.create_verification_token(user_id))
 
-    def forgot_password(self, email: str) -> None:
+    @staticmethod
+    def _mail_rules(action: str, email: str, client: str) -> tuple[Rule, Rule]:
+        # 3 per email and 10 per address per hour; each action has its own counters.
+        return (
+            Rule(f"{action}-email:{key_part(email)}", 3, HOUR),
+            Rule(f"{action}-ip:{client}", 10, HOUR),
+        )
+
+    def forgot_password(self, email: str, client: str = "unknown") -> None:
         """Always returns normally for a well-formed email, whether or not an account exists."""
         email = email.strip().lower()
         if len(email) > 254 or not _EMAIL.fullmatch(email):
             raise _invalid({"email": "Enter a full email address, like name@example.com."})
+        # Counts the submitted address whether or not an account exists, so a 429 reveals nothing.
+        self._limit(*self._mail_rules("forgot", email, client))
         user = self.store.get_user_by_email(email)
         if user is None or user["status"] != "active":
             return

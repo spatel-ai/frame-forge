@@ -12,7 +12,7 @@ Error codes (all with the shape {detail, code, fields?}):
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Request, Response
 
 from ..core.errors import ErrorOut
 from .deps import (
@@ -23,6 +23,7 @@ from .deps import (
     session_token,
     set_session_cookie,
 )
+from .ratelimit import client_address
 from .schemas import (
     ChangePasswordIn,
     ForgotPasswordIn,
@@ -53,8 +54,8 @@ _AUTH: dict[int | str, dict[str, Any]] = {401: _E}
     responses={409: _E, **_INVALID, **_LIMITED},
     summary="Create an account, log in, and send the confirmation email",
 )
-def signup(body: SignupIn, response: Response, service: Service) -> UserOut:
-    user, token = service.signup(body)
+def signup(body: SignupIn, request: Request, response: Response, service: Service) -> UserOut:
+    user, token = service.signup(body, client_address(request))
     set_session_cookie(response, token, service.session_seconds)
     return user
 
@@ -65,8 +66,8 @@ def signup(body: SignupIn, response: Response, service: Service) -> UserOut:
     responses={**_AUTH, **_INVALID, **_LIMITED},
     summary="Log in; sets the session cookie",
 )
-def login(body: LoginIn, response: Response, service: Service) -> UserOut:
-    user, token = service.login(body)
+def login(body: LoginIn, request: Request, response: Response, service: Service) -> UserOut:
+    user, token = service.login(body, client_address(request))
     set_session_cookie(response, token, service.session_seconds)
     return user
 
@@ -108,8 +109,8 @@ def verify_email(body: TokenIn, service: Service) -> None:
     responses={**_AUTH, **_LIMITED},
     summary="Send the confirmation email again to the logged-in user",
 )
-def resend_verification(service: Service, user: User) -> None:
-    service.resend_verification(user.id, user.email)
+def resend_verification(request: Request, service: Service, user: User) -> None:
+    service.resend_verification(user.id, user.email, client_address(request))
 
 
 @router.post(
@@ -118,8 +119,8 @@ def resend_verification(service: Service, user: User) -> None:
     responses={**_INVALID, **_LIMITED},
     summary="Send a reset link if an account exists; answers the same either way",
 )
-def forgot_password(body: ForgotPasswordIn, service: Service) -> None:
-    service.forgot_password(body.email)
+def forgot_password(body: ForgotPasswordIn, request: Request, service: Service) -> None:
+    service.forgot_password(body.email, client_address(request))
 
 
 @router.post(
