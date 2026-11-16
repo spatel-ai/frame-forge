@@ -27,7 +27,7 @@ export default function AppShell() {
   return (
     <main className="app">
       <header>
-        <h1>Talking Avatar</h1>
+        <h1>Frameforge</h1>
         {config?.provider === 'mock' && <span className="badge">Mock mode — no real generation, no cost</span>}
       </header>
 

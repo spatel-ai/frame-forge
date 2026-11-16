@@ -1,4 +1,4 @@
-# Milestones — Talking Avatar Platform
+# Milestones — Frameforge
 
 Nine milestones, each a slice that works end to end on backend and frontend. A milestone ends
 with evidence, not with "code written".

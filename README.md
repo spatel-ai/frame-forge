@@ -1,10 +1,10 @@
-# Talking Avatar POC
+# Frameforge
 
 Upload a photo, type a script (English, Hindi or Punjabi), listen to the generated voice,
 approve it, and get a talking-avatar video of up to 30 seconds.
 
-- `backend/` — FastAPI, PostgreSQL job tracking (in Docker), files on local disk under `backend/data/`
-- `frontend/` — React (Vite) single page
+- `backend/` — **Frameforge API**: FastAPI, PostgreSQL job tracking (in Docker), files on local disk under `backend/data/`
+- `frontend/` — **Frameforge Web**: React (Vite) single page
 - Models (fal.ai): voice `fal-ai/minimax/speech-02-hd` (default) or Kokoro (set `AVATAR_VOICE=kokoro`); Punjabi always uses `fal-ai/gemini-3.1-flash-tts` with the male voice Charon, video `fal-ai/kling-video/ai-avatar/v2/standard`
 
 ## Run in mock mode (free, no network calls)

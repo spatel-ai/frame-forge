@@ -302,8 +302,8 @@
     "status": "Needs owner",
     "waiting_on": "Q-20",
     "area": "Frontend",
-    "choice": "Working name \"Talking Avatar\". A vivid blue-violet primary (`#4A3AFF`), a marigold used only for credits (`#FFB020`), a cool neutral page, Plus Jakarta Sans for headings and Inter for text, a 4 px spacing scale, 8 to 16 px corners. All values live in one tokens file. Light theme only at launch. The full table is in UX.md section 4.",
-    "trade_off": "The palette and name are engineering's taste until the owner confirms them; a later rebrand means changing the tokens file and re-checking contrast.",
+    "choice": "The name is settled separately (D-031: Frameforge). A vivid blue-violet primary (`#4A3AFF`), a marigold used only for credits (`#FFB020`), a cool neutral page, Plus Jakarta Sans for headings and Inter for text, a 4 px spacing scale, 8 to 16 px corners. All values live in one tokens file. Light theme only at launch. The full table is in UX.md section 4.",
+    "trade_off": "The palette is engineering's taste until the owner confirms them; a later rebrand means changing the tokens file and re-checking contrast.",
     "validation": "Text and control contrast meet 4.5:1 and 3:1 as stated in UX.md. Final sign-off is the owner's (T-152).",
     "date": "2026-11-17"
   },
@@ -327,6 +327,17 @@
     "choice": "Screens stay current without a manual refresh by refetching: a job every 3 seconds while in progress, a pending payment every 2 seconds for up to a minute, the balance after any action that can change it and when the window regains focus. A change the customer makes appears at once and is confirmed by the server's answer, except money, which only ever shows the server's number. No WebSocket or server-sent events are added.",
     "trade_off": "Each open job screen makes a request every 3 seconds. Updates are up to 3 seconds late.",
     "validation": "Tests with fake timers for each refetch rule; the browser run confirms progress advances with no reload. Revisit if request volume becomes a measured cost.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-031",
+    "decision": "The product is Frameforge; the backend is Frameforge API, the frontend Frameforge Web",
+    "status": "Confirmed (owner, 2026-11-17)",
+    "waiting_on": "",
+    "area": "Both",
+    "choice": "The product name customers see is \"Frameforge\". The backend is called \"Frameforge API\" (its OpenAPI title) and the frontend \"Frameforge Web\". Documents, designs, the browser tab and the app header use these names. Internal identifiers that customers never see keep their current values for now: the folder names `backend/` and `frontend/`, the package names, the Docker project and database name `avatar`, and the `AVATAR_` environment variables.",
+    "trade_off": "\"avatar\" lives on in internal names, which can confuse a newcomer. The parent `CLAUDE.md` still says \"Talking Avatar POC\"; it is never edited, and it refers to this same product. Trademark, domain and app-store availability of \"Frameforge\" have not been checked.",
+    "validation": "A search of the repository finds \"Talking Avatar\" only in the parent `CLAUDE.md` and in history. Not verified — the name's legal availability requires a trademark and domain search before launch.",
     "date": "2026-11-17"
   }
 ]

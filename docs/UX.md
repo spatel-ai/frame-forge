@@ -1,10 +1,10 @@
-# UX and Design — Talking Avatar Platform
+# UX and Design — Frameforge Web
 
 Status: **Proposed, awaiting owner approval of the designs** (2026-11-17, task T-152).
 
 This document is the standard every screen is built and reviewed against. The screen designs
 themselves are on the design canvas:
-[Talking Avatar App Designs](https://claude.ai/artifact/3UF9Uf2hTWHw1TGm3ZERjz).
+[Frameforge App Designs](https://claude.ai/artifact/3UF9Uf2hTWHw1TGm3ZERjz).
 
 Governing rules: the parent [CLAUDE.md](../CLAUDE.md). Related: [HLD.md](HLD.md),
 [DECISIONS.md](DECISIONS.md) D-027 to D-030, [MILESTONES.md](MILESTONES.md) milestone M1.5.
@@ -73,7 +73,7 @@ Seen in the M1 browser run screenshots.
 | --- | --- |
 | Confirmed | R-75 to R-81 in [tracker/requirements.json](tracker/requirements.json) |
 | Assumed | The brand proposal in section 4 (R-82). Polling every 3 seconds is "real time" enough (D-030). Light theme only at launch |
-| Needs Verification | The product's final name (Q-21). Whether the proposed colours and type suit the owner's market (Q-20). The price shown in designs, which depends on Q-01 |
+| Needs Verification | Whether the proposed colours and type suit the owner's market (Q-20). The price shown in designs, which depends on Q-01 |
 | Deferred | Dark theme. Animated illustrations. A drag-and-drop timeline editor. Languages other than English in the interface itself |
 | Out of Scope | Copying any other product's logo, artwork or brand colours |
 
@@ -92,7 +92,7 @@ Seen in the M1 browser run screenshots.
 
 ## 4. Design system (proposed)
 
-Working name: **Talking Avatar**. The name, colours and typefaces are proposals (Q-20, Q-21).
+Name: **Frameforge** (owner decision D-031). The colours and typefaces are proposals (Q-20).
 They live in one tokens file, so changing them later is a small edit.
 
 ### Colour

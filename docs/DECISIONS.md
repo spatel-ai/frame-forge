@@ -1,4 +1,4 @@
-# Decision Log — Talking Avatar Platform
+# Decision Log — Frameforge
 
 Every decision records the five parts the parent [CLAUDE.md](../CLAUDE.md) §2 asks for: the
 choice, the alternatives considered, the reason, the trade-off, and how it will be validated.
@@ -453,13 +453,13 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 **Status:** Needs owner (Q-20) · 2026-11-17 · Area: frontend
 
-**Choice:** Working name "Talking Avatar". A vivid blue-violet primary (`#4A3AFF`), a marigold used only for credits (`#FFB020`), a cool neutral page, Plus Jakarta Sans for headings and Inter for text, a 4 px spacing scale, 8 to 16 px corners. All values live in one tokens file. Light theme only at launch. The full table is in UX.md section 4.
+**Choice:** The name is settled separately (D-031: Frameforge). A vivid blue-violet primary (`#4A3AFF`), a marigold used only for credits (`#FFB020`), a cool neutral page, Plus Jakarta Sans for headings and Inter for text, a 4 px spacing scale, 8 to 16 px corners. All values live in one tokens file. Light theme only at launch. The full table is in UX.md section 4.
 
 **Alternatives:** The owner supplies a brand. A dark theme at launch. A warmer or more muted palette.
 
 **Why:** No brand exists and the owner asked for a proposal. One accent for actions and a separate colour for money keeps "what can I press" and "what does it cost" visually distinct. Both typefaces are free and widely available.
 
-**Trade-off:** The palette and name are engineering's taste until the owner confirms them; a later rebrand means changing the tokens file and re-checking contrast.
+**Trade-off:** The palette is engineering's taste until the owner confirms them; a later rebrand means changing the tokens file and re-checking contrast.
 
 **Validation:** Text and control contrast meet 4.5:1 and 3:1 as stated in UX.md. Final sign-off is the owner's (T-152).
 
@@ -494,3 +494,19 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 **Trade-off:** Each open job screen makes a request every 3 seconds. Updates are up to 3 seconds late.
 
 **Validation:** Tests with fake timers for each refetch rule; the browser run confirms progress advances with no reload. Revisit if request volume becomes a measured cost.
+
+---
+
+## D-031 — The product is Frameforge; the backend is Frameforge API, the frontend Frameforge Web
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: both
+
+**Choice:** The product name customers see is "Frameforge". The backend is called "Frameforge API" (its OpenAPI title) and the frontend "Frameforge Web". Documents, designs, the browser tab and the app header use these names. Internal identifiers that customers never see keep their current values for now: the folder names `backend/` and `frontend/`, the package names, the Docker project and database name `avatar`, and the `AVATAR_` environment variables.
+
+**Alternatives:** The working name "Talking Avatar". Other candidates offered to the owner (Bolo, Vvdo, Chehra, Awaaz, Bolkar, FaceReel, Sutradhar). Renaming every internal identifier now.
+
+**Why:** The owner chose the names (answers Q-21). Internal identifiers are left alone because renaming the database, environment variables and packages touches every developer set-up and the lock files for no customer-visible gain.
+
+**Trade-off:** "avatar" lives on in internal names, which can confuse a newcomer. The parent `CLAUDE.md` still says "Talking Avatar POC"; it is never edited, and it refers to this same product. Trademark, domain and app-store availability of "Frameforge" have not been checked.
+
+**Validation:** A search of the repository finds "Talking Avatar" only in the parent `CLAUDE.md` and in history. Not verified — the name's legal availability requires a trademark and domain search before launch.

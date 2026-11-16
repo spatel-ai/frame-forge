@@ -1,4 +1,4 @@
-# Brief: screen designs for the Talking Avatar app
+# Brief: screen designs for the Frameforge web app
 
 You are drawing static screen designs (mockups) as HTML files for a design canvas. You write
 files only. You do not publish, run, render, screenshot or verify anything, and you do not touch

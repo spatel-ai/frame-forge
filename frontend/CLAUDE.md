@@ -1,4 +1,4 @@
-# Frontend — Talking Avatar Platform
+# Frameforge Web (frontend)
 
 The parent [CLAUDE.md](../CLAUDE.md) governs all work here. This file adds frontend specifics and
 never overrides it. If the two disagree, the parent file wins; fix this file.

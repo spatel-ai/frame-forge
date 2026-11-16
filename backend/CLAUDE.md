@@ -1,4 +1,4 @@
-# Backend — Talking Avatar Platform
+# Frameforge API (backend)
 
 The parent [CLAUDE.md](../CLAUDE.md) governs all work here. This file adds backend specifics and
 never overrides it. If the two disagree, the parent file wins; fix this file.

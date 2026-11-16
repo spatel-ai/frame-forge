@@ -205,8 +205,9 @@
     "why_it_matters": "It appears in the wordmark, the browser tab, emails and the Razorpay checkout window.",
     "default_if_unanswered": "The working name 'Talking Avatar'. Changing it later is a small edit.",
     "escalation": "None",
-    "handling": "Default applies unless you object",
+    "handling": "Answered by the owner",
     "blocks": "M7",
-    "status": "Open"
+    "status": "Answered",
+    "answer": "Frameforge. Backend: Frameforge API. Frontend: Frameforge Web (owner, 2026-11-17; decision D-031)."
   }
 ]

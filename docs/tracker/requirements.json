@@ -331,7 +331,7 @@
     "id": "R-82",
     "class": "Assumed",
     "area": "Design",
-    "requirement": "The product uses the proposed brand: working name Talking Avatar, the colours and typefaces in UX.md section 4, light theme only at launch.",
+    "requirement": "The product uses the proposed brand: the name Frameforge (D-031), the colours and typefaces in UX.md section 4, light theme only at launch.",
     "source": "Decision D-028; question Q-20",
     "discovery_item": ""
   },

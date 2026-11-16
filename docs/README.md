@@ -80,7 +80,7 @@ Status: VERIFIED | MOCK-VERIFIED | IMPLEMENTED, UNVERIFIED | BLOCKED | DEFERRED
 
 ## Designs
 
-[Talking Avatar App Designs](https://claude.ai/artifact/3UF9Uf2hTWHw1TGm3ZERjz)
+[Frameforge App Designs](https://claude.ai/artifact/3UF9Uf2hTWHw1TGm3ZERjz)
 
 The screen designs for every customer screen, on a design canvas. UX.md is the written standard;
 the canvas is the picture. The link is private to its owner until shared.

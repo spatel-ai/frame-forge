@@ -1,4 +1,4 @@
-"""HTTP API for the Talking Avatar POC: wiring only (app, lifespan, routers, errors, middleware)."""
+"""Frameforge API: wiring only (app, lifespan, routers, errors, middleware)."""
 
 import asyncio
 from contextlib import asynccontextmanager, suppress
@@ -47,7 +47,7 @@ def create_app(
                     await poller
             store.close()
 
-    app = FastAPI(title="Talking Avatar POC", lifespan=lifespan)
+    app = FastAPI(title="Frameforge API", lifespan=lifespan)
     app.state.settings = settings
     register_error_handlers(app)
     register_job_error_handlers(app)

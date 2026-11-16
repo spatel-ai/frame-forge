@@ -1,4 +1,4 @@
-# High-Level Design — Talking Avatar Platform
+# High-Level Design — Frameforge
 
 Status: **Proposed, awaiting owner approval** (revised 2026-11-17). Nothing in this document is
 built unless the section "What exists today" says so.
