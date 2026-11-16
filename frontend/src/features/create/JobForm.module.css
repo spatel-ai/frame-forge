@@ -10,3 +10,4 @@
   .footer { align-items: flex-end; }
   .footer > button { width: auto; }
 }
+.cardBody { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }

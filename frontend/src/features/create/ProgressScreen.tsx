@@ -1,6 +1,7 @@
 import type { Job } from '../../api/client'
 import { ProgressSteps } from '../../components/feedback'
 import type { ProgressStep } from '../../components/feedback'
+import { Card } from '../../components/layout'
 import styles from './screens.module.css'
 
 type InProgress = Extract<Job['status'], 'audio_generating' | 'video_submitting' | 'video_generating'>
@@ -37,13 +38,17 @@ function stepsFor(status: InProgress): { title: string; steps: ProgressStep[] } 
 export function ProgressScreen({ status }: { status: InProgress }) {
   const { title, steps } = stepsFor(status)
   return (
-    <section className={styles.panel} aria-labelledby="h-progress">
-      <h2 id="h-progress" className={styles.heading}>{title}</h2>
-      <ProgressSteps steps={steps} />
-      <p className={styles.note}>
-        This can take several minutes. It is safe to leave or reload this page: we keep working and
-        this page picks up where it left off.
-      </p>
-    </section>
+    <div className={styles.centered}>
+      <Card padding="lg">
+        <section className={styles.cardBody} aria-labelledby="h-progress">
+          <h2 id="h-progress" className={styles.heading}>{title}</h2>
+          <ProgressSteps steps={steps} />
+          <p className={styles.note}>
+            This can take several minutes. It is safe to leave or reload this page: we keep working and
+            this page picks up where it left off.
+          </p>
+        </section>
+      </Card>
+    </div>
   )
 }

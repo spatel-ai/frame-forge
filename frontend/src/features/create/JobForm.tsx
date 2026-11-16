@@ -5,6 +5,7 @@ import { ApiError, createJob, NetworkError } from '../../api/client'
 import type { Config, Job } from '../../api/client'
 import { Banner } from '../../components/feedback'
 import { Button, FileDropZone, Select, TextArea } from '../../components/form'
+import { Card } from '../../components/layout'
 import styles from './JobForm.module.css'
 
 type FieldName = 'image' | 'script' | 'language'
@@ -122,7 +123,9 @@ export function JobForm({ config, onCreated }: { config: Config; onCreated: (j: 
   return (
     <form onSubmit={onSubmit} className={styles.form} noValidate>
       <div className={styles.sections}>
-        <section className={styles.section} aria-labelledby="h-photo">
+        <div className={styles.section}>
+          <Card padding="lg">
+          <section className={styles.cardBody} aria-labelledby="h-photo">
           <h2 id="h-photo" className={styles.heading}>Photo</h2>
           <FileDropZone
             ref={imageRef}
@@ -139,8 +142,12 @@ export function JobForm({ config, onCreated }: { config: Config; onCreated: (j: 
             <li>Use a photo of yourself or of someone who has agreed.</li>
           </ul>
         </section>
+          </Card>
+        </div>
 
-        <section className={styles.section} aria-labelledby="h-script">
+        <div className={styles.section}>
+          <Card padding="lg">
+          <section className={styles.cardBody} aria-labelledby="h-script">
           <h2 id="h-script" className={styles.heading}>Script</h2>
           <Select
             ref={languageRef}
@@ -172,6 +179,8 @@ export function JobForm({ config, onCreated }: { config: Config; onCreated: (j: 
             }}
           />
         </section>
+          </Card>
+        </div>
       </div>
 
       <div className={styles.footer}>

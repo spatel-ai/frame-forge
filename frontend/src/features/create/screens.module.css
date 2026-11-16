@@ -26,3 +26,7 @@
   .actions { flex-direction: row; flex-wrap: wrap; }
   .actions > button, .actions > a { width: auto; }
 }
+.cardBody { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+/* Portrait or landscape output sits in a fixed 16:9 frame, as in the design, instead of growing with the file. */
+.video { aspect-ratio: 16 / 9; object-fit: contain; background: var(--color-ink); }
+.centered { width: 100%; max-width: calc(var(--space-7) * 15); margin: 0 auto; }
