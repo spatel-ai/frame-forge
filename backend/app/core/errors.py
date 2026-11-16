@@ -1,4 +1,4 @@
-"""One error shape for the whole API: {"detail": "<message for the user>", "code": "<machine_code>"}.
+"""One error shape for the whole API: {"detail": "<message>", "code": "<machine_code>"}.
 
 `detail` is always a string. Internal errors never expose exception text or a stack trace."""
 
@@ -9,8 +9,6 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
-
-from ..jobs.service import Conflict, ValidationError
 
 log = logging.getLogger(__name__)
 
@@ -57,14 +55,6 @@ async def _api_error(_: Request, exc: ApiError) -> JSONResponse:
     return error_response(exc.status_code, exc.detail, exc.code)
 
 
-async def _invalid_input(_: Request, exc: ValidationError) -> JSONResponse:
-    return error_response(422, str(exc), "invalid_input")
-
-
-async def _wrong_state(_: Request, exc: Conflict) -> JSONResponse:
-    return error_response(409, str(exc), "wrong_state")
-
-
 async def _request_validation(_: Request, exc: RequestValidationError) -> JSONResponse:
     return error_response(422, _flatten_validation(exc), "validation_error")
 
@@ -85,9 +75,9 @@ async def _unhandled(_: Request, exc: Exception) -> JSONResponse:
 
 
 def register_error_handlers(app: FastAPI) -> None:
-    app.add_exception_handler(ApiError, _api_error)
-    app.add_exception_handler(ValidationError, _invalid_input)
-    app.add_exception_handler(Conflict, _wrong_state)
-    app.add_exception_handler(RequestValidationError, _request_validation)
-    app.add_exception_handler(StarletteHTTPException, _http_exception)
+    # Starlette types a handler as (Request, Exception); handlers here take the specific subclass
+    # they are registered for, which Starlette guarantees at call time.
+    app.add_exception_handler(ApiError, _api_error)  # type: ignore[arg-type]
+    app.add_exception_handler(RequestValidationError, _request_validation)  # type: ignore[arg-type]
+    app.add_exception_handler(StarletteHTTPException, _http_exception)  # type: ignore[arg-type]
     app.add_exception_handler(Exception, _unhandled)

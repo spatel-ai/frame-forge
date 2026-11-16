@@ -1,5 +1,7 @@
 """Job and config routes, mounted under /api/v1."""
 
+from typing import Any
+
 from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import FileResponse
 
@@ -10,8 +12,8 @@ from .service import JobService
 
 router = APIRouter(prefix="/api/v1")
 
-_NOT_FOUND = {404: {"model": ErrorOut}}
-_INVALID = {422: {"model": ErrorOut}}
+_INVALID: dict[int | str, dict[str, Any]] = {422: {"model": ErrorOut}}
+_NOT_FOUND: dict[int | str, dict[str, Any]] = {404: {"model": ErrorOut}, **_INVALID}
 
 
 def _service(request: Request) -> JobService:
@@ -52,7 +54,9 @@ def _load(request: Request, job_id: str) -> dict:
 def get_config(request: Request) -> ConfigOut:
     settings = _settings(request)
     return ConfigOut(
-        provider=_service(request).provider.name,
+        # Provider.name is a plain str; ConfigOut narrows it to "mock" | "fal" (providers.py
+        # is a money-critical file and is not changed here).
+        provider=_service(request).provider.name,  # type: ignore[arg-type]
         max_audio_seconds=settings.max_audio_seconds,
         max_script_chars=settings.max_script_chars,
         max_image_mb=settings.max_image_mb,

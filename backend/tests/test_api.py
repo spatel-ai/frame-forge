@@ -1,8 +1,10 @@
-"""API contract tests (task T-104): error shape, request ids, health, OpenAPI. Mock provider only."""
+"""API contract tests (T-104): error shape, request ids, health, OpenAPI. Mock provider only."""
 
+import ast
 import logging
 from dataclasses import replace
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -193,17 +195,63 @@ def test_openapi_lists_every_field_and_the_error_model(settings):
     assert set(schemas["ConfigOut"]["properties"]) == set(ConfigOut.model_fields)
     assert set(schemas["ErrorOut"]["properties"]) == {"detail", "code"}
     assert set(schemas["JobOut"]["properties"]["status"]["enum"]) == {
-        "audio_generating", "audio_ready", "video_submitting",
-        "video_generating", "completed", "failed",
+        "audio_generating",
+        "audio_ready",
+        "video_submitting",
+        "video_generating",
+        "completed",
+        "failed",
     }
     paths = spec["paths"]
     assert "/api/v1/config" in paths and "/healthz" in paths
     assert not any(p.startswith("/api/") and not p.startswith("/api/v1/") for p in paths)
     get_job = paths["/api/v1/jobs/{job_id}"]["get"]["responses"]
     assert get_job["404"]["content"]["application/json"]["schema"]["$ref"].endswith("/ErrorOut")
-    assert (
-        get_job["200"]["content"]["application/json"]["schema"]["$ref"].endswith("/JobOut")
-    )
+    assert get_job["200"]["content"]["application/json"]["schema"]["$ref"].endswith("/JobOut")
+
+
+def test_openapi_declares_project_error_shape_for_every_error():
+    """D-012: every declared 4xx/5xx is ErrorOut; no FastAPI default validation schema remains."""
+    doc = create_app().openapi()
+    schemas = doc["components"]["schemas"]
+    assert "HTTPValidationError" not in schemas and "ValidationError" not in schemas
+    error_ref = "#/components/schemas/ErrorOut"
+    for path, methods in doc["paths"].items():
+        for method, op in methods.items():
+            where = f"{method.upper()} {path}"
+            errors = {c: r for c, r in op["responses"].items() if c[:1] in ("4", "5")}
+            for code, response in errors.items():
+                ref = response.get("content", {}).get("application/json", {}).get("schema", {})
+                assert ref.get("$ref") == error_ref, f"{where} {code}"
+            # A route with path, query or body input can fail validation (422).
+            if op.get("parameters") or op.get("requestBody"):
+                assert "422" in errors, f"{where} does not declare 422"
+
+
+def test_core_does_not_import_from_feature_packages():
+    """D-012/D-022: `app.core` stays free of `app.jobs` and `app.providers` so features can be
+    built in parallel without editing shared core files."""
+    core = Path(__file__).resolve().parents[1] / "app" / "core"
+    forbidden = ("jobs", "providers")
+    for source in sorted(core.glob("*.py")):
+        for node in ast.walk(ast.parse(source.read_text(), str(source))):
+            names: list[str] = []
+            if isinstance(node, ast.Import):
+                names = [a.name for a in node.names]
+            elif isinstance(node, ast.ImportFrom):
+                # Relative: `..jobs.x` is level 2, module "jobs.x"; `from .. import jobs` too.
+                base = node.module or ""
+                names = [base] + [f"{base}.{a.name}".strip(".") for a in node.names]
+                if node.level == 1:  # `from . import x` / `from .x import y` stay inside core
+                    continue
+                if node.level == 0 and not base.startswith("app"):
+                    continue
+                if node.level == 0:
+                    base = base.removeprefix("app").lstrip(".")
+                    names = [base] + [f"{base}.{a.name}".strip(".") for a in node.names]
+            for name in names:
+                top = name.removeprefix("app.").split(".")[0]
+                assert top not in forbidden, f"{source.name} imports {name!r}"
 
 
 def test_job_and_config_json_keys_are_unchanged(client):

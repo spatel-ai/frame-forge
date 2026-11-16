@@ -57,7 +57,7 @@ class JobStore:
         ts = _to_db("created_at", now_iso())
         with self.engine.begin() as conn:
             conn.execute(
-                insert(_jobs).values(
+                insert(_jobs).values(  # type: ignore[arg-type]  # Table typed as FromClause
                     id=job_id,
                     status=AUDIO_GENERATING,
                     language=language,
@@ -96,7 +96,8 @@ class JobStore:
         values = {name: _to_db(name, value) for name, value in values.items()}
         with self.engine.begin() as conn:
             result = conn.execute(
-                update(_jobs)
+                # Job.__table__ is typed as FromClause; update() wants a Table. Same at insert().
+                update(_jobs)  # type: ignore[arg-type]
                 .where(_jobs.c.id == job_id, _jobs.c.status == from_status)
                 .values(**values)
             )

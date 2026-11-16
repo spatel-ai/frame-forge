@@ -72,12 +72,11 @@ def test_concurrent_transitions_on_one_job_let_exactly_one_win(database_url):
 
         # The monitor runs in autocommit: inside one transaction pg_stat_activity is a
         # frozen snapshot and would never show the waiters arriving.
-        with locker.connect() as lock_conn, locker.connect().execution_options(
-            isolation_level="AUTOCOMMIT"
-        ) as monitor:
-            lock_conn.execute(
-                text("SELECT 1 FROM jobs WHERE id = :id FOR UPDATE"), {"id": job_id}
-            )
+        with (
+            locker.connect() as lock_conn,
+            locker.connect().execution_options(isolation_level="AUTOCOMMIT") as monitor,
+        ):
+            lock_conn.execute(text("SELECT 1 FROM jobs WHERE id = :id FOR UPDATE"), {"id": job_id})
             threads = [threading.Thread(target=approve) for _ in range(threads_n)]
             for t in threads:
                 t.start()
@@ -142,17 +141,28 @@ def test_timestamps_round_trip_as_now_iso_text(database_url):
         assert abs(datetime.now(timezone.utc) - created) < timedelta(seconds=5)
 
         started = "2026-11-17T08:30:15+00:00"
-        assert store.transition(job_id, db.AUDIO_GENERATING, db.VIDEO_GENERATING,
-                                video_started_at=started)
+        assert store.transition(
+            job_id, db.AUDIO_GENERATING, db.VIDEO_GENERATING, video_started_at=started
+        )
         job = store.get(job_id)
         assert job["video_started_at"] == started
         assert datetime.fromisoformat(job["video_started_at"]).tzinfo is not None
         assert ISO_SECONDS_UTC.match(job["updated_at"])
         assert [j["id"] for j in store.list_by_status(db.VIDEO_GENERATING)] == [job_id]
         assert list(job) == [
-            "id", "status", "language", "script", "image_file", "audio_file",
-            "audio_duration_seconds", "video_file", "provider_request_id",
-            "video_started_at", "error", "created_at", "updated_at",
+            "id",
+            "status",
+            "language",
+            "script",
+            "image_file",
+            "audio_file",
+            "audio_duration_seconds",
+            "video_file",
+            "provider_request_id",
+            "video_started_at",
+            "error",
+            "created_at",
+            "updated_at",
         ]
     finally:
         store.close()

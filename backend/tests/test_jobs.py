@@ -9,12 +9,12 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from app.jobs import db
 from app.core.config import Settings
+from app.jobs import db
 from app.jobs.db import JobStore
+from app.jobs.service import Conflict, JobService, ValidationError
 from app.main import create_app
 from app.providers import MockProvider, ProviderError, VideoPoll
-from app.jobs.service import Conflict, JobService, ValidationError
 
 
 def png(size=(512, 512)) -> bytes:
@@ -238,7 +238,9 @@ def test_transient_poll_error_is_retried_then_completes(settings):
 
 def test_provider_reported_failure_marks_the_job_failed(settings):
     async def run():
-        provider = ScriptedPolls(settings, [VideoPoll("failed", error="Video generation failed: x")])
+        provider = ScriptedPolls(
+            settings, [VideoPoll("failed", error="Video generation failed: x")]
+        )
         service = make_service(settings, provider)
         job_id = await ready_job(service)
         service.approve_audio(job_id)
@@ -370,9 +372,7 @@ def test_http_flow_end_to_end(settings):
         job_id = created.json()["id"]
 
         job = wait_for(client, job_id, "audio_ready")
-        assert job["estimated_video_cost_usd"] == round(
-            job["audio_duration_seconds"] * 0.0562, 2
-        )
+        assert job["estimated_video_cost_usd"] == round(job["audio_duration_seconds"] * 0.0562, 2)
         assert client.get(job["audio_url"]).status_code == 200
         assert client.get(f"/api/v1/jobs/{job_id}/video").status_code == 404
 
@@ -490,7 +490,12 @@ def test_fal_arguments_per_language(settings):
     assert calls[1][1]["language_boost"] == "Hindi"
     assert calls[2] == (
         "fal-ai/gemini-3.1-flash-tts",
-        {"prompt": "hi", "voice": "Charon", "language_code": "Punjabi (India)", "output_format": "wav"},
+        {
+            "prompt": "hi",
+            "voice": "Charon",
+            "language_code": "Punjabi (India)",
+            "output_format": "wav",
+        },
     )
 
 

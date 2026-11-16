@@ -12,6 +12,7 @@ from .core.errors import register_error_handlers
 from .core.logging import RequestIdMiddleware, configure_logging
 from .jobs import routes as job_routes
 from .jobs.db import JobStore
+from .jobs.errors import register_job_error_handlers
 from .jobs.service import JobService
 from .providers import Provider, build_provider
 
@@ -49,6 +50,7 @@ def create_app(
     app = FastAPI(title="Talking Avatar POC", lifespan=lifespan)
     app.state.settings = settings
     register_error_handlers(app)
+    register_job_error_handlers(app)
     app.add_middleware(RequestIdMiddleware)
     app.include_router(job_routes.router)
     app.include_router(health.router)

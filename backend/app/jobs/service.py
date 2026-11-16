@@ -10,10 +10,10 @@ from pathlib import Path
 
 from PIL import Image
 
-from . import db
 from ..core.config import Settings
-from .db import JobStore
 from ..providers import Provider, ProviderError
+from . import db
+from .db import JobStore
 
 log = logging.getLogger("avatar")
 
