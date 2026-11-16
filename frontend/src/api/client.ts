@@ -6,11 +6,21 @@ export type Job = components['schemas']['JobOut']
 export class ApiError extends Error {
   status: number
   code: string
-  constructor(status: number, message: string, code = 'unknown') {
+  /** Per-field messages from the server ({field: message}); empty when the error is not about one field. */
+  fields: Record<string, string>
+  constructor(status: number, message: string, code = 'unknown', fields: Record<string, string> = {}) {
     super(message)
     this.status = status
     this.code = code
+    this.fields = fields
   }
+}
+
+function toFields(value: unknown): Record<string, string> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  const out: Record<string, string> = {}
+  for (const [key, msg] of Object.entries(value)) if (typeof msg === 'string') out[key] = msg
+  return out
 }
 
 /** Network-level failure (no HTTP response). */
@@ -37,14 +47,16 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   if (!res.ok) {
     let detail: unknown
     let code = 'unknown'
+    let fields: Record<string, string> = {}
     try {
       const body = await res.json()
       detail = body.detail
       if (typeof body.code === 'string') code = body.code
+      fields = toFields(body.fields)
     } catch {
       /* non-JSON body */
     }
-    throw new ApiError(res.status, detailToMessage(detail, `Request failed (${res.status})`), code)
+    throw new ApiError(res.status, detailToMessage(detail, `Request failed (${res.status})`), code, fields)
   }
   return (await res.json()) as T
 }
