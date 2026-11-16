@@ -20,6 +20,14 @@ class Settings:
         default_factory=lambda: float(os.getenv("AVATAR_VIDEO_TIMEOUT", "1800"))
     )
 
+    # Synchronous SQLAlchemy URL for PostgreSQL (psycopg 3 driver). The default
+    # matches docker-compose.yml's local development database.
+    database_url: str = field(
+        default_factory=lambda: os.getenv(
+            "DATABASE_URL", "postgresql+psycopg://avatar:avatar_dev@127.0.0.1:5432/avatar"
+        )
+    )
+
     max_audio_seconds: float = 30.0
     # Live MiniMax English runs measured about 14 characters a second, so 400
     # characters stays under 30 seconds instead of paying for unusable audio.
