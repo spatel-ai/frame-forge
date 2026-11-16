@@ -220,9 +220,9 @@
     "starts_after": "T-103",
     "task": "`/api/v1` prefix, error shape, request-id logging, `/healthz`",
     "acceptance": "Every error matches D-012",
-    "status": "In progress",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Merged 2026-11-17. 54 tests pass on development. OpenAPI lists every job and config field. Two review findings are being fixed with T-105: some routes still declare the default validation-error shape for 422, and core/errors.py imports from the jobs package"
   },
   {
     "id": "T-105",
@@ -235,7 +235,7 @@
     "starts_after": "T-104",
     "task": "One command that runs lint, type check and mock tests",
     "acceptance": "Documented in `backend/CLAUDE.md`",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
     "evidence": ""
   },
@@ -265,7 +265,7 @@
     "starts_after": "T-104, T-112",
     "task": "Generate API types from OpenAPI and switch the client to `/api/v1`",
     "acceptance": "No hand-written response type remains",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
     "evidence": ""
   },
