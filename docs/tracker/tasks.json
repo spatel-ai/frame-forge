@@ -222,7 +222,7 @@
     "acceptance": "Every error matches D-012",
     "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "Merged 2026-11-17. 54 tests pass on development. OpenAPI lists every job and config field. Two review findings are being fixed with T-105: some routes still declare the default validation-error shape for 422, and core/errors.py imports from the jobs package"
+    "evidence": "Merged 2026-11-17. Routes under /api/v1; one error shape; request ids; /healthz. Both review findings fixed with T-105: every error response now declares the project error shape, and core no longer imports from a feature package (each guarded by a test)"
   },
   {
     "id": "T-105",
@@ -235,9 +235,9 @@
     "starts_after": "T-104",
     "task": "One command that runs lint, type check and mock tests",
     "acceptance": "Documented in `backend/CLAUDE.md`",
-    "status": "In progress",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Merged 2026-11-17. backend/check.sh passes on development: Ruff lint, Ruff format, mypy, 56 tests. No logic change in service.py, providers.py or db.py; test changes are formatting only"
   },
   {
     "id": "T-110",

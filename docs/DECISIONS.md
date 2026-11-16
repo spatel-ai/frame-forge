@@ -405,7 +405,7 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 **Status:** Proposed · 2026-11-17 · Area: backend
 
-**Choice:** Ruff for linting and formatting. A type checker is added in T-105 after confirming it handles the code as written; the choice is recorded here then.
+**Choice:** Ruff for linting and formatting, and mypy for type checking. Both mypy and pyright were tried in T-105 and reported the same findings on this code; mypy was chosen because it is pure Python, while the pyright package downloads a Node runtime on first use. `backend/check.sh` runs lint, format check, type check and tests. Tests are not type-checked.
 
 **Alternatives:** Flake8 + Black + isort (three tools for what one does). No tooling (the POC's state today).
 
