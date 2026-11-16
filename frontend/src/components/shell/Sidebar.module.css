@@ -1,0 +1,34 @@
+.sidebar { display: none; }
+
+@media (min-width: 768px) {
+  .sidebar {
+    display: flex; flex-direction: column; gap: var(--space-1);
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    padding: var(--space-5) var(--space-3);
+    background: var(--color-surface); border-right: var(--line-width) solid var(--color-line);
+  }
+}
+
+.brand { padding: 0 var(--space-3) var(--space-4); }
+
+.link {
+  display: flex; align-items: center; gap: var(--space-3);
+  min-height: var(--target-min); padding: var(--space-3);
+  border-radius: var(--radius-control);
+  color: var(--color-ink-soft); font-weight: 500; text-decoration: none;
+}
+.link:hover { background: var(--color-page); color: var(--color-ink); }
+.link:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+.active, .active:hover { background: var(--color-primary-soft); color: var(--color-primary-strong); font-weight: 600; }
+
+.label { min-width: 0; }
+
+/* Tablet: icons only. The word stays in the DOM so every link keeps its accessible name. */
+@media (max-width: 1023px) {
+  .brand { padding-left: 0; padding-right: 0; display: flex; justify-content: center; }
+  .link { justify-content: center; padding: var(--space-3) 0; }
+  .label {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+}
