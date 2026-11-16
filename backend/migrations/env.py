@@ -7,8 +7,10 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+import app.auth.models  # noqa: F401  (registers the auth tables on Base.metadata)
+import app.jobs.models  # noqa: F401  (registers the jobs table)
 from app.core.config import Settings
-from app.jobs.models import Base
+from app.core.database import Base
 
 config = context.config
 if config.config_file_name is not None and config.attributes.get("configure_logger", True):

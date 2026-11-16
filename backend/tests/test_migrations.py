@@ -38,3 +38,22 @@ def test_upgrade_and_downgrade_in_throwaway_schema(empty_schema, admin_engine):
 
     command.downgrade(cfg, "base")
     assert not inspect(admin_engine).has_table("jobs", schema=schema)
+
+
+def test_head_builds_the_auth_tables(empty_schema, admin_engine):
+    """T-201 (R-01): upgrade head creates users, sessions, email_tokens and audit_log."""
+    command.upgrade(empty_schema.alembic_config(), "head")
+    insp = inspect(admin_engine)
+    for table in ("users", "sessions", "email_tokens", "audit_log"):
+        assert insp.has_table(table, schema=empty_schema.name), table
+    users = {c["name"] for c in insp.get_columns("users", schema=empty_schema.name)}
+    assert users == {
+        "id",
+        "name",
+        "email",
+        "password_hash",
+        "email_verified_at",
+        "role",
+        "status",
+        "created_at",
+    }
