@@ -12,11 +12,19 @@ Error codes (all with the shape {detail, code, fields?}):
   email_not_verified 403 (on job create and approve, D-036),
   validation_error 422 (with `fields`: name, email, password, current_password, new_password)."""
 
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Depends, Response
 
 from ..core.errors import ApiError, ErrorOut
+from .deps import (
+    CurrentUser,
+    clear_session_cookie,
+    current_user,
+    get_auth_service,
+    session_token,
+    set_session_cookie,
+)
 from .schemas import (
     ChangePasswordIn,
     ForgotPasswordIn,
@@ -27,6 +35,10 @@ from .schemas import (
     TokenIn,
     UserOut,
 )
+from .service import AuthService
+
+Service = Annotated[AuthService, Depends(get_auth_service)]
+User = Annotated[CurrentUser, Depends(current_user)]
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
@@ -47,8 +59,10 @@ def _not_built() -> ApiError:
     responses={409: _E, **_INVALID, **_LIMITED},
     summary="Create an account, log in, and send the confirmation email",
 )
-def signup(body: SignupIn, response: Response) -> UserOut:
-    raise _not_built()
+def signup(body: SignupIn, response: Response, service: Service) -> UserOut:
+    user, token = service.signup(body)
+    set_session_cookie(response, token, service.session_seconds)
+    return user
 
 
 @router.post(
@@ -57,25 +71,31 @@ def signup(body: SignupIn, response: Response) -> UserOut:
     responses={**_AUTH, **_INVALID, **_LIMITED},
     summary="Log in; sets the session cookie",
 )
-def login(body: LoginIn, response: Response) -> UserOut:
-    raise _not_built()
+def login(body: LoginIn, response: Response, service: Service) -> UserOut:
+    user, token = service.login(body)
+    set_session_cookie(response, token, service.session_seconds)
+    return user
 
 
 @router.post("/logout", status_code=204, summary="End this session and clear the cookie")
-def logout(response: Response) -> None:
-    raise _not_built()
+def logout(
+    response: Response, service: Service, token: Annotated[str | None, Depends(session_token)]
+) -> None:
+    service.logout(token)
+    clear_session_cookie(response)
 
 
 @router.post(
     "/logout-all", status_code=204, responses=_AUTH, summary="End every session of this user"
 )
-def logout_all(response: Response) -> None:
-    raise _not_built()
+def logout_all(response: Response, service: Service, user: User) -> None:
+    service.logout_all(user.id)
+    clear_session_cookie(response)
 
 
 @router.get("/me", response_model=UserOut, responses=_AUTH, summary="The logged-in user")
-def me() -> UserOut:
-    raise _not_built()
+def me(service: Service, user: User) -> UserOut:
+    return service.me(user.id)
 
 
 @router.post(
@@ -134,5 +154,5 @@ def reset_password(body: ResetPasswordIn) -> None:
     responses={**_AUTH, **_INVALID},
     summary="Change the password; ends the user's other sessions",
 )
-def change_password(body: ChangePasswordIn, response: Response) -> None:
-    raise _not_built()
+def change_password(body: ChangePasswordIn, service: Service, user: User) -> None:
+    service.change_password(user.id, user.session_id, body)

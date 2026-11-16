@@ -2,6 +2,12 @@
 
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import DeclarativeBase
+
+
+class Base(DeclarativeBase):
+    """The one declarative base: every feature's models register their tables on it, so Alembic
+    sees them all."""
 
 
 class DatabaseNotReady(RuntimeError):

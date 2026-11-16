@@ -28,6 +28,15 @@ class Settings:
         )
     )
 
+    # "development" sends no real email (messages go to the log); "production" needs a provider.
+    environment: str = field(default_factory=lambda: os.getenv("AVATAR_ENV", "development"))
+    # Base of the links in emails, such as the confirm-email link.
+    app_base_url: str = field(
+        default_factory=lambda: os.getenv("AVATAR_APP_URL", "http://localhost:5173").rstrip("/")
+    )
+    # A login lasts this long, with no renewal (D-003).
+    session_days: int = 30
+
     max_audio_seconds: float = 30.0
     # Live MiniMax English runs measured about 14 characters a second, so 400
     # characters stays under 30 seconds instead of paying for unusable audio.

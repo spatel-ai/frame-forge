@@ -6,6 +6,9 @@ from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI
 
 from .auth import routes as auth_routes
+from .auth.email import EmailSender, build_email_sender
+from .auth.service import AuthService
+from .auth.store import AuthStore
 from .core import health
 from .core.config import Settings
 from .core.database import DatabaseNotReady, check_database
@@ -24,11 +27,14 @@ def create_app(
     settings: Settings | None = None,
     provider: Provider | None = None,
     start_poller: bool = True,
+    email_sender: EmailSender | None = None,
 ) -> FastAPI:
     settings = settings or Settings()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        # Fail before touching the database if production has no way to send email.
+        sender = email_sender or build_email_sender(settings)
         store = JobStore(settings.database_url)
         try:
             check_database(store.engine)
@@ -38,6 +44,7 @@ def create_app(
         service = JobService(settings, store, provider or build_provider(settings))
         service.recover_interrupted()
         app.state.service = service
+        app.state.auth_service = AuthService(settings, AuthStore(store.engine), sender)
         poller = asyncio.create_task(service.run_poller()) if start_poller else None
         try:
             yield
