@@ -179,6 +179,30 @@
       "h": 960,
       "title": "Reset link expired or used",
       "expand": "fill"
+    },
+    "Email-Confirm-Notice.dc.html": {
+      "x": 0,
+      "y": 7000,
+      "w": 1440,
+      "h": 960,
+      "title": "Not confirmed yet: notice on Create",
+      "expand": "fill"
+    },
+    "Email-Confirmed.dc.html": {
+      "x": 1520,
+      "y": 7000,
+      "w": 1440,
+      "h": 960,
+      "title": "Email confirmed (from the link)",
+      "expand": "fill"
+    },
+    "Email-Link-Expired.dc.html": {
+      "x": 3040,
+      "y": 7000,
+      "w": 1440,
+      "h": 960,
+      "title": "Confirmation link expired or used",
+      "expand": "fill"
     }
   },
   "createdOnFiles": {
@@ -196,7 +220,9 @@
     "t-phone",
     "n-price",
     "n-brand",
-    "t-reset"
+    "t-reset",
+    "t-confirm",
+    "n-confirm"
   ],
   "notes": {
     "n-brand": {
@@ -252,6 +278,21 @@
       "y": 5300,
       "maxW": 6000,
       "w": 240
+    },
+    "t-confirm": {
+      "kind": "title1",
+      "text": "Confirm email (awaiting approval)",
+      "x": 0,
+      "y": 6700,
+      "maxW": 4480,
+      "w": 240
+    },
+    "n-confirm": {
+      "fill": "orange",
+      "text": "New in M2, awaiting the owner's approval (task T-207, decision D-036). Customers can log in before confirming, but cannot make a voice or video until they do. Confirmation links work once and expire after 24 hours. Desktop only (D-033).",
+      "w": 420,
+      "x": 4560,
+      "y": 7000
     }
   },
   "order": [
@@ -277,7 +318,10 @@
     "Forgot-Password.dc.html",
     "Forgot-Password-Sent.dc.html",
     "Reset-Password.dc.html",
-    "Reset-Link-Expired.dc.html"
+    "Reset-Link-Expired.dc.html",
+    "Email-Confirm-Notice.dc.html",
+    "Email-Confirmed.dc.html",
+    "Email-Link-Expired.dc.html"
   ],
   "pages": [
     {

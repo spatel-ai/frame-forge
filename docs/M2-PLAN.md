@@ -44,7 +44,7 @@ All work on `development`. New screens at desktop width only (D-033).
 | Class | Item |
 | --- | --- |
 | Confirmed | Email + password, Argon2id, server-side sessions in an HttpOnly SameSite=Lax cookie (D-003); verification required before generating; reset per HLD §5.5; desktop-only screens; old jobs hidden |
-| Assumed | Sessions last 30 days, no sliding renewal. Login with an unknown email and a wrong password give the same message and similar timing. Sign-up with a taken email answers `email_taken` (409), accepting that it reveals the account exists; it is rate-limited. Changing the password logs out other devices, keeps this one. A reset logs out every device. Emails go to the server log only. First admin is made with a command-line step; nobody is admin until the owner names someone (Q-11) |
+| Assumed | Confirmation links work once and expire after 24 hours (reset links: 30 minutes, HLD §5.5). Sessions last 30 days, no sliding renewal. Login with an unknown email and a wrong password give the same message and similar timing. Sign-up with a taken email answers `email_taken` (409), accepting that it reveals the account exists; it is rate-limited. Changing the password logs out other devices, keeps this one. A reset logs out every device. Emails go to the server log only. First admin is made with a command-line step; nobody is admin until the owner names someone (Q-11) |
 | Needs Verification | That a `Secure` cookie is kept by the browser on `http://localhost` through the Vite proxy (checked in Phase 0 with Chromium; if not, a development-only setting turns `Secure` off). FastAPI 0.163 cookie and dependency APIs, read from the installed package before use |
 | Deferred | Real email provider (Q-04). Terms checkbox (T-707). Admin screens (M6). Sign-in with Google, two-factor, account deletion |
 | Out of Scope | Wallet, prices, payments (M3, M4) |
@@ -121,4 +121,8 @@ only by Fable at merge.
 
 ## Phase 0 results
 
-Recorded as Phase 0 runs.
+| Item | Check | Result |
+| --- | --- | --- |
+| Secure cookie on `http://localhost` | A test server set `Secure; HttpOnly; SameSite=Lax`; Chromium (Playwright 1.65.1) loaded it at `localhost` and `127.0.0.1` | Cookie kept and sent back on both; page scripts cannot read it. No development-only setting needed. Other browsers not checked |
+| Confirm-email screens (T-207) | Three desktop boards drawn on the canvas under "Confirm email (awaiting approval)": notice on Create, email confirmed, link expired; copies in `design/` | Awaiting the owner's approval |
+| `argon2-cffi` | PyPI | 25.1.0, MIT, Python 3.8 or newer |
