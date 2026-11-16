@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI
 
+from .auth import routes as auth_routes
 from .core import health
 from .core.config import Settings
 from .core.database import DatabaseNotReady, check_database
@@ -52,6 +53,7 @@ def create_app(
     register_error_handlers(app)
     register_job_error_handlers(app)
     app.add_middleware(RequestIdMiddleware)
+    app.include_router(auth_routes.router)
     app.include_router(job_routes.router)
     app.include_router(health.router)
     return app

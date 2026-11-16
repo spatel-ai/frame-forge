@@ -1,0 +1,138 @@
+"""Auth routes, mounted under /api/v1/auth: the M2 contract (task T-200).
+
+Every handler is a stub that answers 501 `not_implemented` until its task is built
+(T-202: signup, login, logout, logout-all, me, password/change; T-203: verify-email,
+verify-email/resend, password/forgot, password/reset/check, password/reset).
+The routes, bodies, responses and error codes below are the agreed contract; the
+builders keep them unchanged or change the contract here first.
+
+Error codes (all with the shape {detail, code, fields?}):
+  invalid_credentials 401, not_authenticated 401, email_taken 409, rate_limited 429,
+  verify_link_invalid 400, reset_link_invalid 400, origin_refused 403,
+  email_not_verified 403 (on job create and approve, D-036),
+  validation_error 422 (with `fields`: name, email, password, current_password, new_password)."""
+
+from typing import Any
+
+from fastapi import APIRouter, Response
+
+from ..core.errors import ApiError, ErrorOut
+from .schemas import (
+    ChangePasswordIn,
+    ForgotPasswordIn,
+    LoginIn,
+    ResetCheckOut,
+    ResetPasswordIn,
+    SignupIn,
+    TokenIn,
+    UserOut,
+)
+
+router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
+
+_E = {"model": ErrorOut}
+_INVALID: dict[int | str, dict[str, Any]] = {422: _E}
+_LIMITED: dict[int | str, dict[str, Any]] = {429: _E}
+_AUTH: dict[int | str, dict[str, Any]] = {401: _E}
+
+
+def _not_built() -> ApiError:
+    return ApiError(501, "This is not built yet.", "not_implemented")
+
+
+@router.post(
+    "/signup",
+    status_code=201,
+    response_model=UserOut,
+    responses={409: _E, **_INVALID, **_LIMITED},
+    summary="Create an account, log in, and send the confirmation email",
+)
+def signup(body: SignupIn, response: Response) -> UserOut:
+    raise _not_built()
+
+
+@router.post(
+    "/login",
+    response_model=UserOut,
+    responses={**_AUTH, **_INVALID, **_LIMITED},
+    summary="Log in; sets the session cookie",
+)
+def login(body: LoginIn, response: Response) -> UserOut:
+    raise _not_built()
+
+
+@router.post("/logout", status_code=204, summary="End this session and clear the cookie")
+def logout(response: Response) -> None:
+    raise _not_built()
+
+
+@router.post(
+    "/logout-all", status_code=204, responses=_AUTH, summary="End every session of this user"
+)
+def logout_all(response: Response) -> None:
+    raise _not_built()
+
+
+@router.get("/me", response_model=UserOut, responses=_AUTH, summary="The logged-in user")
+def me() -> UserOut:
+    raise _not_built()
+
+
+@router.post(
+    "/verify-email",
+    status_code=204,
+    responses={400: _E, **_INVALID},
+    summary="Confirm an email address with the token from the emailed link (no login needed)",
+)
+def verify_email(body: TokenIn) -> None:
+    raise _not_built()
+
+
+@router.post(
+    "/verify-email/resend",
+    status_code=204,
+    responses={**_AUTH, **_LIMITED},
+    summary="Send the confirmation email again to the logged-in user",
+)
+def resend_verification() -> None:
+    raise _not_built()
+
+
+@router.post(
+    "/password/forgot",
+    status_code=202,
+    responses={**_INVALID, **_LIMITED},
+    summary="Send a reset link if an account exists; answers the same either way",
+)
+def forgot_password(body: ForgotPasswordIn) -> None:
+    raise _not_built()
+
+
+@router.post(
+    "/password/reset/check",
+    response_model=ResetCheckOut,
+    responses={400: _E, **_INVALID},
+    summary="Check a reset token before showing the form",
+)
+def check_reset_token(body: TokenIn) -> ResetCheckOut:
+    raise _not_built()
+
+
+@router.post(
+    "/password/reset",
+    status_code=204,
+    responses={400: _E, **_INVALID},
+    summary="Set a new password with a reset token; ends every session of that user",
+)
+def reset_password(body: ResetPasswordIn) -> None:
+    raise _not_built()
+
+
+@router.post(
+    "/password/change",
+    status_code=204,
+    responses={**_AUTH, **_INVALID},
+    summary="Change the password; ends the user's other sessions",
+)
+def change_password(body: ChangePasswordIn, response: Response) -> None:
+    raise _not_built()

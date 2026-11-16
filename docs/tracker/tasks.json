@@ -430,9 +430,9 @@
     "starts_after": "T-156",
     "task": "Agree the auth API contract before building",
     "acceptance": "Routes, bodies and error codes written into the OpenAPI document",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "VERIFIED",
+    "evidence": "11 auth routes with bodies, responses and error codes in backend/app/auth/{schemas,routes}.py (stubs answer 501 not_implemented); OpenAPI regenerated, frontend schema.d.ts updated; tests/test_auth_contract.py pins routes, statuses and the UserOut fields. backend/check.sh and npm run check pass."
   },
   {
     "id": "T-201",
@@ -475,9 +475,9 @@
     "starts_after": "T-156",
     "task": "Draw the confirm-email screens (no design existed)",
     "acceptance": "Owner approves the boards on the canvas",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Three desktop boards drawn on the canvas (Confirm email section); copies in docs/design/. Awaiting owner approval."
   },
   {
     "id": "T-203",
