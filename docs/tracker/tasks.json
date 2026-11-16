@@ -265,9 +265,9 @@
     "starts_after": "T-104, T-112",
     "task": "Generate API types from OpenAPI and switch the client to `/api/v1`",
     "acceptance": "No hand-written response type remains",
-    "status": "In progress",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Merged 2026-11-17. Types generated from the backend OpenAPI with a pinned npx command; no hand-written response type remains; client calls /api/v1. Check and build pass on development"
   },
   {
     "id": "T-111",
@@ -280,9 +280,9 @@
     "starts_after": "T-113",
     "task": "Move the create flow onto routes with TanStack Query",
     "acceptance": "Reload at any step resumes the job",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Merged 2026-11-17. /create and /create/:jobId with TanStack Query; 32 frontend tests pass against a mocked API, including polling, 404 redirect and approve. Not yet seen in a browser"
   },
   {
     "id": "T-112",
