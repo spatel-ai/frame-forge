@@ -430,3 +430,67 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 **Trade-off:** Mocking the client module does not exercise the real fetch code; that is covered by the Phase 6 browser run.
 
 **Validation:** One command runs lint, type check and tests (T-112).
+
+---
+
+## D-027 — Design direction: creative-tool patterns with our own identity, desktop first
+
+**Status:** Confirmed · 2026-11-17 · Area: frontend
+
+**Choice:** The app follows the layout patterns common to Canva and to AI video tools: a left sidebar, one prominent Create action, card galleries, a step-by-step create flow, voice preview and price before any spend. The visual identity is our own. Screens are designed for desktop first and must also work on a phone. All planned customer screens are designed and approved before they are built.
+
+**Alternatives:** Keep the POC's single plain form and restyle screens as they are built. Mirror one product's look closely. Design for phones first.
+
+**Why:** Owner requirement after reviewing M1 (R-75 to R-78). Familiar patterns mean customers need no instructions; designing everything first means login, wallet and payments are built once, to one standard.
+
+**Trade-off:** A design milestone (M1.5) now sits before login, and the create flow built in M1 is rebuilt.
+
+**Validation:** The owner approves the designs on the canvas (T-152); rebuilt screens are compared with them in a browser at 1440 px and 390 px (T-156).
+
+---
+
+## D-028 — Proposed brand and design tokens
+
+**Status:** Needs owner (Q-20) · 2026-11-17 · Area: frontend
+
+**Choice:** Working name "Talking Avatar". A vivid blue-violet primary (`#4A3AFF`), a marigold used only for credits (`#FFB020`), a cool neutral page, Plus Jakarta Sans for headings and Inter for text, a 4 px spacing scale, 8 to 16 px corners. All values live in one tokens file. Light theme only at launch. The full table is in UX.md section 4.
+
+**Alternatives:** The owner supplies a brand. A dark theme at launch. A warmer or more muted palette.
+
+**Why:** No brand exists and the owner asked for a proposal. One accent for actions and a separate colour for money keeps "what can I press" and "what does it cost" visually distinct. Both typefaces are free and widely available.
+
+**Trade-off:** The palette and name are engineering's taste until the owner confirms them; a later rebrand means changing the tokens file and re-checking contrast.
+
+**Validation:** Text and control contrast meet 4.5:1 and 3:1 as stated in UX.md. Final sign-off is the owner's (T-152).
+
+---
+
+## D-029 — UX standards are acceptance criteria; one shared component library; field errors from the server
+
+**Status:** Proposed · 2026-11-17 · Area: both
+
+**Choice:** UX.md section 7 (validation, loading, feedback, live state, money, accessibility, responsive) and section 8 (definition of done) are acceptance criteria for every frontend task. Screens are built only from a shared component library on the design tokens, using native HTML controls (`button`, `input`, `select`, `dialog`) rather than a third-party kit. The API's error body gains an optional `fields` object, `{"detail", "code", "fields": {"<field>": "<message>"}}`, so a server-side validation error can be shown under the field it belongs to.
+
+**Alternatives:** Leave quality to each task's judgement. Adopt a component kit (MUI, Chakra). Show all server errors in one banner.
+
+**Why:** Written criteria are the only way "good UX" survives many tasks and several agents. Native controls bring keyboard and screen-reader behaviour without a dependency (this keeps D-011). Inline server errors follow the principle that a message appears next to what needs fixing.
+
+**Trade-off:** Each frontend task carries more acceptance work. Building our own components costs time once. `fields` is a small addition to the D-012 error shape that the backend must fill in for input errors.
+
+**Validation:** Component tests for every state; a contract test that input errors name their field; the browser review in each milestone's Gate D.
+
+---
+
+## D-030 — "Real time" means the screen updates itself by refetching; no push channel yet
+
+**Status:** Proposed · 2026-11-17 · Area: both
+
+**Choice:** Screens stay current without a manual refresh by refetching: a job every 3 seconds while in progress, a pending payment every 2 seconds for up to a minute, the balance after any action that can change it and when the window regains focus. A change the customer makes appears at once and is confirmed by the server's answer, except money, which only ever shows the server's number. No WebSocket or server-sent events are added.
+
+**Alternatives:** WebSockets or server-sent events pushing every change.
+
+**Why:** The owner asked for state that updates in real time (R-81). The slowest thing we track takes minutes, so a few seconds of delay is invisible, and refetching needs no new server machinery and works behind any proxy. It is already how the job screen works.
+
+**Trade-off:** Each open job screen makes a request every 3 seconds. Updates are up to 3 seconds late.
+
+**Validation:** Tests with fake timers for each refetch rule; the browser run confirms progress advances with no reload. Revisit if request volume becomes a measured cost.

@@ -16,16 +16,24 @@
     "status": "Done"
   },
   {
-    "id": "M2",
+    "id": "M1.5",
     "order": 2,
+    "milestone": "Design system and UX",
+    "outcome": "Approved designs for every customer screen, a component library, and the existing flow rebuilt to them",
+    "depends_on": "M1",
+    "status": "In progress"
+  },
+  {
+    "id": "M2",
+    "order": 3,
     "milestone": "Accounts and login",
     "outcome": "Only logged-in users can use the product; each sees only their own work",
-    "depends_on": "M1, Q-02",
+    "depends_on": "M1.5, Q-02",
     "status": "Planned"
   },
   {
     "id": "M3",
-    "order": 3,
+    "order": 4,
     "milestone": "Wallet and charging",
     "outcome": "Videos cost credits; the ledger is correct under concurrency (no real payments yet)",
     "depends_on": "M2, Q-01, Q-08, Q-19",
@@ -33,7 +41,7 @@
   },
   {
     "id": "M4",
-    "order": 4,
+    "order": 5,
     "milestone": "Razorpay payments",
     "outcome": "Customers buy credits with Razorpay in test mode",
     "depends_on": "M3, Q-06, Q-10",
@@ -41,7 +49,7 @@
   },
   {
     "id": "M5",
-    "order": 5,
+    "order": 6,
     "milestone": "Product completeness",
     "outcome": "Scripts, banners, history, consent: a product a customer can use unaided",
     "depends_on": "M4, Q-11, Q-15, Q-17",
@@ -49,7 +57,7 @@
   },
   {
     "id": "M6",
-    "order": 6,
+    "order": 7,
     "milestone": "Admin and operations",
     "outcome": "Staff can see, correct and reconcile money, and manage templates",
     "depends_on": "M5, Q-05, Q-09",
@@ -57,7 +65,7 @@
   },
   {
     "id": "M7",
-    "order": 7,
+    "order": 8,
     "milestone": "Hardening and launch",
     "outcome": "Deployed, secured, verified live with real money",
     "depends_on": "M6, Q-03, Q-07, Q-12, Q-13, Q-18",

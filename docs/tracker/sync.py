@@ -45,11 +45,11 @@ def main():
 
     tasks, milestones, current = [], [], None
     for line in md.splitlines():
-        heading = re.match(r"## (M\d) — ", line)
+        heading = re.match(r"## (M\d(?:\.\d)?) — ", line)
         if heading:
             current = heading.group(1)
         c = cells(line)
-        if len(c) == 4 and re.fullmatch(r"M\d", c[0]):
+        if len(c) == 4 and re.fullmatch(r"M\d(?:\.\d)?", c[0]):
             milestones.append({
                 "id": c[0], "order": len(milestones), "milestone": c[1], "outcome": c[2],
                 "depends_on": c[3], "status": old_ms.get(c[0], {}).get("status", "Planned"),
@@ -92,7 +92,7 @@ def main():
     problems = []
     ids = {row["id"] for rows in (tasks, decisions, requirements, questions, milestones) for row in rows}
     task_ids = {t["id"] for t in tasks}
-    files = [DOCS / n for n in ("HLD.md", "DECISIONS.md", "MILESTONES.md", "README.md", "M1-PLAN.md")]
+    files = [DOCS / n for n in ("HLD.md", "DECISIONS.md", "MILESTONES.md", "README.md", "M1-PLAN.md", "UX.md")]
     files += [DOCS.parent / "backend" / "CLAUDE.md", DOCS.parent / "frontend" / "CLAUDE.md"]
     files += [Path(p) for p in glob.glob(str(TRACKER / "*.json"))]
     for path in files:

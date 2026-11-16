@@ -95,6 +95,10 @@ banners (D-009). PostgreSQL replaces SQLite (D-002). Media stays on local disk d
 
 ### Customer app screens (target layout)
 
+How these screens look and behave is defined in [UX.md](UX.md): the design system, navigation
+(a left sidebar on desktop, a bottom bar on phones), and the standards for validation, loading,
+feedback and live state. Designs for each screen are on the design canvas linked there.
+
 | Area | Screens |
 | --- | --- |
 | Auth | Sign up, log in, verify email, forgot and reset password |
@@ -231,7 +235,9 @@ covers the estimated price, and each user has a daily cap on voice generations.
 ## 6. API surface (proposed)
 
 All routes sit under `/api/v1`. The existing `/api/...` routes move there in milestone M1.
-Errors use one shape: `{"detail": "<message for the user>", "code": "<machine_code>"}`.
+Errors use one shape: `{"detail": "<message for the user>", "code": "<machine_code>"}`. An input
+error may add `"fields": {"<field>": "<message>"}` so the message can be shown under the field it
+belongs to (D-029).
 
 Contract-first: each milestone from M2 starts with a task that writes that milestone's routes
 into the OpenAPI document before backend or frontend work begins.

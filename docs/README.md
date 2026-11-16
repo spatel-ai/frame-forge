@@ -8,6 +8,7 @@ The parent [CLAUDE.md](../CLAUDE.md) governs the project. These documents apply 
 | [DECISIONS.md](DECISIONS.md) | Why was each choice made, and what else was considered? |
 | [MILESTONES.md](MILESTONES.md) | In what order is it built, who owns each task, and how do we know it is finished? |
 | [M1-PLAN.md](M1-PLAN.md) | The phases, steps and discovery findings for milestone 1 |
+| [UX.md](UX.md) | What must every screen look and behave like? The design system and the interaction standards |
 | [tracker/](tracker/) | What is the status right now? |
 | [../backend/CLAUDE.md](../backend/CLAUDE.md) | Rules for backend work |
 | [../frontend/CLAUDE.md](../frontend/CLAUDE.md) | Rules for frontend work |
@@ -76,6 +77,13 @@ Known risks or limitations:
 Next justified action:
 Status: VERIFIED | MOCK-VERIFIED | IMPLEMENTED, UNVERIFIED | BLOCKED | DEFERRED
 ```
+
+## Designs
+
+[Talking Avatar App Designs](https://claude.ai/artifact/3UF9Uf2hTWHw1TGm3ZERjz)
+
+The screen designs for every customer screen, on a design canvas. UX.md is the written standard;
+the canvas is the picture. The link is private to its owner until shared.
 
 ## Dashboard
 

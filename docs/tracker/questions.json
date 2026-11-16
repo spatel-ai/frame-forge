@@ -188,5 +188,25 @@
     "handling": "Needs your answer",
     "blocks": "M3",
     "status": "Open"
+  },
+  {
+    "id": "Q-20",
+    "question": "Do you approve the screen designs and the proposed colours and typefaces on the design canvas?",
+    "why_it_matters": "No screen is rebuilt until you approve. The palette and typefaces are engineering's proposal, not a brand you chose.",
+    "default_if_unanswered": "None. The component library and every later screen wait for your approval.",
+    "escalation": "Core behaviour",
+    "handling": "Needs your answer",
+    "blocks": "M1.5",
+    "status": "Open"
+  },
+  {
+    "id": "Q-21",
+    "question": "What is the product's name?",
+    "why_it_matters": "It appears in the wordmark, the browser tab, emails and the Razorpay checkout window.",
+    "default_if_unanswered": "The working name 'Talking Avatar'. Changing it later is a small edit.",
+    "escalation": "None",
+    "handling": "Default applies unless you object",
+    "blocks": "M7",
+    "status": "Open"
   }
 ]

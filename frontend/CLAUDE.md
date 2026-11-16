@@ -151,14 +151,32 @@ other; shared code moves to `components/`, `lib/` or `api/`.
 - Poll a job only while its status is `audio_generating`, `video_submitting`, `video_generating`
   or `video_assembling`. Stop on any other status.
 
-## Interface standards
+## UX standards (decision D-029)
 
-- Every screen has a loading state, an empty state and an error state that says what to do next.
-- Works at 360 px wide and on desktop. No horizontal scrolling.
-- Keyboard reachable, visible focus, labels on every input, errors announced with `role="alert"`.
-- Colours, spacing and type sizes come from `styles/tokens.css`. No one-off values in components.
-- Words a customer reads are plain and specific: "Not enough credits. You need 40 more." not
-  "Insufficient balance error".
+[docs/UX.md](../docs/UX.md) is the standard for every screen, and the
+[design canvas](https://claude.ai/artifact/3UF9Uf2hTWHw1TGm3ZERjz) is the picture. Read both before
+building or changing a screen. They are acceptance criteria, not suggestions.
+
+- **Build from the design.** Do not invent a layout. If a screen or state has no design, stop and
+  ask for one; do not improvise.
+- **Only shared components and tokens.** No colour, size, spacing or radius written directly in a
+  feature. If a component is missing, add it to the library, with tests, not to the feature.
+- **Native controls.** `button`, `a`, `input` with `label`, `select`, `dialog`. Never a clickable
+  `div`.
+- **Every input:** visible label, hint for its limits, validation on leaving the field and live
+  after a first error, message under the field with `role="alert"`, focus moved to the first error
+  on submit, nothing the customer typed is lost on failure. Server `fields` errors are shown under
+  the same fields.
+- **Every wait:** skeletons on first load, a busy button for short actions, named progress steps
+  for long ones. Never a blank screen.
+- **Every list:** a designed empty state with the first action.
+- **Every failure:** says what happened, what was not charged, and what to do next.
+- **Live state:** follow the refetch table in UX.md section 7. Money shows only what the server
+  returned.
+- **Both widths:** 1440 px and 390 px, no sideways scroll from 360 px.
+
+A task is done only when it meets the nine points of UX.md section 8, including being seen in a
+real browser at both widths.
 
 ## Tests
 

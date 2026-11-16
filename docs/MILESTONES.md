@@ -1,6 +1,6 @@
 # Milestones — Talking Avatar Platform
 
-Eight milestones, each a slice that works end to end on backend and frontend. A milestone ends
+Nine milestones, each a slice that works end to end on backend and frontend. A milestone ends
 with evidence, not with "code written".
 
 - Task **status and verification** are kept in [tracker/tasks.json](tracker/tasks.json), not here.
@@ -27,7 +27,7 @@ a blocker; never skip it.
 | A | Before starting a milestone | Requirements understood and still wanted; acceptance criteria written; dependencies and blocking questions resolved; provider facts the work relies on are verified; each task has an owner |
 | B | Before joining backend and frontend work | Both sides match the agreed API contract; unit tests pass; errors are handled; security rules respected; nothing else broke |
 | C | Before any paid or live external run | Owner has approved this specific run and its expected cost; credentials are set securely; inputs meet the provider's rules; duplicate paid requests are impossible |
-| D | Before calling a milestone done | Every acceptance criterion has evidence; results recorded with the parent file's statuses; known limits reported; no open critical defect |
+| D | Before calling a milestone done | Every acceptance criterion has evidence; results recorded with the parent file's statuses; known limits reported; no open critical defect. Every screen the milestone touched meets the definition of done in [UX.md](UX.md) section 8 and has been seen in a browser at 1440 px and 390 px |
 
 Gate A also includes the parent file's §5 alignment check: if a task no longer adds value, or a
 simpler way exists, change the plan before building.
@@ -38,7 +38,8 @@ simpler way exists, change the plan before building.
 | --- | --- | --- | --- |
 | M0 | Design baseline | Approved design, decisions and plan | — |
 | M1 | Platform foundation | Same product as today, on PostgreSQL, with routing and a versioned API | M0 |
-| M2 | Accounts and login | Only logged-in users can use the product; each sees only their own work | M1, Q-02 |
+| M1.5 | Design system and UX | Approved designs for every customer screen, a component library, and the existing flow rebuilt to them | M1 |
+| M2 | Accounts and login | Only logged-in users can use the product; each sees only their own work | M1.5, Q-02 |
 | M3 | Wallet and charging | Videos cost credits; the ledger is correct under concurrency (no real payments yet) | M2, Q-01, Q-08, Q-19 |
 | M4 | Razorpay payments | Customers buy credits with Razorpay in test mode | M3, Q-06, Q-10 |
 | M5 | Product completeness | Scripts, banners, history, consent: a product a customer can use unaided | M4, Q-11, Q-15, Q-17 |
@@ -87,6 +88,28 @@ backend tests pass against PostgreSQL.
 | T-113 | FE | Sonnet | Acceptance | R-42 | Generate API types from OpenAPI and switch the client to `/api/v1` | No hand-written response type remains |
 | T-111 | FE | Sonnet | Acceptance | R-08, R-55 | Move the create flow onto routes with TanStack Query | Reload at any step resumes the job |
 | T-112 | FE | Haiku | Acceptance | R-06 | Test setup and first component tests | One command runs lint, type check and tests |
+
+## M1.5 — Design system and UX
+
+**Gate A needs:** the owner's design direction (given 2026-11-17: Canva-inspired patterns with our
+own identity, a proposed brand, all planned screens, desktop first). **Gate C:** none.
+
+The standards for this milestone and every later screen are in [UX.md](UX.md). No screen is
+rebuilt until the owner approves the designs (T-152).
+
+**Exit evidence:** The owner has approved the designs. The component library exists with tests.
+The existing create flow, rebuilt to the approved design, passes the definition of done in UX.md
+section 8, shown by a browser run at 1440 px and 390 px in mock mode.
+
+| ID | Area | Owner | Need | Traces to | Task | Accepted when |
+| --- | --- | --- | --- | --- | --- | --- |
+| T-150 | DOC | Fable | Acceptance | R-75, R-79, R-80, R-81 | UX discovery and standards | [UX.md](UX.md) covers discovery, principles, the design system and the interaction standards |
+| T-151 | DOC | Fable | Acceptance | R-76, R-77, R-78 | Screen designs on the design canvas | Every planned customer screen at desktop width, the main ones at phone width, plus state and component sheets |
+| T-152 | DOC | Owner | Acceptance | R-78, R-82 | Owner reviews and approves the designs and the proposed brand | Changes requested are made; approval recorded |
+| T-153 | FE | Sonnet | Acceptance | R-76, R-79, R-80 | Design tokens and the component library, with tests | Every component in UX.md section 4 exists, is keyboard accessible, and has tests for its states |
+| T-154 | FE | Sonnet | Acceptance | R-76, R-77 | New app shell: sidebar, top bar, phone navigation | Matches the design at 1440 px and 390 px; no sideways scroll from 360 px |
+| T-155 | FE | Sonnet | Acceptance | R-79, R-80, R-81 | Rebuild the create flow to the approved design | Stepper, drop zone with preview, inline validation, progress steps; meets UX.md section 8 |
+| T-156 | FE | Fable | Acceptance | R-75 | Browser review against the designs | Each rebuilt screen compared with its design at both widths; differences fixed or recorded |
 
 ## M2 — Accounts and login
 
@@ -238,7 +261,7 @@ parallel once the tasks they start after are done. Two tasks in the same lane ne
 
 | Lane | Files it owns | Notes |
 | --- | --- | --- |
-| Docs | `docs/` except `docs/contracts/` | |
+| Docs | `docs/` except `docs/contracts/`; the design canvas | |
 | Contract | `docs/contracts/` | The agreed routes, bodies and error codes. Backend and frontend both build to it, which is what lets them work at the same time |
 | BE-Core | `backend/app/core/`, `backend/app/main.py`, `backend/pyproject.toml`, `backend/migrations/` | The backend integrator. The only lane that registers routes and orders migrations |
 | BE-Auth | `backend/app/auth/` | |
@@ -311,6 +334,13 @@ its lane free, can start.
 | T-111 | FE-Create | T-113 |
 | T-112 | FE-Shell | T-110 |
 | T-113 | FE-Shell | T-104, T-112 |
+| T-150 | Docs | — |
+| T-151 | Docs | T-150 |
+| T-152 | Docs | T-151 |
+| T-153 | FE-Shell | T-152, T-113 |
+| T-154 | FE-Shell | T-153 |
+| T-155 | FE-Create | T-154, T-111 |
+| T-156 | Review | T-155 |
 | T-200 | Contract | T-008 |
 | T-201 | BE-Auth | T-104, T-200 |
 | T-202 | BE-Auth | T-201 |
@@ -318,8 +348,8 @@ its lane free, can start.
 | T-204 | BE-Jobs | T-202 |
 | T-205 | BE-Auth | T-203 |
 | T-206 | BE-Auth | T-204, T-205 |
-| T-210 | FE-Auth | T-110, T-200 |
-| T-211 | FE-Shell | T-210, T-113 |
+| T-210 | FE-Auth | T-154, T-200 |
+| T-211 | FE-Shell | T-210, T-154 |
 | T-212 | FE-Account | T-211 |
 | T-300 | Contract | T-200 |
 | T-301 | BE-Wallet | T-202, T-300 |
@@ -329,7 +359,7 @@ its lane free, can start.
 | T-305 | BE-Wallet | T-304, T-306 |
 | T-306 | BE-Wallet | T-302 |
 | T-310 | FE-Wallet | T-211, T-300 |
-| T-311 | FE-Create | T-111, T-211, T-300 |
+| T-311 | FE-Create | T-155, T-211, T-300 |
 | T-400 | Contract | T-300 |
 | T-401 | Review | T-008 |
 | T-402 | BE-Pay | T-302, T-400, T-401 |

@@ -139,7 +139,11 @@ Breaking one of these can charge a customer wrongly or pay fal.ai twice.
 - Contract first: a milestone's routes are written into the OpenAPI document (tasks T-200, T-300,
   T-400, T-500, T-600) before backend or frontend work on them begins.
 - Routes under `/api/v1` (from M1).
-- Errors: `{"detail": "<message for the user>", "code": "<machine_code>"}`.
+- Errors: `{"detail": "<message for the user>", "code": "<machine_code>"}`. For an input error, also
+  return `"fields": {"<field>": "<message>"}` naming each field at fault, so the interface can show
+  the message under that field (D-029, [docs/UX.md](../docs/UX.md) section 7).
+- Error messages are read by customers: plain words, what went wrong, what to do next. Never a
+  technical term, an exception name or an internal id.
 - Status codes: 401 not logged in, 402 not enough credits, 403 not allowed, 404 missing or not
   yours, 409 wrong state, 422 invalid input, 429 too many requests.
 - A change to a response is a contract change: update the frontend types in the same work.
