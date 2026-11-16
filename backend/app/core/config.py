@@ -34,6 +34,16 @@ class Settings:
     app_base_url: str = field(
         default_factory=lambda: os.getenv("AVATAR_APP_URL", "http://localhost:5173").rstrip("/")
     )
+    # Origins allowed to make state-changing requests (D-035); comma-separated in the env.
+    allowed_origins: tuple[str, ...] = field(
+        default_factory=lambda: tuple(
+            o.strip()
+            for o in os.getenv(
+                "AVATAR_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
+            ).split(",")
+            if o.strip()
+        )
+    )
     # A login lasts this long, with no renewal (D-003).
     session_days: int = 30
 
