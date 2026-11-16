@@ -473,8 +473,8 @@
     "need": "Safety",
     "traces_to": "R-01",
     "starts_after": "T-202",
-    "task": "Email verification and password reset",
-    "acceptance": "Single-use, expiring tokens; emails printed to the console in development",
+    "task": "Email verification and password reset, as in HLD section 5.5",
+    "acceptance": "Single-use tokens stored hashed, reset links expire in 30 minutes; the forgot route answers the same for unknown emails; a reset revokes every session; emails printed to the console in development",
     "status": "To do",
     "verification": "",
     "evidence": ""
@@ -533,8 +533,8 @@
     "need": "Acceptance",
     "traces_to": "R-01",
     "starts_after": "T-154, T-200",
-    "task": "Sign-up, log-in, verify, forgot and reset screens",
-    "acceptance": "Field-level errors; keyboard accessible",
+    "task": "Sign-up, log-in, verify, forgot and reset screens, built from their designs",
+    "acceptance": "Matches the designs (including the four password-reset screens); meets UX.md section 8",
     "status": "To do",
     "verification": "",
     "evidence": ""

@@ -217,8 +217,9 @@
     "why_it_matters": "The login design has a 'Forgot password?' link but no reset screen or flow is planned. Without one, a locked-out paying customer needs manual help. It also requires the system to send email.",
     "default_if_unanswered": "Yes: add a reset screen and an emailed link to M2.",
     "escalation": "None",
-    "handling": "Default applies unless you object",
+    "handling": "Answered by the owner",
     "blocks": "M2",
-    "status": "Open"
+    "status": "Answered",
+    "answer": "Yes: implement the forgot-password flow (owner, 2026-11-17). Designed now; built in M2 (T-203, T-210) because it needs customer accounts. HLD section 5.5."
   }
 ]

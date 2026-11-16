@@ -125,11 +125,11 @@ refuses anonymous users and refuses other users' resources.
 | T-200 | BE | Fable | Correctness | R-01 | Agree the auth API contract before building | Routes, bodies and error codes written into the OpenAPI document |
 | T-201 | BE | Sonnet | Correctness | R-01 | `users`, `sessions`, `email_tokens` tables | Migration applies cleanly |
 | T-202 | BE | Sonnet | Safety | R-01 | Sign up, log in, log out, current user | Argon2id; cookie flags per D-003; session revocable |
-| T-203 | BE | Sonnet | Safety | R-01 | Email verification and password reset | Single-use, expiring tokens; emails printed to the console in development |
+| T-203 | BE | Sonnet | Safety | R-01 | Email verification and password reset, as in HLD section 5.5 | Single-use tokens stored hashed, reset links expire in 30 minutes; the forgot route answers the same for unknown emails; a reset revokes every session; emails printed to the console in development |
 | T-204 | BE | Sonnet | Safety | R-12 | Jobs belong to a user; protect every job and media route | Another user's job returns 404 |
 | T-205 | BE | Sonnet | Safety | R-01 | Rate limits and origin check | Repeated bad logins are throttled; cross-site POST refused |
 | T-206 | BE | Haiku | Safety | R-12 | Access-control test matrix | Every route × anonymous / owner / other user / admin |
-| T-210 | FE | Sonnet | Acceptance | R-01 | Sign-up, log-in, verify, forgot and reset screens | Field-level errors; keyboard accessible |
+| T-210 | FE | Sonnet | Acceptance | R-01 | Sign-up, log-in, verify, forgot and reset screens, built from their designs | Matches the designs (including the four password-reset screens); meets UX.md section 8 |
 | T-211 | FE | Sonnet | Safety | R-01 | Session bootstrap, guarded routes, handling of 401 | Expired session returns the user to log in, then back |
 | T-212 | FE | Sonnet | Acceptance | R-01 | Account page | Change password; log out everywhere |
 

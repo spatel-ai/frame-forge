@@ -232,6 +232,27 @@ covers the estimated price, and each user has a daily cap on voice generations.
   failed attempt is retried, and a job found in `video_assembling` after a restart is run again.
 - Banner seconds add nothing to the price (D-020).
 
+### 5.5 Forgotten password
+
+The owner asked for this on 2026-11-17 (Q-22). It is built in M2 with the rest of login (T-203,
+T-210); the screens are on the design canvas under "Password reset".
+
+1. The customer enters their email on the forgot-password screen. `POST /auth/password/forgot`
+   always answers the same way, whether or not an account exists, so the screen cannot be used
+   to discover who has an account. It is rate-limited per email and per network address.
+2. If an active account exists, the server creates a reset token: 32 random bytes, of which only
+   a hash is stored in `email_tokens` (purpose `reset`), expiring in 30 minutes. Asking again
+   cancels any earlier unused reset token. The email holds a link to `/reset-password` with the
+   token. In development the email is printed to the server log instead of sent.
+3. The reset page reads the token, removes it from the address bar, and sends no referrer, so
+   the token does not linger in history or leak to another site.
+4. `POST /auth/password/reset` with the token and the new password: if the token is known,
+   unused and in date, the new password is checked by the same rules as sign-up, stored as an
+   Argon2id hash, the token is marked used, every session of that user is revoked, an audit
+   entry is written and a "your password was changed" email is sent. The customer then logs in.
+5. An unknown, used or expired token gets error code `reset_link_invalid`, and the screen offers
+   to send a new link. The response never says which of the three it was.
+
 ## 6. API surface (proposed)
 
 All routes sit under `/api/v1`. The existing `/api/...` routes move there in milestone M1.
