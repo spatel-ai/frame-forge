@@ -1,4 +1,4 @@
-"""API contract tests (task T-104): error shape, request ids, health, OpenAPI. Mock provider only."""
+"""API contract tests (T-104): error shape, request ids, health, OpenAPI. Mock provider only."""
 
 import ast
 import logging

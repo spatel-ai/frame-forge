@@ -1,4 +1,4 @@
-"""One error shape for the whole API: {"detail": "<message for the user>", "code": "<machine_code>"}.
+"""One error shape for the whole API: {"detail": "<message>", "code": "<machine_code>"}.
 
 `detail` is always a string. Internal errors never expose exception text or a stack trace."""
 
@@ -75,7 +75,9 @@ async def _unhandled(_: Request, exc: Exception) -> JSONResponse:
 
 
 def register_error_handlers(app: FastAPI) -> None:
-    app.add_exception_handler(ApiError, _api_error)
-    app.add_exception_handler(RequestValidationError, _request_validation)
-    app.add_exception_handler(StarletteHTTPException, _http_exception)
+    # Starlette types a handler as (Request, Exception); handlers here take the specific subclass
+    # they are registered for, which Starlette guarantees at call time.
+    app.add_exception_handler(ApiError, _api_error)  # type: ignore[arg-type]
+    app.add_exception_handler(RequestValidationError, _request_validation)  # type: ignore[arg-type]
+    app.add_exception_handler(StarletteHTTPException, _http_exception)  # type: ignore[arg-type]
     app.add_exception_handler(Exception, _unhandled)

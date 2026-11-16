@@ -16,5 +16,6 @@ async def _wrong_state(_: Request, exc: Conflict) -> JSONResponse:
 
 
 def register_job_error_handlers(app: FastAPI) -> None:
-    app.add_exception_handler(ValidationError, _invalid_input)
-    app.add_exception_handler(Conflict, _wrong_state)
+    # Starlette types a handler as (Request, Exception); see core/errors.py.
+    app.add_exception_handler(ValidationError, _invalid_input)  # type: ignore[arg-type]
+    app.add_exception_handler(Conflict, _wrong_state)  # type: ignore[arg-type]
