@@ -31,7 +31,12 @@ export function Dialog({ open, onClose, title, children, dismissable = true }: D
     }
   }, [open])
 
+  const openRef = useRef(open)
+  openRef.current = open
+
   // Closing is always driven by the open prop: Escape asks the parent to close, it does not close itself.
+  // Browsers may skip the cancellable 'cancel' event (e.g. repeated Escape without user activation) and
+  // close the dialog natively; the 'close' listener then tells the parent so the prop never goes stale.
   useEffect(() => {
     const dialog = ref.current
     if (!dialog) return
@@ -39,8 +44,15 @@ export function Dialog({ open, onClose, title, children, dismissable = true }: D
       event.preventDefault()
       onClose()
     }
+    const onNativeClose = () => {
+      if (openRef.current) onClose()
+    }
     dialog.addEventListener('cancel', onCancel)
-    return () => dialog.removeEventListener('cancel', onCancel)
+    dialog.addEventListener('close', onNativeClose)
+    return () => {
+      dialog.removeEventListener('cancel', onCancel)
+      dialog.removeEventListener('close', onNativeClose)
+    }
   }, [onClose])
 
   return (

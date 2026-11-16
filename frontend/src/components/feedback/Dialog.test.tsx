@@ -66,6 +66,23 @@ describe('Dialog', () => {
     expect(document.activeElement).toBe(opener)
   })
 
+  it('tells the parent when the browser closes the dialog natively', async () => {
+    const onClose = vi.fn()
+    render(<Harness onClose={onClose} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Open' }))
+    act(() => { getDialog().close() })
+    expect(onClose).toHaveBeenCalledOnce()
+    expect(getDialog().hasAttribute('open')).toBe(false)
+  })
+
+  it('does not call onClose again when the parent closes it', async () => {
+    const onClose = vi.fn()
+    render(<Harness onClose={onClose} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Open' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }))
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
   it('closes on backdrop click but not on a click inside', async () => {
     const onClose = vi.fn()
     render(<Harness onClose={onClose} />)
