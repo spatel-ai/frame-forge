@@ -38,6 +38,10 @@ class Conflict(Exception):
     pass
 
 
+class JobNotFound(Exception):
+    """No such job for this user: it does not exist, is someone else's, or has no owner."""
+
+
 class JobService:
     def __init__(self, settings: Settings, store: JobStore, provider: Provider):
         self.settings = settings
@@ -91,7 +95,7 @@ class JobService:
 
     # ---- step 1: create the job and generate the voice ------------------
 
-    def create_job(self, image_bytes: bytes, script: str, language: str) -> dict:
+    def create_job(self, user_id: str, image_bytes: bytes, script: str, language: str) -> dict:
         script = script.strip()
         if not script:
             raise ValidationError("The script is empty. Type what the avatar should say.", "script")
@@ -122,7 +126,7 @@ class JobService:
         self.job_dir(job_id).mkdir(parents=True)
         image_file = f"image.{extension}"
         (self.job_dir(job_id) / image_file).write_bytes(clean)
-        job = self.store.create(job_id, language, script, image_file)
+        job = self.store.create(job_id, user_id, language, script, image_file)
         self._spawn(self._generate_audio(job_id, script, language))
         return job
 
@@ -160,9 +164,12 @@ class JobService:
 
     # ---- step 2: approval gate, then the paid video submission ----------
 
-    def approve_audio(self, job_id: str) -> dict:
+    def approve_audio(self, user_id: str, job_id: str) -> dict:
         """Only the first approval of a job wins; any repeat or concurrent
-        click finds the job already past `audio_ready` and gets a Conflict."""
+        click finds the job already past `audio_ready` and gets a Conflict.
+        The job must belong to `user_id`; otherwise it is reported as not found (R-12)."""
+        if self.store.get_owned(job_id, user_id) is None:
+            raise JobNotFound(job_id)
         if not self.store.transition(job_id, db.AUDIO_READY, db.VIDEO_SUBMITTING, error=None):
             raise Conflict("This job is not waiting for audio approval.")
         self._spawn(self._submit_video(job_id))

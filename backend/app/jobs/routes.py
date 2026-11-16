@@ -1,10 +1,11 @@
 """Job and config routes, mounted under /api/v1."""
 
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, File, Form, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import FileResponse
 
+from ..auth.deps import CurrentUser, current_user
 from ..core.config import Settings
 from ..core.errors import ApiError, ErrorOut
 from .schemas import ConfigOut, JobOut
@@ -13,7 +14,23 @@ from .service import JobService
 router = APIRouter(prefix="/api/v1")
 
 _INVALID: dict[int | str, dict[str, Any]] = {422: {"model": ErrorOut}}
-_NOT_FOUND: dict[int | str, dict[str, Any]] = {404: {"model": ErrorOut}, **_INVALID}
+_UNAUTHENTICATED: dict[int | str, dict[str, Any]] = {401: {"model": ErrorOut}}
+_NOT_FOUND: dict[int | str, dict[str, Any]] = {
+    **_UNAUTHENTICATED,
+    404: {"model": ErrorOut},
+    **_INVALID,
+}
+_UNCONFIRMED: dict[int | str, dict[str, Any]] = {403: {"model": ErrorOut}}
+
+User = Annotated[CurrentUser, Depends(current_user)]
+
+
+def _confirmed_user(user: User) -> CurrentUser:
+    _require_confirmed_email(user)
+    return user
+
+
+ConfirmedUser = Annotated[CurrentUser, Depends(_confirmed_user)]
 
 
 def _service(request: Request) -> JobService:
@@ -43,8 +60,18 @@ def _public(job: dict, settings: Settings) -> JobOut:
     )
 
 
-def _load(request: Request, job_id: str) -> dict:
-    job = _service(request).store.get(job_id)
+def _require_confirmed_email(user: CurrentUser) -> None:
+    if not user.email_verified:
+        raise ApiError(
+            403,
+            "Confirm your email to make videos. We sent you a link; you can ask for a new one.",
+            "email_not_verified",
+        )
+
+
+def _load(request: Request, user: CurrentUser, job_id: str) -> dict:
+    # Missing, someone else's and ownerless jobs all look the same: 404 (R-12).
+    job = _service(request).store.get_owned(job_id, user.id)
     if job is None:
         raise ApiError(404, "Job not found.", "job_not_found")
     return job
@@ -65,9 +92,15 @@ def get_config(request: Request) -> ConfigOut:
     )
 
 
-@router.post("/jobs", status_code=201, response_model=JobOut, responses=_INVALID)
+@router.post(
+    "/jobs",
+    status_code=201,
+    response_model=JobOut,
+    responses={**_UNAUTHENTICATED, **_UNCONFIRMED, **_INVALID},
+)
 async def create_job(
     request: Request,
+    user: ConfirmedUser,  # 401 then 403, ahead of input validation and the upload read
     image: UploadFile = File(...),
     script: str = Form(...),
     language: str = Form(...),
@@ -75,38 +108,39 @@ async def create_job(
     settings = _settings(request)
     limit = settings.max_image_mb * 1024 * 1024
     raw = await image.read(limit + 1)  # never buffer more than the limit
-    job = _service(request).create_job(raw, script, language)
+    job = _service(request).create_job(user.id, raw, script, language)
     return _public(job, settings)
 
 
 @router.get("/jobs/{job_id}", response_model=JobOut, responses=_NOT_FOUND)
-def get_job(request: Request, job_id: str) -> JobOut:
-    return _public(_load(request, job_id), _settings(request))
+def get_job(request: Request, user: User, job_id: str) -> JobOut:
+    return _public(_load(request, user, job_id), _settings(request))
 
 
 @router.post(
     "/jobs/{job_id}/approve",
     response_model=JobOut,
-    responses={**_NOT_FOUND, 409: {"model": ErrorOut}},
+    responses={**_NOT_FOUND, **_UNCONFIRMED, 409: {"model": ErrorOut}},
 )
-async def approve(request: Request, job_id: str) -> JobOut:
-    _load(request, job_id)
-    job = _service(request).approve_audio(job_id)
+async def approve(request: Request, user: User, job_id: str) -> JobOut:
+    _load(request, user, job_id)  # 404 first, so another user's job id is never confirmed
+    _require_confirmed_email(user)
+    job = _service(request).approve_audio(user.id, job_id)
     return _public(job, _settings(request))
 
 
-def _file(request: Request, job_id: str, column: str) -> FileResponse:
-    job = _load(request, job_id)
+def _file(request: Request, user: CurrentUser, job_id: str, column: str) -> FileResponse:
+    job = _load(request, user, job_id)
     if not job[column]:
         raise ApiError(404, "Not available yet.", "not_available_yet")
     return FileResponse(_service(request).job_dir(job_id) / job[column])
 
 
 @router.get("/jobs/{job_id}/audio", response_class=FileResponse, responses=_NOT_FOUND)
-def get_audio(request: Request, job_id: str) -> FileResponse:
-    return _file(request, job_id, "audio_file")
+def get_audio(request: Request, user: User, job_id: str) -> FileResponse:
+    return _file(request, user, job_id, "audio_file")
 
 
 @router.get("/jobs/{job_id}/video", response_class=FileResponse, responses=_NOT_FOUND)
-def get_video(request: Request, job_id: str) -> FileResponse:
-    return _file(request, job_id, "video_file")
+def get_video(request: Request, user: User, job_id: str) -> FileResponse:
+    return _file(request, user, job_id, "video_file")

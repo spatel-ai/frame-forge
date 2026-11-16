@@ -53,12 +53,15 @@ class JobStore:
         """Close every pooled connection. Safe to call more than once."""
         self.engine.dispose()
 
-    def create(self, job_id: str, language: str, script: str, image_file: str) -> dict:
+    def create(
+        self, job_id: str, user_id: str, language: str, script: str, image_file: str
+    ) -> dict:
         ts = _to_db("created_at", now_iso())
         with self.engine.begin() as conn:
             conn.execute(
                 insert(_jobs).values(  # type: ignore[arg-type]  # Table typed as FromClause
                     id=job_id,
+                    user_id=user_id,
                     status=AUDIO_GENERATING,
                     language=language,
                     script=script,
@@ -70,8 +73,17 @@ class JobStore:
         return self.get(job_id)  # type: ignore[return-value]
 
     def get(self, job_id: str) -> dict | None:
+        """Any job, whoever owns it. For the poller and internal use; routes use `get_owned`."""
         with self.engine.connect() as conn:
             row = conn.execute(select(_jobs).where(_jobs.c.id == job_id)).first()
+        return _to_dict(row) if row else None
+
+    def get_owned(self, job_id: str, user_id: str) -> dict | None:
+        """The job only if `user_id` owns it. A job with no owner never matches."""
+        with self.engine.connect() as conn:
+            row = conn.execute(
+                select(_jobs).where(_jobs.c.id == job_id, _jobs.c.user_id == user_id)
+            ).first()
         return _to_dict(row) if row else None
 
     def list_by_status(self, status: str) -> list[dict]:

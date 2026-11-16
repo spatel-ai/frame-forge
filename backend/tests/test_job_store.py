@@ -26,6 +26,11 @@ def store(database_url):
     s.close()
 
 
+@pytest.fixture
+def owner(database_url, seed_user):
+    return seed_user(database_url)
+
+
 def with_options(url: str, **query: str) -> str:
     """The same URL with extra libpq settings appended to its `options`."""
     u = make_url(url)
@@ -34,14 +39,14 @@ def with_options(url: str, **query: str) -> str:
     return u.update_query_dict({"options": options}).render_as_string(hide_password=False)
 
 
-def ready_job(store: JobStore) -> str:
+def ready_job(store: JobStore, owner: str) -> str:
     job_id = uuid.uuid4().hex
-    store.create(job_id, "English", "hi", "image.png")
+    store.create(job_id, owner, "English", "hi", "image.png")
     assert store.transition(job_id, db.AUDIO_GENERATING, db.AUDIO_READY, audio_file="a.wav")
     return job_id
 
 
-def test_concurrent_transitions_on_one_job_let_exactly_one_win(database_url):
+def test_concurrent_transitions_on_one_job_let_exactly_one_win(database_url, owner):
     """R-56: many simultaneous approvals of one job, each on its own connection,
     move it to video_submitting exactly once.
 
@@ -53,7 +58,7 @@ def test_concurrent_transitions_on_one_job_let_exactly_one_win(database_url):
     store = JobStore(with_options(database_url, application_name=app_name))
     locker = create_engine(database_url, poolclass=NullPool)
     try:
-        job_id = ready_job(store)
+        job_id = ready_job(store, owner)
         with store.engine.connect() as conn:
             # The server default; the guarantee is shown under it, not under a stricter level.
             assert conn.get_isolation_level() == "READ COMMITTED"
@@ -108,9 +113,9 @@ def test_concurrent_transitions_on_one_job_let_exactly_one_win(database_url):
         locker.dispose()
 
 
-def test_transition_refuses_unknown_fields_and_changes_nothing(store):
+def test_transition_refuses_unknown_fields_and_changes_nothing(store, owner):
     """R-56: only real columns can be set; a bad name never reaches SQL."""
-    job_id = ready_job(store)
+    job_id = ready_job(store, owner)
     before = store.get(job_id)
     for bad in ({"no_such_column": 1}, {"status; DROP TABLE jobs": 1}, {"id": "other"}):
         with pytest.raises(ValueError, match="Not a settable jobs column"):
@@ -118,22 +123,22 @@ def test_transition_refuses_unknown_fields_and_changes_nothing(store):
     assert store.get(job_id) == before
 
 
-def test_transition_from_the_wrong_status_changes_nothing(store):
+def test_transition_from_the_wrong_status_changes_nothing(store, owner):
     """R-56: compare-and-set returns False and leaves the row alone."""
-    job_id = ready_job(store)
+    job_id = ready_job(store, owner)
     before = store.get(job_id)
     assert not store.transition(job_id, db.AUDIO_GENERATING, db.FAILED, error="x")
     assert not store.transition("missing", db.AUDIO_READY, db.VIDEO_SUBMITTING)
     assert store.get(job_id) == before
 
 
-def test_timestamps_round_trip_as_now_iso_text(database_url):
+def test_timestamps_round_trip_as_now_iso_text(database_url, owner):
     """R-56: timestamptz columns come back in now_iso()'s exact format, even when the
     session's time zone is not UTC, and video_started_at round-trips unchanged."""
     store = JobStore(with_options(database_url, timezone="Asia/Kolkata"))
     try:
         job_id = uuid.uuid4().hex
-        job = store.create(job_id, "English", "hi", "image.png")
+        job = store.create(job_id, owner, "English", "hi", "image.png")
         assert ISO_SECONDS_UTC.match(job["created_at"]), job["created_at"]
         assert ISO_SECONDS_UTC.match(job["updated_at"]), job["updated_at"]
         assert job["video_started_at"] is None
@@ -163,6 +168,7 @@ def test_timestamps_round_trip_as_now_iso_text(database_url):
             "error",
             "created_at",
             "updated_at",
+            "user_id",
         ]
     finally:
         store.close()

@@ -35,6 +35,15 @@ def settings(tmp_path, database_url):
     )
 
 
+# The `seed_user` fixture (tests/conftest.py), made reachable from make_service.
+_seed_user: list = []
+
+
+@pytest.fixture(autouse=True)
+def _seeder(seed_user):
+    _seed_user[:] = [seed_user]
+
+
 # Stores opened by make_service; closed after each test so no connection outlives it.
 _open_stores: list[JobStore] = []
 
@@ -47,10 +56,18 @@ def _close_stores(settings):
         _open_stores.pop().close()
 
 
-def make_service(settings, provider=None) -> JobService:
+class OwnedService(JobService):
+    """A JobService plus the id of the confirmed user that owns the test's jobs (T-204)."""
+
+    owner_id: str
+
+
+def make_service(settings, provider=None) -> OwnedService:
     store = JobStore(settings.database_url)
     _open_stores.append(store)
-    return JobService(settings, store, provider or MockProvider(settings))
+    service = OwnedService(settings, store, provider or MockProvider(settings))
+    service.owner_id = _seed_user[0](settings.database_url)
+    return service
 
 
 async def drain(service: JobService) -> None:
@@ -59,7 +76,7 @@ async def drain(service: JobService) -> None:
 
 
 async def ready_job(service: JobService, script="Hello there, this is a test.") -> str:
-    job = service.create_job(png(), script, "English")
+    job = service.create_job(service.owner_id, png(), script, "English")
     assert job["status"] == db.AUDIO_GENERATING
     await drain(service)
     return job["id"]
@@ -77,7 +94,7 @@ def test_full_flow_reaches_completed_with_files_on_disk(settings):
         assert job["audio_duration_seconds"] > 0
         assert (service.job_dir(job_id) / job["audio_file"]).stat().st_size > 0
 
-        assert service.approve_audio(job_id)["status"] == db.VIDEO_SUBMITTING
+        assert service.approve_audio(service.owner_id, job_id)["status"] == db.VIDEO_SUBMITTING
         await drain(service)
         job = service.store.get(job_id)
         assert job["status"] == db.VIDEO_GENERATING
@@ -107,12 +124,12 @@ def test_second_approval_is_rejected_and_only_one_video_is_submitted(settings):
     async def run():
         service = make_service(settings)
         job_id = await ready_job(service)
-        service.approve_audio(job_id)
+        service.approve_audio(service.owner_id, job_id)
         with pytest.raises(Conflict):
-            service.approve_audio(job_id)
+            service.approve_audio(service.owner_id, job_id)
         await drain(service)
         with pytest.raises(Conflict):
-            service.approve_audio(job_id)
+            service.approve_audio(service.owner_id, job_id)
         assert service.provider.submit_count == 1
 
     asyncio.run(run())
@@ -128,7 +145,7 @@ def test_audio_over_the_limit_fails_and_cannot_be_approved(settings):
         assert job["status"] == db.FAILED
         assert "30 seconds" in job["error"]
         with pytest.raises(Conflict):
-            service.approve_audio(job_id)
+            service.approve_audio(service.owner_id, job_id)
         assert service.provider.submit_count == 0
 
     asyncio.run(run())
@@ -161,7 +178,7 @@ def test_upload_failure_returns_to_audio_ready_and_can_be_approved_again(setting
         provider = FlakyUpload(settings)
         service = make_service(settings, provider)
         job_id = await ready_job(service)
-        service.approve_audio(job_id)
+        service.approve_audio(service.owner_id, job_id)
         await drain(service)
         job = service.store.get(job_id)
         assert job["status"] == db.AUDIO_READY
@@ -169,7 +186,7 @@ def test_upload_failure_returns_to_audio_ready_and_can_be_approved_again(setting
         assert provider.submit_count == 0
 
         provider.fail = False
-        service.approve_audio(job_id)
+        service.approve_audio(service.owner_id, job_id)
         await drain(service)
         job = service.store.get(job_id)
         assert job["status"] == db.VIDEO_GENERATING
@@ -189,13 +206,13 @@ def test_submit_failure_is_final_and_never_retried(settings):
         provider = BrokenSubmit(settings)
         service = make_service(settings, provider)
         job_id = await ready_job(service)
-        service.approve_audio(job_id)
+        service.approve_audio(service.owner_id, job_id)
         await drain(service)
         job = service.store.get(job_id)
         assert job["status"] == db.FAILED
         assert "double charge" in job["error"]
         with pytest.raises(Conflict):
-            service.approve_audio(job_id)
+            service.approve_audio(service.owner_id, job_id)
         assert provider.submit_count == 1
 
     asyncio.run(run())
@@ -225,7 +242,7 @@ def test_transient_poll_error_is_retried_then_completes(settings):
         )
         service = make_service(settings, provider)
         job_id = await ready_job(service)
-        service.approve_audio(job_id)
+        service.approve_audio(service.owner_id, job_id)
         await drain(service)
         await service.poll_once()
         assert service.store.get(job_id)["status"] == db.VIDEO_GENERATING
@@ -243,7 +260,7 @@ def test_provider_reported_failure_marks_the_job_failed(settings):
         )
         service = make_service(settings, provider)
         job_id = await ready_job(service)
-        service.approve_audio(job_id)
+        service.approve_audio(service.owner_id, job_id)
         await drain(service)
         await service.poll_once()
         job = service.store.get(job_id)
@@ -257,7 +274,7 @@ def test_video_that_never_finishes_times_out(settings):
         provider = ScriptedPolls(settings, [VideoPoll("pending")])
         service = make_service(replace(settings, video_timeout_seconds=-1), provider)
         job_id = await ready_job(service)
-        service.approve_audio(job_id)
+        service.approve_audio(service.owner_id, job_id)
         await drain(service)
         await service.poll_once()
         job = service.store.get(job_id)
@@ -271,7 +288,7 @@ def test_restart_resumes_submitted_video_without_resubmitting(settings):
     async def run():
         first = make_service(settings)
         job_id = await ready_job(first)
-        first.approve_audio(job_id)
+        first.approve_audio(first.owner_id, job_id)
         await drain(first)
         request_id = first.store.get(job_id)["provider_request_id"]
         first.store.close()
@@ -292,7 +309,9 @@ def test_restart_resumes_submitted_video_without_resubmitting(settings):
 def test_restart_fails_jobs_cut_off_mid_call_instead_of_rerunning_them(settings):
     async def run():
         service = make_service(settings)
-        mid_voice = service.store.create("a" * 32, "English", "hi", "image.png")["id"]
+        mid_voice = service.store.create("a" * 32, service.owner_id, "English", "hi", "image.png")[
+            "id"
+        ]
         mid_submit = await ready_job(service)
         service.store.transition(mid_submit, db.AUDIO_READY, db.VIDEO_SUBMITTING)
         service.recover_interrupted()
@@ -330,7 +349,7 @@ def test_invalid_input_is_rejected_before_any_provider_call(
     async def run():
         service = make_service(settings)
         with pytest.raises(ValidationError, match=expected):
-            service.create_job(image, script, language)
+            service.create_job(service.owner_id, image, script, language)
         assert not list(settings.jobs_dir.glob("*"))
 
     asyncio.run(run())
@@ -340,8 +359,9 @@ def test_gif_is_rejected(settings):
     async def run():
         out = BytesIO()
         Image.new("RGB", (512, 512)).save(out, "GIF")
+        svc = make_service(settings)
         with pytest.raises(ValidationError, match="JPEG, PNG or WebP"):
-            make_service(settings).create_job(out.getvalue(), "hi", "English")
+            svc.create_job(svc.owner_id, out.getvalue(), "hi", "English")
 
     asyncio.run(run())
 
@@ -359,8 +379,9 @@ def wait_for(client, job_id, status, timeout=10.0):
     raise AssertionError(f"job stayed {job['status']}, expected {status}: {job}")
 
 
-def test_http_flow_end_to_end(settings):
-    with TestClient(create_app(settings)) as client:
+def test_http_flow_end_to_end(settings, sign_up):
+    with TestClient(create_app(settings), base_url="https://testserver") as client:
+        sign_up(client)
         assert client.get("/api/v1/config").json()["provider"] == "mock"
 
         created = client.post(
@@ -384,8 +405,9 @@ def test_http_flow_end_to_end(settings):
         assert video.status_code == 200 and len(video.content) > 0
 
 
-def test_http_errors(settings):
-    with TestClient(create_app(settings)) as client:
+def test_http_errors(settings, sign_up):
+    with TestClient(create_app(settings), base_url="https://testserver") as client:
+        sign_up(client)
         assert client.get("/api/v1/jobs/nope").status_code == 404
         assert client.post("/api/v1/jobs/nope/approve").status_code == 404
         bad = client.post(
@@ -435,14 +457,14 @@ def test_refused_video_submission_keeps_the_audio_for_another_approval(settings)
         provider = Refuses(settings)
         service = make_service(settings, provider)
         job_id = await ready_job(service)
-        service.approve_audio(job_id)
+        service.approve_audio(service.owner_id, job_id)
         await drain(service)
         job = service.store.get(job_id)
         assert job["status"] == db.AUDIO_READY
         assert "balance exhausted" in job["error"]
 
         provider.refuse = False
-        service.approve_audio(job_id)
+        service.approve_audio(service.owner_id, job_id)
         await drain(service)
         assert service.store.get(job_id)["status"] == db.VIDEO_GENERATING
         assert provider.submit_count == 1
@@ -503,7 +525,10 @@ def test_script_in_its_own_language_is_accepted(settings):
     async def run():
         service = make_service(settings)
         for script, language in (("ਸਤ ਸ੍ਰੀ ਅਕਾਲ। AI", "Punjabi"), ("नमस्ते दोस्तों", "Hindi")):
-            assert service.create_job(png(), script, language)["language"] == language
+            assert (
+                service.create_job(service.owner_id, png(), script, language)["language"]
+                == language
+            )
         await drain(service)
 
     asyncio.run(run())
