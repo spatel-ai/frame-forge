@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -72,49 +72,51 @@ afterEach(() => {
 })
 
 describe('job screens by status', () => {
-  it('R-08: audio_generating shows "Generating voice…"', async () => {
+  it('R-79: audio_generating shows the named voice step', async () => {
     vi.mocked(getJob).mockResolvedValue(withStatus('audio_generating'))
     renderAt('/create/job-1')
-    expect(await screen.findByText(/Generating voice…/)).toBeTruthy()
+    expect(await screen.findByText('Making the voice', { selector: 'h2' })).toBeTruthy()
   })
 
-  it('R-08: audio_ready shows the audio review with the approve and start over buttons', async () => {
+  it('R-79: audio_ready shows the audio review with the approve and start over buttons', async () => {
     vi.mocked(getJob).mockResolvedValue(withStatus('audio_ready'))
     renderAt('/create/job-1')
-    expect(await screen.findByText('Review the audio')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Approve audio and generate video' })).toBeTruthy()
+    expect(await screen.findByText('Listen to the voice')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Approve and make video' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Start over' })).toBeTruthy()
   })
 
-  it('R-08: video_submitting shows "Generating video…"', async () => {
+  it('R-79: video_submitting shows "Generating video…"', async () => {
     vi.mocked(getJob).mockResolvedValue(withStatus('video_submitting'))
     renderAt('/create/job-1')
-    expect(await screen.findByText(/Generating video…/)).toBeTruthy()
+    expect(await screen.findByText(/Making your video/)).toBeTruthy()
   })
 
-  it('R-08: video_generating shows "Generating video…"', async () => {
+  it('R-79: video_generating shows "Generating video…"', async () => {
     vi.mocked(getJob).mockResolvedValue(withStatus('video_generating'))
     renderAt('/create/job-1')
-    expect(await screen.findByText(/Generating video…/)).toBeTruthy()
+    expect(await screen.findByText(/Making your video/)).toBeTruthy()
   })
 
-  it('R-08: completed shows the video, a download link and "Create another"', async () => {
+  it('R-79: completed shows the video, a download link and "Create another"', async () => {
     vi.mocked(getJob).mockResolvedValue(withStatus('completed', { video_url: 'https://example.test/v.mp4' }))
     renderAt('/create/job-1')
-    expect(await screen.findByText('Your video')).toBeTruthy()
+    expect(await screen.findByText('Your video is ready')).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Download video' }).getAttribute('href')).toBe('https://example.test/v.mp4')
     expect(screen.getByRole('button', { name: 'Create another' })).toBeTruthy()
   })
 
-  it('R-08: failed shows "Generation failed" with the error and "Start over"', async () => {
+  it('R-79: failed shows what happened, that nothing was charged, and "Start over"', async () => {
     vi.mocked(getJob).mockResolvedValue(withStatus('failed', { error: 'Provider said no' }))
     renderAt('/create/job-1')
-    expect(await screen.findByText('Generation failed')).toBeTruthy()
-    expect(screen.getByRole('alert').textContent).toBe('Provider said no')
+    expect(await screen.findByText('We could not make this video')).toBeTruthy()
+    const alert = screen.getByRole('alert').textContent ?? ''
+    expect(alert).toContain('Provider said no')
+    expect(alert).toContain('Nothing was charged')
     expect(screen.getByRole('button', { name: 'Start over' })).toBeTruthy()
   })
 
-  it('R-08: "Start over" clears the stored id and goes to /create', async () => {
+  it('R-79: "Start over" clears the stored id and goes to /create', async () => {
     localStorage.setItem(KEY, 'job-1')
     vi.mocked(getJob).mockResolvedValue(withStatus('failed', { error: 'x' }))
     const { user } = renderAt('/create/job-1')
@@ -124,7 +126,7 @@ describe('job screens by status', () => {
     expect(await screen.findByRole('button', { name: 'Generate voice' })).toBeTruthy()
   })
 
-  it('R-08: "Create another" clears the stored id and goes to /create', async () => {
+  it('R-79: "Create another" clears the stored id and goes to /create', async () => {
     localStorage.setItem(KEY, 'job-1')
     vi.mocked(getJob).mockResolvedValue(withStatus('completed', { video_url: 'https://example.test/v.mp4' }))
     const { user } = renderAt('/create/job-1')
@@ -170,7 +172,7 @@ describe('polling', () => {
     renderAt('/create/job-1')
     await tick(0)
     await tick(3000)
-    expect(screen.getByText('Your video')).toBeTruthy()
+    expect(screen.getByText('Your video is ready')).toBeTruthy()
     expect(getJob).toHaveBeenCalledTimes(2)
     await tick(10000)
     expect(getJob).toHaveBeenCalledTimes(2)
@@ -186,7 +188,7 @@ describe('polling', () => {
     expect(screen.queryByText('Connection problem, retrying…')).toBeNull()
     await tick(3000)
     expect(screen.getByText('Connection problem, retrying…')).toBeTruthy()
-    expect(screen.getByText(/Generating video…/)).toBeTruthy()
+    expect(screen.getByText(/Making your video/)).toBeTruthy()
     await tick(3000)
     expect(getJob).toHaveBeenCalledTimes(3)
     expect(screen.queryByText('Connection problem, retrying…')).toBeNull()
@@ -209,6 +211,7 @@ describe('polling', () => {
     renderAt('/create')
     await tick(0)
     expect(screen.getByText('Cannot load configuration (Network error). Retrying…')).toBeTruthy()
+    expect(screen.getByText('Loading the form')).toBeTruthy()
     await tick(3000)
     expect(getConfig).toHaveBeenCalledTimes(2)
     expect(screen.getByRole('button', { name: 'Generate voice' })).toBeTruthy()
@@ -218,52 +221,52 @@ describe('polling', () => {
 })
 
 describe('approve', () => {
-  it('R-08: approve success updates the job on screen and sends one request', async () => {
+  it('R-79: approve success updates the job on screen and sends one request', async () => {
     vi.mocked(getJob).mockResolvedValue(withStatus('audio_ready'))
     vi.mocked(approveJob).mockResolvedValue(withStatus('video_submitting'))
     const { user } = renderAt('/create/job-1')
-    await user.click(await screen.findByRole('button', { name: 'Approve audio and generate video' }))
-    expect(await screen.findByText(/Generating video…/)).toBeTruthy()
+    await user.click(await screen.findByRole('button', { name: 'Approve and make video' }))
+    expect(await screen.findByText(/Making your video/)).toBeTruthy()
     expect(approveJob).toHaveBeenCalledTimes(1)
     expect(approveJob).toHaveBeenCalledWith('job-1')
   })
 
-  it('R-08: approve cannot be submitted twice while the request is in flight', async () => {
+  it('R-79: approve cannot be submitted twice while the request is in flight', async () => {
     vi.mocked(getJob).mockResolvedValue(withStatus('audio_ready'))
     let resolve!: (j: Job) => void
     vi.mocked(approveJob).mockReturnValue(new Promise<Job>((r) => (resolve = r)))
     const { user } = renderAt('/create/job-1')
-    const button = await screen.findByRole('button', { name: 'Approve audio and generate video' })
+    const button = await screen.findByRole('button', { name: 'Approve and make video' })
     await user.click(button)
-    const busy = await screen.findByRole('button', { name: 'Submitting…' })
-    expect((busy as HTMLButtonElement).disabled).toBe(true)
+    const busy = await screen.findByRole('button', { name: 'Starting your video…' })
+    expect(busy.getAttribute('aria-busy')).toBe('true')
     await user.click(busy)
     expect(approveJob).toHaveBeenCalledTimes(1)
     await act(async () => resolve(withStatus('video_submitting')))
-    expect(await screen.findByText(/Generating video…/)).toBeTruthy()
+    expect(await screen.findByText(/Making your video/)).toBeTruthy()
   })
 
-  it('R-08: approve failure shows the error and refetches the job', async () => {
+  it('R-79: approve failure shows the error and refetches the job', async () => {
     vi.mocked(getJob)
       .mockResolvedValueOnce(withStatus('audio_ready'))
       .mockResolvedValue(withStatus('video_generating'))
     vi.mocked(approveJob).mockRejectedValue(new ApiError(409, 'Job is not ready to approve', 'conflict'))
     const { user } = renderAt('/create/job-1')
-    await user.click(await screen.findByRole('button', { name: 'Approve audio and generate video' }))
+    await user.click(await screen.findByRole('button', { name: 'Approve and make video' }))
     await vi.waitFor(() => expect(getJob).toHaveBeenCalledTimes(2))
-    expect(await screen.findByText(/Generating video…/)).toBeTruthy()
+    expect(await screen.findByText(/Making your video/)).toBeTruthy()
   })
 
-  it('R-08: approve failure shows the error message when the job is still ready', async () => {
+  it('R-79: approve failure shows the error message when the job is still ready', async () => {
     vi.mocked(getJob).mockResolvedValue(withStatus('audio_ready'))
     vi.mocked(approveJob).mockRejectedValue(new ApiError(409, 'Job is not ready to approve', 'conflict'))
     const { user } = renderAt('/create/job-1')
-    await user.click(await screen.findByRole('button', { name: 'Approve audio and generate video' }))
+    await user.click(await screen.findByRole('button', { name: 'Approve and make video' }))
     const alert = await screen.findByText('Job is not ready to approve')
-    expect(alert.getAttribute('role')).toBe('alert')
+    expect(alert.closest('[role="alert"]')).toBeTruthy()
     await vi.waitFor(() => expect(getJob).toHaveBeenCalledTimes(2))
     expect(screen.getByText('Job is not ready to approve')).toBeTruthy()
-    expect((screen.getByRole('button', { name: 'Approve audio and generate video' }) as HTMLButtonElement).disabled).toBe(false)
+    expect((screen.getByRole('button', { name: 'Approve and make video' }) as HTMLButtonElement).disabled).toBe(false)
   })
 })
 
@@ -272,7 +275,7 @@ describe('returning visitors', () => {
     localStorage.setItem(KEY, 'job-9')
     vi.mocked(getJob).mockResolvedValue(withStatus('audio_ready', { id: 'job-9' }))
     renderAt('/create')
-    expect(await screen.findByText('Review the audio')).toBeTruthy()
+    expect(await screen.findByText('Listen to the voice')).toBeTruthy()
     expect(router.state.location.pathname).toBe('/create/job-9')
     expect(getJob).toHaveBeenCalledWith('job-9')
   })
@@ -287,7 +290,113 @@ describe('returning visitors', () => {
   it('R-55: opening /create/<id> directly shows that job', async () => {
     vi.mocked(getJob).mockResolvedValue(withStatus('audio_ready', { id: 'shared-id' }))
     renderAt('/create/shared-id')
-    expect(await screen.findByText('Review the audio')).toBeTruthy()
+    expect(await screen.findByText('Listen to the voice')).toBeTruthy()
     expect(getJob).toHaveBeenCalledWith('shared-id')
+  })
+})
+
+const stepList = () => screen.getByRole('list', { name: 'Create a video' })
+const currentStep = () => stepList().querySelector('li[aria-current="step"]')?.textContent ?? ''
+
+describe('stepper and heading', () => {
+  const cases: [Job, string][] = [
+    [withStatus('audio_generating'), 'Review'],
+    [withStatus('audio_ready'), 'Review'],
+    [withStatus('video_submitting'), 'Video'],
+    [withStatus('video_generating'), 'Video'],
+    [withStatus('completed', { video_url: 'https://example.test/v.mp4' }), 'Video'],
+    [withStatus('failed', { error: 'x' }), 'Video'],
+    [withStatus('failed', { error: 'x', audio_url: null }), 'Review'],
+  ]
+  for (const [job, label] of cases) {
+    it(`R-79: ${job.status}${job.audio_url ? '' : ' (no audio)'} marks "${label}" as the current step`, async () => {
+      vi.mocked(getJob).mockResolvedValue(job)
+      renderAt('/create/job-1')
+      await screen.findByRole('heading', { level: 2 }).catch(() => undefined)
+      await vi.waitFor(() => expect(currentStep()).toContain(label))
+      expect(within(stepList()).getAllByRole('listitem')).toHaveLength(3)
+    })
+  }
+
+  it('R-79: the details screen marks "Details" as current and has exactly one h1', async () => {
+    renderAt('/create')
+    await screen.findByRole('button', { name: 'Generate voice' })
+    expect(currentStep()).toContain('Details')
+    expect(screen.getAllByRole('heading', { level: 1 }).map((h) => h.textContent)).toEqual(['Create a video'])
+  })
+
+  it('R-79: a job screen has exactly one h1', async () => {
+    vi.mocked(getJob).mockResolvedValue(withStatus('audio_ready'))
+    renderAt('/create/job-1')
+    await screen.findByText('Listen to the voice')
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
+  })
+})
+
+describe('waiting and failure states', () => {
+  it('R-81: the first load of a job shows a skeleton, not a bare message', async () => {
+    vi.mocked(getJob).mockReturnValue(new Promise(() => {}))
+    renderAt('/create/job-1')
+    expect(await screen.findByText('Loading your video')).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 1 })).toBeTruthy()
+  })
+
+  it('R-81: the first load of the form shows a skeleton while the configuration loads', async () => {
+    vi.mocked(getConfig).mockReturnValue(new Promise(() => {}))
+    renderAt('/create')
+    expect(await screen.findByText('Loading the form')).toBeTruthy()
+  })
+
+  it('R-81: video_submitting and video_generating show named steps and say it is safe to leave', async () => {
+    vi.mocked(getJob).mockResolvedValue(withStatus('video_submitting'))
+    renderAt('/create/job-1')
+    const sending = await screen.findByText('Sending to the video model')
+    expect(sending.closest('li')?.getAttribute('aria-current')).toBe('step')
+    expect(screen.getByText('Voice ready')).toBeTruthy()
+    expect(screen.getByText(/several minutes/)).toBeTruthy()
+    expect(screen.getByText(/safe to leave or reload/)).toBeTruthy()
+  })
+
+  it('R-81: video_generating marks "Making the video" as the current progress step', async () => {
+    vi.mocked(getJob).mockResolvedValue(withStatus('video_generating'))
+    renderAt('/create/job-1')
+    const making = await screen.findByText('Making the video')
+    expect(making.closest('li')?.getAttribute('aria-current')).toBe('step')
+  })
+
+  it('R-79: completed shows the video player, the AI-generated label and a download link', async () => {
+    vi.mocked(getJob).mockResolvedValue(withStatus('completed', { video_url: 'https://example.test/v.mp4' }))
+    const { container } = renderAt('/create/job-1').user && { container: document.body }
+    await screen.findByText('Your video is ready')
+    expect(container.querySelector('video')?.getAttribute('src')).toBe('https://example.test/v.mp4')
+    expect(screen.getByText('AI-generated')).toBeTruthy()
+  })
+
+  it('R-79: an unknown status shows an error with "Start over"', async () => {
+    vi.mocked(getJob).mockResolvedValue({ ...baseJob, status: 'mystery' as Job['status'] })
+    renderAt('/create/job-1')
+    expect(await screen.findByText('Something unexpected happened')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Start over' })).toBeTruthy()
+  })
+
+  it('R-79: the review screen shows no price or cost', async () => {
+    vi.mocked(getJob).mockResolvedValue(withStatus('audio_ready', { estimated_video_cost_usd: 0.42 }))
+    renderAt('/create/job-1')
+    await screen.findByText('Listen to the voice')
+    const text = screen.getByRole('heading', { level: 1 }).parentElement?.textContent ?? ''
+    expect(text).not.toMatch(/\$|USD|price|cost|credits/i)
+    expect(screen.getByText('4.2 seconds')).toBeTruthy()
+  })
+
+  it('R-81: a poll error shows a non-blocking banner while the job stays visible', async () => {
+    vi.useFakeTimers()
+    vi.mocked(getJob)
+      .mockResolvedValueOnce(withStatus('video_generating'))
+      .mockRejectedValue(new NetworkError('Network error'))
+    renderAt('/create/job-1')
+    await tick(0)
+    await tick(3000)
+    expect(screen.getByText('Connection problem, retrying…')).toBeTruthy()
+    expect(screen.getByText('Making your video')).toBeTruthy()
   })
 })
