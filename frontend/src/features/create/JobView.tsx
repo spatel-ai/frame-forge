@@ -1,27 +1,25 @@
-import { useState } from 'react'
-import { ApiError, approveJob, getJob } from '../../api/client'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { ApiError, approveJob } from '../../api/client'
 import type { Job } from '../../api/client'
 import { errMsg, usd } from '../../lib/util'
+import { jobKey } from './jobQueries'
 
-export function JobView({ job, onUpdate, onReset }: { job: Job; onUpdate: (j: Job) => void; onReset: () => void }) {
-  const [approving, setApproving] = useState(false)
-  const [approveError, setApproveError] = useState<string | null>(null)
+export function JobView({ job, onReset }: { job: Job; onReset: () => void }) {
+  const queryClient = useQueryClient()
+  const approveMutation = useMutation({
+    mutationFn: () => approveJob(job.id),
+    onSuccess: (j) => queryClient.setQueryData(jobKey(job.id), j),
+    onError: (e) => {
+      // e.g. 409: state changed elsewhere; refresh
+      if (e instanceof ApiError) void queryClient.invalidateQueries({ queryKey: jobKey(job.id) })
+    },
+  })
+  const approving = approveMutation.isPending
+  const approveError = approveMutation.error ? errMsg(approveMutation.error) : null
 
-  const approve = async () => {
+  const approve = () => {
     if (approving) return
-    setApproving(true)
-    setApproveError(null)
-    try {
-      onUpdate(await approveJob(job.id))
-    } catch (e) {
-      setApproveError(errMsg(e))
-      if (e instanceof ApiError) {
-        // e.g. 409: state changed elsewhere; refresh
-        getJob(job.id).then(onUpdate, () => {})
-      }
-    } finally {
-      setApproving(false)
-    }
+    approveMutation.mutate()
   }
 
   switch (job.status) {

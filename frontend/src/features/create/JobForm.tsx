@@ -1,3 +1,4 @@
+import { useMutation } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { createJob } from '../../api/client'
@@ -9,8 +10,12 @@ export function JobForm({ config, onCreated }: { config: Config; onCreated: (j: 
   const [preview, setPreview] = useState<string | null>(null)
   const [script, setScript] = useState('')
   const [language, setLanguage] = useState(config.languages[0] ?? 'English')
-  const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const create = useMutation({
+    mutationFn: (v: { file: File; text: string; language: string }) => createJob(v.file, v.text, v.language),
+  })
+  const busy = create.isPending
 
   useEffect(() => {
     if (!file) {
@@ -22,7 +27,7 @@ export function JobForm({ config, onCreated }: { config: Config; onCreated: (j: 
     return () => URL.revokeObjectURL(url)
   }, [file])
 
-  const onSubmit = async (e: FormEvent) => {
+  const onSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (busy) return
     setError(null)
@@ -31,13 +36,10 @@ export function JobForm({ config, onCreated }: { config: Config; onCreated: (j: 
     const text = script.trim()
     if (!text) return setError('Please enter a script.')
     if (text.length > config.max_script_chars) return setError(`Script must be ${config.max_script_chars} characters or fewer.`)
-    setBusy(true)
-    try {
-      onCreated(await createJob(file, text, language))
-    } catch (err) {
-      setError(errMsg(err))
-      setBusy(false)
-    }
+    create.mutate(
+      { file, text, language },
+      { onSuccess: (j) => onCreated(j), onError: (err) => setError(errMsg(err)) },
+    )
   }
 
   const over = script.length > config.max_script_chars
