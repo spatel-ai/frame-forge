@@ -505,9 +505,9 @@
     "starts_after": "T-202",
     "task": "Jobs belong to a user; protect every job and media route",
     "acceptance": "Another user's job returns 404",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent building in a worktree (parallel with T-203)."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Migration 0003: jobs.user_id (nullable, FK users ON DELETE SET NULL, indexed); ownerless jobs kept and never shown. Every /jobs route needs a session (401); lookups by id AND owner, so another user's, missing and ownerless jobs give the same 404 job_not_found, media included; create and approve need a confirmed email (403 email_not_verified). Compare-and-set, restart recovery and no-retry tests unchanged in meaning. tests/test_job_access.py; backend/check.sh: 148 passed with T-203. Frontend types regenerated. The current create screen gets 401 until T-211 adds login to the app."
   },
   {
     "id": "T-205",
