@@ -445,9 +445,9 @@
     "starts_after": "T-104, T-200",
     "task": "`users`, `sessions`, `email_tokens` tables",
     "acceptance": "Migration applies cleanly",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent building T-201 and T-202 together in a worktree (BE-Auth lane)."
   },
   {
     "id": "T-202",
@@ -460,9 +460,9 @@
     "starts_after": "T-201",
     "task": "Sign up, log in, log out, log out everywhere, current user, change password",
     "acceptance": "Argon2id; cookie flags per D-003; session revocable; changing the password logs out other devices",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent building T-201 and T-202 together in a worktree (BE-Auth lane)."
   },
   {
     "id": "T-207",
