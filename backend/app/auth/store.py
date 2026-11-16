@@ -6,7 +6,7 @@ plain dicts. Callers pass `now` so that time is controlled in one place (the ser
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Engine, Row, func, insert, select, update
+from sqlalchemy import Connection, Engine, Row, func, insert, select, update
 from sqlalchemy.exc import IntegrityError
 
 from .models import AuditLog, EmailToken, Session, User
@@ -208,6 +208,90 @@ class AuthStore:
                     expires_at=expires_at,
                 )
             )
+
+    def _consume(
+        self, conn: Connection, purpose: str, token_hash: str, now: datetime
+    ) -> str | None:
+        """Single use under a race: one compare-and-set UPDATE. Only the caller that gets a row
+        back may act; a second caller, an expired token or a wrong purpose gets None."""
+        rows = conn.execute(
+            update(_tokens)  # type: ignore[arg-type]
+            .where(
+                _tokens.c.token_hash == token_hash,
+                _tokens.c.purpose == purpose,
+                _tokens.c.used_at.is_(None),
+                _tokens.c.expires_at > now,
+            )
+            .values(used_at=now)
+            .returning(_tokens.c.user_id)
+        ).all()
+        return rows[0][0] if len(rows) == 1 else None
+
+    def consume_email_token(self, purpose: str, token_hash: str, now: datetime) -> str | None:
+        """Mark the token used and return its user id, or None if it cannot be used."""
+        with self.engine.begin() as conn:
+            return self._consume(conn, purpose, token_hash, now)
+
+    def peek_email_token_user(self, purpose: str, token_hash: str, now: datetime) -> dict | None:
+        """The user of a valid, unused, in-date token. Does not consume it."""
+        stmt = (
+            select(*_users.c)
+            .join(_tokens, _tokens.c.user_id == _users.c.id)
+            .where(
+                _tokens.c.token_hash == token_hash,
+                _tokens.c.purpose == purpose,
+                _tokens.c.used_at.is_(None),
+                _tokens.c.expires_at > now,
+            )
+        )
+        with self.engine.connect() as conn:
+            return _row(conn.execute(stmt).first())
+
+    def _mark_verified(self, conn: Connection, user_id: str, now: datetime) -> None:
+        conn.execute(
+            update(_users)  # type: ignore[arg-type]
+            .where(_users.c.id == user_id, _users.c.email_verified_at.is_(None))
+            .values(email_verified_at=now)
+        )
+
+    def confirm_email(self, token_hash: str, now: datetime) -> bool:
+        """Consume a confirmation token and set email_verified_at (if null), in one transaction."""
+        with self.engine.begin() as conn:
+            user_id = self._consume(conn, "verify", token_hash, now)
+            if user_id is None:
+                return False
+            self._mark_verified(conn, user_id, now)
+            return True
+
+    def reset_password(self, token_hash: str, password_hash: str, now: datetime) -> dict | None:
+        """In ONE transaction: consume the reset token, store the new hash, confirm the email
+        (a working reset link proves the address), revoke every session, write the audit entry.
+        Returns the user, or None if the token cannot be used (nothing changed)."""
+        with self.engine.begin() as conn:
+            user_id = self._consume(conn, "reset", token_hash, now)
+            if user_id is None:
+                return None
+            conn.execute(
+                update(_users)  # type: ignore[arg-type]
+                .where(_users.c.id == user_id)
+                .values(password_hash=password_hash)
+            )
+            self._mark_verified(conn, user_id, now)
+            conn.execute(
+                update(_sessions)  # type: ignore[arg-type]
+                .where(_sessions.c.user_id == user_id, _sessions.c.revoked_at.is_(None))
+                .values(revoked_at=now)
+            )
+            conn.execute(
+                insert(_audit).values(  # type: ignore[arg-type]
+                    id=new_id(),
+                    actor_user_id=user_id,
+                    action="password_reset",
+                    target=user_id,
+                    created_at=now,
+                )
+            )
+            return _row(conn.execute(select(_users).where(_users.c.id == user_id)).first())
 
     # audit -----------------------------------------------------------------------------
 

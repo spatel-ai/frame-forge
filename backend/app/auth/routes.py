@@ -1,8 +1,6 @@
 """Auth routes, mounted under /api/v1/auth: the M2 contract (task T-200).
 
-Every handler is a stub that answers 501 `not_implemented` until its task is built
-(T-202: signup, login, logout, logout-all, me, password/change; T-203: verify-email,
-verify-email/resend, password/forgot, password/reset/check, password/reset).
+All handlers are built (T-202: accounts and sessions; T-203: email confirmation and reset).
 The routes, bodies, responses and error codes below are the agreed contract; the
 builders keep them unchanged or change the contract here first.
 
@@ -16,7 +14,7 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Response
 
-from ..core.errors import ApiError, ErrorOut
+from ..core.errors import ErrorOut
 from .deps import (
     CurrentUser,
     clear_session_cookie,
@@ -46,10 +44,6 @@ _E = {"model": ErrorOut}
 _INVALID: dict[int | str, dict[str, Any]] = {422: _E}
 _LIMITED: dict[int | str, dict[str, Any]] = {429: _E}
 _AUTH: dict[int | str, dict[str, Any]] = {401: _E}
-
-
-def _not_built() -> ApiError:
-    return ApiError(501, "This is not built yet.", "not_implemented")
 
 
 @router.post(
@@ -104,8 +98,8 @@ def me(service: Service, user: User) -> UserOut:
     responses={400: _E, **_INVALID},
     summary="Confirm an email address with the token from the emailed link (no login needed)",
 )
-def verify_email(body: TokenIn) -> None:
-    raise _not_built()
+def verify_email(body: TokenIn, service: Service) -> None:
+    service.verify_email(body.token)
 
 
 @router.post(
@@ -114,8 +108,8 @@ def verify_email(body: TokenIn) -> None:
     responses={**_AUTH, **_LIMITED},
     summary="Send the confirmation email again to the logged-in user",
 )
-def resend_verification() -> None:
-    raise _not_built()
+def resend_verification(service: Service, user: User) -> None:
+    service.resend_verification(user.id, user.email)
 
 
 @router.post(
@@ -124,8 +118,8 @@ def resend_verification() -> None:
     responses={**_INVALID, **_LIMITED},
     summary="Send a reset link if an account exists; answers the same either way",
 )
-def forgot_password(body: ForgotPasswordIn) -> None:
-    raise _not_built()
+def forgot_password(body: ForgotPasswordIn, service: Service) -> None:
+    service.forgot_password(body.email)
 
 
 @router.post(
@@ -134,8 +128,8 @@ def forgot_password(body: ForgotPasswordIn) -> None:
     responses={400: _E, **_INVALID},
     summary="Check a reset token before showing the form",
 )
-def check_reset_token(body: TokenIn) -> ResetCheckOut:
-    raise _not_built()
+def check_reset_token(body: TokenIn, service: Service) -> ResetCheckOut:
+    return ResetCheckOut(email=service.check_reset_token(body.token))
 
 
 @router.post(
@@ -144,8 +138,10 @@ def check_reset_token(body: TokenIn) -> ResetCheckOut:
     responses={400: _E, **_INVALID},
     summary="Set a new password with a reset token; ends every session of that user",
 )
-def reset_password(body: ResetPasswordIn) -> None:
-    raise _not_built()
+def reset_password(body: ResetPasswordIn, response: Response, service: Service) -> None:
+    service.reset_password(body.token, body.password)
+    # The customer is not logged in by this route; drop any stale cookie.
+    clear_session_cookie(response)
 
 
 @router.post(
