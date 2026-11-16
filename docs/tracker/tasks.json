@@ -355,9 +355,9 @@
     "starts_after": "T-152, T-113",
     "task": "Design tokens and the component library, with tests",
     "acceptance": "Every component in UX.md section 4 exists, is keyboard accessible, and has tests for its states",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Phase 1 (tokens, bundled fonts, 25 icons) merged; npm run check 99 passed; build makes no Google font request. Phase 2 (form, feedback and layout components) in progress."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Tokens, bundled fonts, 25 icons; form (Button, TextField, TextArea, Select, Checkbox, FileDropZone, SelectableCard/Group, Spinner), feedback (Pill, Banner, Toast, Skeleton, ProgressSteps, EmptyState, ErrorState, Dialog, CreditsPill) and layout (Card, Stepper, Pagination). npm run check: 24 files, 203 tests passed, 0 lint errors; no hex colours in components. Review fix: Dialog reports a native close to the parent. Not yet seen in a browser (T-156): real dialog focus trap, container-query Stepper collapse, :has() card states, contrast."
   },
   {
     "id": "T-154",

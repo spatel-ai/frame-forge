@@ -16,8 +16,11 @@ export function Dialog({ open, onClose, title, children, dismissable = true }: D
   const closeRef = useRef<HTMLButtonElement>(null)
   const opener = useRef<HTMLElement | null>(null)
   const titleId = useId()
+  const openRef = useRef(open)
 
   useEffect(() => {
+    // Updated before close() below, so the native 'close' it fires is not reported back to the parent.
+    openRef.current = open
     const dialog = ref.current
     if (!dialog) return
     if (open && !dialog.open) {
@@ -30,9 +33,6 @@ export function Dialog({ open, onClose, title, children, dismissable = true }: D
       opener.current = null
     }
   }, [open])
-
-  const openRef = useRef(open)
-  openRef.current = open
 
   // Closing is always driven by the open prop: Escape asks the parent to close, it does not close itself.
   // Browsers may skip the cancellable 'cancel' event (e.g. repeated Escape without user activation) and
