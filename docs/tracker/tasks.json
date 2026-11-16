@@ -490,9 +490,9 @@
     "starts_after": "T-202",
     "task": "Email verification and password reset, as in HLD section 5.5",
     "acceptance": "Single-use tokens stored hashed, reset links expire in 30 minutes; the forgot route answers the same for unknown emails; a reset revokes every session; emails printed to the console in development; an unverified account cannot create or approve a job (D-036)",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent building in a worktree (parallel with T-204)."
   },
   {
     "id": "T-204",
@@ -505,9 +505,9 @@
     "starts_after": "T-202",
     "task": "Jobs belong to a user; protect every job and media route",
     "acceptance": "Another user's job returns 404",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent building in a worktree (parallel with T-203)."
   },
   {
     "id": "T-205",
