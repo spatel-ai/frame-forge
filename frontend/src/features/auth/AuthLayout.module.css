@@ -1,0 +1,69 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  background: var(--color-page);
+  color: var(--color-ink);
+}
+
+.backdrop { position: absolute; inset: 0; pointer-events: none; }
+.backdrop > svg { display: block; width: 100%; height: 100%; }
+
+.brand {
+  flex: 1 1 50%;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: var(--space-7);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-6);
+  background: linear-gradient(150deg, var(--color-primary) 0%, var(--color-primary-strong) 100%);
+  color: var(--color-surface);
+}
+
+.logo { position: relative; display: flex; align-items: center; gap: var(--space-3); }
+.mark {
+  width: 36px; height: 36px; border-radius: var(--radius-card);
+  background: var(--color-surface); color: var(--color-primary);
+  display: flex; align-items: center; justify-content: center;
+}
+.word { font-family: var(--font-heading); font-weight: 700; font-size: var(--text-section-size); }
+
+.art { position: relative; width: 100%; max-width: 480px; align-self: center; }
+.art > svg { display: block; width: 100%; height: auto; }
+
+.pitch { position: relative; display: flex; flex-direction: column; gap: var(--space-4); max-width: 480px; }
+.headline { margin: 0; font-family: var(--font-heading); font-weight: 700; font-size: 32px; line-height: 1.2; }
+.ticks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); font-size: 16px; }
+.ticks li { display: flex; align-items: center; gap: var(--space-3); }
+.ticks svg { flex: none; }
+
+.side {
+  flex: 1 1 50%;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: var(--space-7) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: var(--line-width) solid var(--color-line);
+  border-radius: var(--radius-dialog);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.note { position: relative; margin: 0; color: var(--color-ink-soft); font-size: var(--text-caption-size); text-align: center; }
