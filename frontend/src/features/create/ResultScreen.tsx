@@ -3,6 +3,7 @@ import { ErrorState, Pill } from '../../components/feedback'
 import { Button } from '../../components/form'
 import { DownloadIcon } from '../../components/icons'
 import { Card } from '../../components/layout'
+import { formatCredits } from './credits'
 import styles from './screens.module.css'
 
 export function ResultScreen({ job, onReset }: { job: Job; onReset: () => void }) {
@@ -10,7 +11,7 @@ export function ResultScreen({ job, onReset }: { job: Job; onReset: () => void }
     return (
       <ErrorState
         title="Your video file is not available"
-        message="The video finished but we could not find its file. Nothing was charged. Start over to try again."
+        message={`The video finished but we could not find its file. ${job.charged_credits === 0 ? 'Nothing was charged.' : `Charged: ${formatCredits(job.charged_credits)} credits.`} Start over to try again.`}
         action={<Button onClick={onReset}>Start over</Button>}
       />
     )
@@ -39,6 +40,7 @@ export function ResultScreen({ job, onReset }: { job: Job; onReset: () => void }
                 <dd>{job.language}</dd>
               </div>
             </dl>
+            <p className={styles.note}>Charged: {formatCredits(job.charged_credits)} credits</p>
             <div className={styles.actions}>
               <a className={styles.linkButton} href={job.video_url} download>
                 <DownloadIcon size={18} />

@@ -1,6 +1,7 @@
 import type { Job } from '../../api/client'
 import { Button } from '../../components/form'
 import { ErrorState } from '../../components/feedback'
+import { formatCredits } from './credits'
 import { ProgressScreen } from './ProgressScreen'
 import { ResultScreen } from './ResultScreen'
 import { ReviewScreen } from './ReviewScreen'
@@ -10,7 +11,7 @@ function FailedScreen({ job, onReset }: { job: Job; onReset: () => void }) {
   return (
     <ErrorState
       title={voiceFailed ? 'We could not make the voice' : 'We could not make this video'}
-      message={`${job.error ?? 'Something went wrong on our side.'} Nothing was charged. Start over to try again.`}
+      message={`${job.error ?? 'Something went wrong on our side.'} ${job.charged_credits === 0 ? 'Nothing was charged.' : `Charged: ${formatCredits(job.charged_credits)} credits.`} Start over to try again.`}
       action={<Button onClick={onReset}>Start over</Button>}
     />
   )

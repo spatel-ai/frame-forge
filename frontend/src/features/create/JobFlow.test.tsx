@@ -3,7 +3,7 @@ import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, approveJob, getConfig, getJob, getMe, NetworkError } from '../../api/client'
+import { ApiError, approveJob, getConfig, getJob, getMe, getWallet, NetworkError } from '../../api/client'
 import type { Config, Job, User } from '../../api/client'
 import { routes } from '../../routes'
 
@@ -13,6 +13,7 @@ vi.mock('../../api/client', async (importOriginal) => ({
   getMe: vi.fn(),
   getJob: vi.fn(),
   approveJob: vi.fn(),
+  getWallet: vi.fn(),
   createJob: vi.fn(),
 }))
 
@@ -66,6 +67,7 @@ beforeEach(() => {
   vi.resetAllMocks()
   localStorage.clear()
   vi.mocked(getConfig).mockResolvedValue(config)
+  vi.mocked(getWallet).mockResolvedValue({ available_credits: 500, reserved_credits: 0, balance_credits: 500 })
   vi.mocked(getMe).mockResolvedValue({ id: 'u1', name: 'Asha Verma', email: 'asha@example.com', email_verified: true, role: 'user', active_sessions: 1 } as User)
 })
 
@@ -109,7 +111,7 @@ describe('job screens by status', () => {
   })
 
   it('R-08, R-80: failed shows what happened, that nothing was charged, and "Start over"', async () => {
-    vi.mocked(getJob).mockResolvedValue(withStatus('failed', { error: 'Provider said no' }))
+    vi.mocked(getJob).mockResolvedValue(withStatus('failed', { error: 'Provider said no', charged_credits: 0 }))
     renderAt('/create/job-1')
     expect(await screen.findByText('We could not make this video')).toBeTruthy()
     const alert = screen.getByRole('alert').textContent ?? ''
@@ -381,12 +383,10 @@ describe('waiting and failure states', () => {
     expect(screen.getByRole('button', { name: 'Start over' })).toBeTruthy()
   })
 
-  it('R-08: the review screen shows no price or cost', async () => {
-    vi.mocked(getJob).mockResolvedValue(withStatus('audio_ready', { price_credits: 240, charged_credits: 10 }))
+  it('R-09: the review screen shows the duration', async () => {
+    vi.mocked(getJob).mockResolvedValue(withStatus('audio_ready'))
     renderAt('/create/job-1')
     await screen.findByText('Listen to the voice')
-    const text = screen.getByRole('heading', { level: 1 }).parentElement?.textContent ?? ''
-    expect(text).not.toMatch(/\$|USD|price|cost|credits/i)
     expect(screen.getByText('4.2 seconds')).toBeTruthy()
   })
 

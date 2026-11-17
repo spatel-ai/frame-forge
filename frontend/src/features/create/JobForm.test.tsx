@@ -1,14 +1,16 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, createJob, NetworkError } from '../../api/client'
+import { ApiError, createJob, getWallet, NetworkError } from '../../api/client'
 import type { Config, Job } from '../../api/client'
 import { JobForm } from './JobForm'
 
 vi.mock('../../api/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../api/client')>()),
   createJob: vi.fn(),
+  getWallet: vi.fn(),
 }))
 
 const config: Config = {
@@ -41,7 +43,9 @@ function photo(size = 10): File {
 function renderForm(onCreated = vi.fn()) {
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <JobForm config={config} onCreated={onCreated} />
+      <MemoryRouter>
+        <JobForm config={config} onCreated={onCreated} />
+      </MemoryRouter>
     </QueryClientProvider>,
   )
   return { onCreated, user: userEvent.setup() }
@@ -53,6 +57,7 @@ const submit = () => screen.getByRole('button', { name: 'Generate voice' })
 
 beforeEach(() => {
   vi.resetAllMocks()
+  vi.mocked(getWallet).mockResolvedValue({ available_credits: 500, reserved_credits: 0, balance_credits: 500 })
   // jsdom has no object URLs; the drop zone previews the chosen photo with one.
   URL.createObjectURL = vi.fn(() => 'blob:test')
   URL.revokeObjectURL = vi.fn()

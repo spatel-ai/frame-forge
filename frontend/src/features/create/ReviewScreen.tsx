@@ -5,17 +5,30 @@ import { Banner } from '../../components/feedback'
 import { Button } from '../../components/form'
 import { Card } from '../../components/layout'
 import { errMsg } from '../../lib/util'
+import { invalidateWallet } from '../wallet/invalidate'
+import { useWallet } from '../wallet/useWallet'
+import { formatCredits } from './credits'
 import { jobKey } from './jobQueries'
+import { NotEnoughCredits } from './NotEnoughCredits'
 import styles from './screens.module.css'
 
 const isNotVerified = (e: unknown) => e instanceof ApiError && e.status === 403 && e.code === 'email_not_verified'
+
+const isInsufficient = (e: unknown) => e instanceof ApiError && e.code === 'insufficient_credits'
 
 export function ReviewScreen({ job, onReset }: { job: Job; onReset: () => void }) {
   const queryClient = useQueryClient()
   const approveMutation = useMutation({
     mutationFn: () => approveJob(job.id),
-    onSuccess: (j) => queryClient.setQueryData(jobKey(job.id), j),
+    onSuccess: (j) => {
+      queryClient.setQueryData(jobKey(job.id), j)
+      void invalidateWallet(queryClient)
+    },
     onError: (e) => {
+      if (isInsufficient(e)) {
+        void invalidateWallet(queryClient)
+        return
+      }
       if (isNotVerified(e)) {
         void queryClient.invalidateQueries({ queryKey: meKey })
         return
@@ -25,7 +38,12 @@ export function ReviewScreen({ job, onReset }: { job: Job; onReset: () => void }
     },
   })
   const approving = approveMutation.isPending
-  const approveError = approveMutation.error && !isNotVerified(approveMutation.error) ? errMsg(approveMutation.error) : null
+  const { data: wallet } = useWallet()
+  const price = job.price_credits
+  const notEnough = !!wallet && price !== null && wallet.available_credits < price
+  const creditsError = isInsufficient(approveMutation.error) ? errMsg(approveMutation.error) : null
+  const approveError =
+    approveMutation.error && !isNotVerified(approveMutation.error) && !creditsError ? errMsg(approveMutation.error) : null
 
   const approve = () => {
     if (approving) return
@@ -61,15 +79,35 @@ export function ReviewScreen({ job, onReset }: { job: Job; onReset: () => void }
             <h2 id="h-approve" className={styles.heading}>Approve</h2>
             <p className={styles.note}>Happy with how it sounds? Approve it and we will make the video. Otherwise start over.</p>
             {job.error && <Banner tone="danger" title="Something went wrong">{job.error}</Banner>}
+            <dl className={styles.facts}>
+              <div className={styles.fact}>
+                <dt>Video price</dt>
+                <dd>{price === null ? 'Price not available yet' : `${formatCredits(price)} credits`}</dd>
+              </div>
+              {wallet && (
+                <div className={styles.fact}>
+                  <dt>Available</dt>
+                  <dd>{formatCredits(wallet.available_credits)} credits</dd>
+                </div>
+              )}
+            </dl>
+            {notEnough && wallet && price !== null ? (
+              <NotEnoughCredits>
+                {`This video costs ${formatCredits(price)} credits. You have ${formatCredits(wallet.available_credits)}.`}
+              </NotEnoughCredits>
+            ) : (
+              creditsError && <NotEnoughCredits>{creditsError}</NotEnoughCredits>
+            )}
             {approveError && <Banner tone="danger" title="We could not start your video">{approveError}</Banner>}
             <div className={styles.actions}>
-              <Button size="large" busy={approving} busyLabel="Starting your video…" onClick={approve}>
+              <Button size="large" busy={approving} busyLabel="Starting your video…" disabled={price === null || notEnough} onClick={approve}>
                 Approve and make video
               </Button>
               <Button variant="secondary" size="large" disabled={approving} onClick={onReset}>
                 Start over
               </Button>
             </div>
+            <p className={styles.note}>Credits are reserved now and only taken when your video is ready. If it fails, they are returned.</p>
           </section>
         </Card>
       </div>
