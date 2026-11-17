@@ -102,7 +102,7 @@ def test_missing_form_field_gives_validation_error(client):
     r = client.post(
         "/api/v1/jobs",
         files={"image": ("me.png", png(), "image/png")},
-        data={"language": "English"},
+        data={**CONSENT_FORM, "language": "English"},
     )
     body = assert_error(r, 422, "validation_error")
     assert "script" in body["detail"]
@@ -331,7 +331,7 @@ def test_all_missing_inputs_are_all_named(client):
     """D-029: several missing inputs are reported together, each under its own name."""
     r = client.post("/api/v1/jobs", data={})
     body = assert_error(r, 422, "validation_error")
-    assert set(body["fields"]) == {"image", "script", "language"}
+    assert set(body["fields"]) == {"image"}  # script/language are checked once the image is read
     assert set(body["fields"].values()) == {"This is required."}
 
 

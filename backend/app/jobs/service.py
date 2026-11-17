@@ -22,6 +22,7 @@ from sqlalchemy import Connection
 
 from ..core.config import Settings
 from ..providers import Provider, ProviderError
+from ..scripts import service as script_library
 from ..wallet import ledger
 from . import db
 from .db import JobStore
@@ -181,7 +182,11 @@ class JobService:
         self, user_id: str, image_bytes: bytes, script: str, language: str, consent_version: str
     ) -> dict:
         """Create the job and charge the voice. `consent_version` is stored with the time in the
-        same transaction (R-14, D-045); the route has already checked it is the current one."""
+        same transaction (R-14, D-045); the route has already checked it is the current one.
+
+        R-43, R-51: in that same transaction the script is saved to the customer's library (or an
+        identical live one is touched) and its id stored in `jobs.script_id`; if any check or the
+        voice charge fails, no script is saved. Script text is never logged."""
         script = script.strip()
         if not script:
             raise ValidationError("The script is empty. Type what the avatar should say.", "script")
@@ -213,6 +218,9 @@ class JobService:
         image_file = f"image.{extension}"
         price = self.settings.voice_price_credits
 
+        def save_script(conn: Connection) -> str:
+            return script_library.save_or_touch(conn, user_id, language, script)
+
         def charge_voice(conn: Connection) -> None:
             # HLD §5.2, first row (D-038): the job row and its voice charge commit together.
             ledger.voice_charge(conn, user_id, job_id, price)
@@ -228,6 +236,7 @@ class JobService:
                 image_file,
                 ledger=charge_voice,
                 consent_version=consent_version,
+                save_script=save_script,
             )
         except BaseException as exc:
             # Nothing was committed, so leave nothing on disk either.
