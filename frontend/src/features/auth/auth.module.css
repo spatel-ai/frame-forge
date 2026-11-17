@@ -1,9 +1,10 @@
 .form { display: flex; flex-direction: column; gap: var(--space-4); margin: 0; }
-.title { margin: 0; font-family: var(--font-heading); font-weight: var(--text-page-title-weight); font-size: var(--text-page-title-size); line-height: 1.2; }
-.lead { margin: 0; color: var(--color-ink-soft); }
+.title { margin: 0; font-family: var(--font-heading); font-weight: var(--text-page-title-weight); font-size: var(--text-page-title-size); line-height: 1.2; overflow-wrap: anywhere; }
+.lead { margin: 0; color: var(--color-ink-soft); overflow-wrap: anywhere; }
 .lead strong { color: var(--color-ink); }
-.small { margin: 0; color: var(--color-ink-soft); font-size: var(--text-caption-size); }
-.center { margin: 0; text-align: center; color: var(--color-ink-soft); }
+.small { margin: 0; color: var(--color-ink-soft); font-size: var(--text-caption-size); overflow-wrap: anywhere; }
+.center { margin: 0; text-align: center; color: var(--color-ink-soft); overflow-wrap: anywhere; }
+
 .stack { display: flex; flex-direction: column; gap: var(--space-4); }
 
 .badge {
@@ -33,8 +34,13 @@
 .helpBox {
   display: flex; flex-direction: column; gap: var(--space-2);
   padding: var(--space-4); border-radius: var(--radius-card);
-  background: var(--color-page); color: var(--color-ink-soft); font-size: var(--text-caption-size);
+  background: var(--color-page); color: var(--color-ink-soft); font-size: var(--text-caption-size); overflow-wrap: anywhere;
 }
 .helpBox strong { color: var(--color-ink); }
 
 .emailTaken { margin: 0; font-size: var(--text-caption-size); color: var(--color-ink-soft); }
+
+/* Phone and tablet: the sign-up / log-in switch link is a standalone target, 44 px tall. */
+@media (max-width: 1023.98px) {
+  .center .link { display: inline-flex; align-items: center; min-height: var(--target-min); }
+}

@@ -1,23 +1,26 @@
 .page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
+  flex-direction: column;
   background: var(--color-page);
   color: var(--color-ink);
 }
 
-.backdrop { position: absolute; inset: 0; pointer-events: none; }
+.backdrop { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .backdrop > svg { display: block; width: 100%; height: 100%; }
 
 .brand {
-  flex: 1 1 50%;
+  flex: none;
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
-  padding: var(--space-7);
+  /* Phone and tablet: a header band; the card overlaps its lower part (see .card). */
+  padding: 28px var(--space-5) 100px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: var(--space-6);
+  justify-content: flex-start;
+  gap: 20px;
   background: linear-gradient(150deg, var(--color-primary) 0%, var(--color-primary-strong) 100%);
   color: var(--color-surface);
 }
@@ -28,36 +31,37 @@
   background: var(--color-surface); color: var(--color-primary);
   display: flex; align-items: center; justify-content: center;
 }
-.word { font-family: var(--font-heading); font-weight: 700; font-size: var(--text-section-size); }
+.word { font-family: var(--font-heading); font-weight: 700; font-size: 18px; }
 
-.art { position: relative; width: 100%; max-width: 480px; align-self: center; }
+.art { display: none; position: relative; width: 100%; max-width: 480px; align-self: center; }
 .art > svg { display: block; width: 100%; height: auto; }
 
-.pitch { position: relative; display: flex; flex-direction: column; gap: var(--space-4); max-width: 480px; }
-.headline { margin: 0; font-family: var(--font-heading); font-weight: 700; font-size: 32px; line-height: 1.2; }
-.ticks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); font-size: 16px; }
+.pitch { position: relative; display: flex; flex-direction: column; gap: var(--space-4); max-width: 480px; min-width: 0; }
+.headline { margin: 0; font-family: var(--font-heading); font-weight: 700; font-size: 22px; line-height: 1.25; overflow-wrap: anywhere; }
+.ticks { display: none; list-style: none; margin: 0; padding: 0; flex-direction: column; gap: var(--space-3); font-size: 16px; }
 .ticks li { display: flex; align-items: center; gap: var(--space-3); }
 .ticks svg { flex: none; }
 
 .side {
-  flex: 1 1 50%;
+  flex: 1 1 auto;
   position: relative;
-  overflow: hidden;
   box-sizing: border-box;
-  padding: var(--space-7) var(--space-5);
+  /* No clipping and no vertical centring: the page scrolls and the card top is never hidden. */
+  padding: 0 var(--space-4) var(--space-5);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: var(--space-5);
 }
 
 .card {
   position: relative;
   width: 100%;
-  max-width: 420px;
+  max-width: 480px;
   box-sizing: border-box;
-  padding: var(--space-6);
+  margin-top: -84px;
+  padding: var(--space-5);
   background: var(--color-surface);
   border: var(--line-width) solid var(--color-line);
   border-radius: var(--radius-dialog);
@@ -67,3 +71,25 @@
 }
 
 .note { position: relative; margin: 0; color: var(--color-ink-soft); font-size: var(--text-caption-size); text-align: center; }
+
+/* Desktop: the 50/50 split, unchanged. */
+@media (min-width: 1024px) {
+  .page { flex-direction: row; }
+  .brand {
+    flex: 1 1 50%;
+    padding: var(--space-7);
+    justify-content: space-between;
+    gap: var(--space-6);
+  }
+  .word { font-size: var(--text-section-size); }
+  .art { display: block; }
+  .headline { font-size: 32px; line-height: 1.2; }
+  .ticks { display: flex; }
+  .side {
+    flex: 1 1 50%;
+    overflow: hidden;
+    padding: var(--space-7) var(--space-5);
+    justify-content: center;
+  }
+  .card { max-width: 420px; margin-top: 0; padding: var(--space-6); }
+}
