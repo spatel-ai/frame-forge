@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  createOrder, getConfig, getJob, getMe, getOrder, getQuote, getTransactions, getWallet, mockCompletePayment, verifyPayment,
+  createOrder, listBanners, getConfig, getJob, getMe, getOrder, getQuote, getTransactions, getWallet, mockCompletePayment, verifyPayment,
 } from '../../api/client'
 import type { Config, Job, PaymentOrder, User, Wallet } from '../../api/client'
 import { safeReturnPath, topUpPath } from '../../lib/returnPath'
@@ -12,7 +12,7 @@ import { routes } from '../../routes'
 
 vi.mock('../../api/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../api/client')>()),
-  getConfig: vi.fn(), getMe: vi.fn(), getWallet: vi.fn(), getTransactions: vi.fn(), getJob: vi.fn(),
+  listBanners: vi.fn(), getConfig: vi.fn(), getMe: vi.fn(), getWallet: vi.fn(), getTransactions: vi.fn(), getJob: vi.fn(),
   getQuote: vi.fn(), createOrder: vi.fn(), getOrder: vi.fn(), verifyPayment: vi.fn(), mockCompletePayment: vi.fn(),
 }))
 vi.mock('../../lib/checkout', () => ({ openCheckout: vi.fn(), loadCheckout: vi.fn() }))
@@ -52,6 +52,7 @@ const approveButton = () => screen.getByRole('button', { name: 'Approve and make
 beforeEach(() => {
   vi.resetAllMocks()
   vi.mocked(getConfig).mockResolvedValue(config)
+  vi.mocked(listBanners).mockResolvedValue({ items: [{ id: 'b1', name: 'Logo', image_url: '/i', created_at: '2026-11-10T10:00:00Z' }] })
   vi.mocked(getMe).mockResolvedValue(me)
   vi.mocked(getWallet).mockResolvedValue(wallet(290))
   vi.mocked(getTransactions).mockResolvedValue({ items: [], total: 0, page: 1, page_size: 20 })
@@ -99,6 +100,7 @@ describe('top-up loop (D-061)', () => {
     expect(d.queryByRole('button', { name: 'Done' })).toBeNull()
     await userEvent.click(d.getByRole('button', { name: 'Back to your video' }))
 
+    await userEvent.click(await screen.findByRole('radio', { name: /Logo/ }))
     await waitFor(() => expect(approveButton().disabled).toBe(false))
     expect(screen.queryByText('Not enough credits')).toBeNull()
     expect(screen.queryByRole('dialog')).toBeNull()

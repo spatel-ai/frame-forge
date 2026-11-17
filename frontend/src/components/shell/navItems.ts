@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import { HomeIcon, PlusCircleIcon, ScriptIcon, UserIcon, VideoIcon, WalletIcon, type IconProps } from '../icons'
+import { HomeIcon, PlusCircleIcon, ScriptIcon, UploadIcon, UserIcon, VideoIcon, WalletIcon, type IconProps } from '../icons'
 
 export type NavItem = {
   to: string
@@ -16,6 +16,7 @@ export const navItems: NavItem[] = [
   { to: '/create', label: 'Create', icon: PlusCircleIcon, enabled: true },
   { to: '/videos', label: 'Videos', icon: VideoIcon, enabled: true },
   { to: '/scripts', label: 'Scripts', icon: ScriptIcon, enabled: true },
+  { to: '/banners', label: 'Banners', icon: UploadIcon, enabled: true },
   { to: '/wallet', label: 'Wallet', icon: WalletIcon, enabled: true },
   { to: '/account', label: 'Account', icon: UserIcon, enabled: true },
 ]

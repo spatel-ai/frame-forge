@@ -1,0 +1,2 @@
+.preview { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: var(--color-page); }
+.manage { align-self: flex-start; }

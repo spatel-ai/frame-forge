@@ -3,7 +3,7 @@ import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, approveJob, getConfig, getJob, getMe, getWallet, NetworkError } from '../../api/client'
+import { ApiError, approveJob, getConfig, listBanners, getJob, getMe, getWallet, NetworkError } from '../../api/client'
 import type { Config, Job, User } from '../../api/client'
 import { routes } from '../../routes'
 
@@ -13,6 +13,7 @@ vi.mock('../../api/client', async (importOriginal) => ({
   getMe: vi.fn(),
   getJob: vi.fn(),
   approveJob: vi.fn(),
+  listBanners: vi.fn(),
   getWallet: vi.fn(),
   createJob: vi.fn(),
 }))
@@ -68,8 +69,14 @@ const tick = (ms: number) =>
     await vi.advanceTimersByTimeAsync(1)
   })
 
+const banner = { id: 'b1', name: 'Logo', image_url: '/api/v1/banners/b1/image', created_at: '2026-11-10T10:00:00Z' }
+const chooseBanner = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.click(await screen.findByRole('radio', { name: /Logo/ }))
+}
+
 beforeEach(() => {
   vi.resetAllMocks()
+  vi.mocked(listBanners).mockResolvedValue({ items: [banner] })
   localStorage.clear()
   vi.mocked(getConfig).mockResolvedValue(config)
   vi.mocked(getWallet).mockResolvedValue({ available_credits: 500, reserved_credits: 0, balance_credits: 500 })
@@ -243,10 +250,11 @@ describe('approve', () => {
     vi.mocked(getJob).mockResolvedValue(withStatus('audio_ready'))
     vi.mocked(approveJob).mockResolvedValue(withStatus('video_submitting'))
     const { user } = renderAt('/create/job-1')
+    await chooseBanner(user)
     await user.click(await screen.findByRole('button', { name: 'Approve and make video' }))
     expect(await screen.findByText(/Making your video/)).toBeTruthy()
     expect(approveJob).toHaveBeenCalledTimes(1)
-    expect(approveJob).toHaveBeenCalledWith('job-1')
+    expect(approveJob).toHaveBeenCalledWith('job-1', 'b1')
   })
 
   it('R-08, R-80: approve cannot be submitted twice while the request is in flight', async () => {
@@ -254,6 +262,7 @@ describe('approve', () => {
     let resolve!: (j: Job) => void
     vi.mocked(approveJob).mockReturnValue(new Promise<Job>((r) => (resolve = r)))
     const { user } = renderAt('/create/job-1')
+    await chooseBanner(user)
     const button = await screen.findByRole('button', { name: 'Approve and make video' })
     await user.click(button)
     const busy = await screen.findByRole('button', { name: 'Starting your video…' })
@@ -270,6 +279,7 @@ describe('approve', () => {
       .mockResolvedValue(withStatus('video_generating'))
     vi.mocked(approveJob).mockRejectedValue(new ApiError(409, 'Job is not ready to approve', 'conflict'))
     const { user } = renderAt('/create/job-1')
+    await chooseBanner(user)
     await user.click(await screen.findByRole('button', { name: 'Approve and make video' }))
     await vi.waitFor(() => expect(getJob).toHaveBeenCalledTimes(2))
     expect(await screen.findByText(/Making your video/)).toBeTruthy()
@@ -279,6 +289,7 @@ describe('approve', () => {
     vi.mocked(getJob).mockResolvedValue(withStatus('audio_ready'))
     vi.mocked(approveJob).mockRejectedValue(new ApiError(409, 'Job is not ready to approve', 'conflict'))
     const { user } = renderAt('/create/job-1')
+    await chooseBanner(user)
     await user.click(await screen.findByRole('button', { name: 'Approve and make video' }))
     const alert = await screen.findByText('Job is not ready to approve')
     expect(alert.closest('[role="alert"]')).toBeTruthy()

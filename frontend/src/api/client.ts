@@ -67,8 +67,14 @@ export const getConfig = () => request<Config>('/api/v1/config')
 
 export const getJob = (id: string) => request<Job>(`/api/v1/jobs/${encodeURIComponent(id)}`)
 
-export const approveJob = (id: string) =>
-  request<Job>(`/api/v1/jobs/${encodeURIComponent(id)}/approve`, { method: 'POST' })
+/** Approve a job. `bannerId` is the customer's chosen banner (D-067); sent only when given. */
+export const approveJob = (id: string, bannerId?: string) =>
+  request<Job>(
+    `/api/v1/jobs/${encodeURIComponent(id)}/approve`,
+    bannerId === undefined
+      ? { method: 'POST' }
+      : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ banner_id: bannerId }) },
+  )
 
 /**
  * Start a job. `scriptId` is sent instead of the text, only for a saved script the customer did not
@@ -205,3 +211,16 @@ export async function fetchVideoFile(videoPath: string): Promise<Blob> {
   if (!res.ok) throw new ApiError(res.status, 'We could not download the video. Please try again.', 'download_failed')
   return res.blob()
 }
+
+// Banners (D-067): the customer's own logo or banner images; one is chosen for each video.
+export type Banner = components['schemas']['BannerOut']
+export const bannersKey = ['banners'] as const
+export const listBanners = () => request<components['schemas']['BannersOut']>('/api/v1/banners')
+export function createBanner(name: string, file: File): Promise<Banner> {
+  const body = new FormData()
+  body.append('name', name)
+  body.append('image', file)
+  return request<Banner>('/api/v1/banners', { method: 'POST', body })
+}
+export const deleteBanner = (id: string) =>
+  request<void>(`/api/v1/banners/${encodeURIComponent(id)}`, { method: 'DELETE' })

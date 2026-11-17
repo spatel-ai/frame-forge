@@ -148,7 +148,7 @@ describe('Video detail', () => {
     expect(screen.getByText('10 credits')).toBeTruthy()
     expect(screen.getByText('240 credits')).toBeTruthy()
     expect(screen.getByText('250 credits')).toBeTruthy()
-    expect(screen.queryByText('Banners')).toBeNull()
+    expect(screen.queryByText('Banners', { selector: 'dt' })).toBeNull()
     expect(screen.queryByText('Start banner')).toBeNull()
   })
 
@@ -157,7 +157,7 @@ describe('Video detail', () => {
     renderAt('/videos/job-1')
     await screen.findByText('Festive opening')
     expect(screen.getByText('Start banner')).toBeTruthy()
-    expect(screen.getByText('Banners')).toBeTruthy()
+    expect(screen.getByText('Banners', { selector: 'dt' })).toBeTruthy()
     expect(screen.getByText('Free')).toBeTruthy()
     expect(screen.queryByText('End banner')).toBeNull()
   })
