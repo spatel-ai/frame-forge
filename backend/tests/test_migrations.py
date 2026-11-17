@@ -3,9 +3,14 @@
 Runs against the Docker database (`docker compose up -d db`) inside a throwaway schema
 from the shared `empty_schema` fixture. Free: it never reaches fal.ai or any paid service."""
 
+import re
+from typing import get_args
+
 from alembic import command
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.pool import NullPool
+
+from app.wallet.schemas import LedgerKind
 
 EXPECTED_COLUMNS = {
     "id",
@@ -59,6 +64,49 @@ def test_head_builds_the_auth_tables(empty_schema, admin_engine):
         "status",
         "created_at",
     }
+
+
+def test_head_builds_the_wallet_tables(empty_schema, admin_engine):
+    """T-301 (R-04): upgrade head creates wallets and ledger_entries with the CHECK that forbids
+    a negative available balance, UNIQUE (kind, ref_type, ref_id), the kind CHECK listing exactly
+    the contract's LedgerKind, and the per-user index; downgrade to 0003 removes them."""
+    cfg = empty_schema.alembic_config()
+    schema = empty_schema.name
+    command.upgrade(cfg, "head")
+    insp = inspect(admin_engine)
+    assert insp.has_table("wallets", schema=schema)
+    assert insp.has_table("ledger_entries", schema=schema)
+    checks = {c["name"]: c["sqltext"] for c in insp.get_check_constraints("wallets", schema=schema)}
+    assert "ck_wallets_available_not_negative" in checks
+    uniques = insp.get_unique_constraints("ledger_entries", schema=schema)
+    assert {
+        "name": "uq_ledger_entries_kind_ref",
+        "column_names": ["kind", "ref_type", "ref_id"],
+    } in [{"name": u["name"], "column_names": u["column_names"]} for u in uniques]
+    kinds_sql = {
+        c["name"]: c["sqltext"] for c in insp.get_check_constraints("ledger_entries", schema=schema)
+    }["ck_ledger_entries_kind"]
+    assert set(re.findall(r"'(\w+)'", kinds_sql)) == set(get_args(LedgerKind))
+    assert "ix_ledger_entries_user_created" in {
+        i["name"] for i in insp.get_indexes("ledger_entries", schema=schema)
+    }
+    assert {c["name"] for c in insp.get_columns("ledger_entries", schema=schema)} == {
+        "id",
+        "user_id",
+        "kind",
+        "credits",
+        "reserved_delta",
+        "balance_after",
+        "reserved_after",
+        "ref_type",
+        "ref_id",
+        "created_by",
+        "created_at",
+    }
+    command.downgrade(cfg, "0003")
+    insp = inspect(admin_engine)
+    assert not insp.has_table("wallets", schema=schema)
+    assert not insp.has_table("ledger_entries", schema=schema)
 
 
 def test_0003_keeps_a_job_made_before_accounts_with_no_owner(empty_schema):
