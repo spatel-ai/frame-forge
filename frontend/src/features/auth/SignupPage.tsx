@@ -49,9 +49,11 @@ export function SignupPage() {
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (mutation.isPending) return
-    setBanner(null)
     setEmailTaken(false)
-    if (!f.checkAll()) return
+    if (!f.checkAll()) {
+      setBanner(null)
+      return
+    }
     mutation.mutate({ name: f.values.name.trim(), email: f.values.email.trim(), password: f.values.password })
   }
 

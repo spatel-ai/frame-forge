@@ -102,6 +102,19 @@ describe('Check your email (R-01)', () => {
     expect(screen.getByText('We sent another link.')).toBeTruthy()
     expect((screen.getByRole('button', { name: 'Resend link in 1:00' }) as HTMLButtonElement).disabled).toBe(true)
   })
+
+  it('R-01 keeps Resend locked for 60 seconds after a 429', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: false })
+    vi.mocked(forgotPassword).mockRejectedValue(new ApiError(429, 'Wait a minute.', 'rate_limited'))
+    renderAuth({ pathname: '/forgot-password/sent', state: { email: 'asha@example.com' } })
+    for (let i = 0; i < 60; i++) await act(async () => vi.advanceTimersByTime(1000))
+    await act(async () => {
+      ;(screen.getByRole('button', { name: 'Resend link' }) as HTMLButtonElement).click()
+      await vi.advanceTimersByTimeAsync(10)
+    })
+    expect(screen.getByRole('alert').textContent).toContain('Wait a minute.')
+    expect((screen.getByRole('button', { name: 'Resend link in 1:00' }) as HTMLButtonElement).disabled).toBe(true)
+  })
 })
 
 describe('Set a new password (R-01)', () => {

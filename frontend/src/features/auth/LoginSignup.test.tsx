@@ -74,6 +74,20 @@ describe('Log in (R-01)', () => {
     expect(passwordBox().value).toBe('wrong-password')
   })
 
+  it('R-01 keeps the error banner in place while the next log-in is pending, then clears it', async () => {
+    vi.mocked(login).mockRejectedValueOnce(new ApiError(401, 'nope', 'invalid_credentials'))
+    const { u } = renderAuth('/login')
+    await u.type(emailBox(), 'asha@example.com')
+    await u.type(passwordBox(), 'wrong-password')
+    await u.click(screen.getByRole('button', { name: 'Log in' }))
+    await screen.findByRole('alert')
+    let finish: (v: typeof testUser) => void = () => {}
+    vi.mocked(login).mockReturnValue(new Promise((r) => (finish = r)))
+    await u.click(screen.getByRole('button', { name: 'Log in' }))
+    expect(screen.getByRole('alert').textContent).toContain('Email or password is wrong.')
+    await act(async () => finish(testUser))
+  })
+
   it('R-01 shows the server detail on rate_limited', async () => {
     vi.mocked(login).mockRejectedValue(new ApiError(429, 'Too many tries. Wait 5 minutes.', 'rate_limited'))
     const { u } = renderAuth('/login')

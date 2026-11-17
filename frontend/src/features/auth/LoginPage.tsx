@@ -49,8 +49,10 @@ export function LoginPage() {
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (mutation.isPending) return
-    setBanner(null)
-    if (!f.checkAll()) return
+    if (!f.checkAll()) {
+      setBanner(null)
+      return
+    }
     mutation.mutate({ email: f.values.email.trim(), password: f.values.password })
   }
 
