@@ -6,6 +6,10 @@ import type { Config, Job } from '../../api/client'
 import { Banner } from '../../components/feedback'
 import { Button, FileDropZone, Select, TextArea } from '../../components/form'
 import { Card } from '../../components/layout'
+import { invalidateWallet } from '../wallet/invalidate'
+import { useWallet } from '../wallet/useWallet'
+import { formatCredits } from './credits'
+import { NotEnoughCredits } from './NotEnoughCredits'
 import styles from './JobForm.module.css'
 
 type FieldName = 'image' | 'script' | 'language'
@@ -53,6 +57,10 @@ export function JobForm({
   // Once a field has been validated (on blur or submit) it is re-validated on every change.
   const [scriptChecked, setScriptChecked] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  // The server's own sentence for a 402; it already states the amounts.
+  const [creditsError, setCreditsError] = useState<string | null>(null)
+  const { data: wallet } = useWallet()
+  const notEnough = !!wallet && wallet.available_credits < config.voice_price_credits
 
   const imageRef = useRef<HTMLInputElement>(null)
   const scriptRef = useRef<HTMLTextAreaElement>(null)
@@ -93,6 +101,7 @@ export function JobForm({
     e.preventDefault()
     if (busy) return
     setFormError(null)
+    setCreditsError(null)
     const errors: FieldErrors = {
       image: validateImage(file, config.max_image_mb),
       script: validateScript(script, config.max_script_chars),
@@ -107,11 +116,19 @@ export function JobForm({
     create.mutate(
       { file, text: script.trim(), language },
       {
-        onSuccess: (j) => onCreated(j),
+        onSuccess: (j) => {
+          void invalidateWallet(queryClient)
+          onCreated(j)
+        },
         onError: (err) => {
           if (err instanceof ApiError && err.status === 403 && err.code === 'email_not_verified') {
             // Confirmed or unconfirmed elsewhere: reload who we are; the notice follows from that.
             void queryClient.invalidateQueries({ queryKey: meKey })
+            return
+          }
+          if (err instanceof ApiError && err.code === 'insufficient_credits') {
+            setCreditsError(err.message)
+            void invalidateWallet(queryClient)
             return
           }
           const fields: FieldErrors = {}
@@ -204,10 +221,18 @@ export function JobForm({
             {formError} Your photo and script are kept.
           </Banner>
         )}
+        {notEnough && wallet ? (
+          <NotEnoughCredits>
+            {`You have ${formatCredits(wallet.available_credits)} credits; generating a voice costs ${formatCredits(config.voice_price_credits)}.`}
+          </NotEnoughCredits>
+        ) : (
+          creditsError && <NotEnoughCredits>{creditsError}</NotEnoughCredits>
+        )}
         {!canGenerate && (
           <p className={styles.unconfirmed}>You can fill this in now. Generating needs a confirmed email.</p>
         )}
-        <Button type="submit" size="large" busy={busy} busyLabel="Generating voice…" disabled={!canGenerate}>
+        <p className={styles.unconfirmed}>Generating the voice costs {formatCredits(config.voice_price_credits)} credits.</p>
+        <Button type="submit" size="large" busy={busy} busyLabel="Generating voice…" disabled={!canGenerate || notEnough}>
           Generate voice
         </Button>
       </div>

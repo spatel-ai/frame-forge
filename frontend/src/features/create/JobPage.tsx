@@ -1,6 +1,8 @@
-import { useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Banner, Skeleton, SkeletonGroup } from '../../components/feedback'
+import { invalidateWallet } from '../wallet/invalidate'
 import { CreateLayout } from './CreateLayout'
 import { isNotFound, useJob } from './jobQueries'
 import { JobView } from './JobView'
@@ -24,6 +26,20 @@ export default function JobPage() {
   const { jobId = '' } = useParams()
   const navigate = useNavigate()
   const { data: job, error } = useJob(jobId)
+
+  const queryClient = useQueryClient()
+
+  // A capture or a release happened when the job moves to completed or failed. Compare with the
+  // previous status so a plain poll never refetches the wallet.
+  const status = job?.status
+  const prevStatus = useRef<string | undefined>(undefined)
+  useEffect(() => {
+    const prev = prevStatus.current
+    prevStatus.current = status
+    if (prev && status && prev !== status && (status === 'completed' || status === 'failed')) {
+      void invalidateWallet(queryClient)
+    }
+  }, [status, queryClient])
 
   const gone = isNotFound(error)
   useEffect(() => {
