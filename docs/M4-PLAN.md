@@ -37,7 +37,9 @@ The parent CLAUDE.md wins on any conflict and is never edited.
 
 | Question | Answer |
 | --- | --- |
-| Q-06 amounts | Any whole number of credits from 500 to 10,000 per purchase (₹500 to ₹10,000; ₹1 = 1 credit). The contract is in credits (D-047) |
+| Q-06 amounts | Any whole number of credits from 1,000 to 10,000 per purchase (D-059; ₹1 = 1 credit). The contract is in credits (D-047) |
+| Payment fee | The customer pays it: 2% on top, a setting; GST on the fee off unless set (D-060) |
+| Short of credits | Top up from the review screen and come back to the same video (D-061) |
 | Q-10 account | The owner has keys and a webhook secret and pastes them into `backend/.env`. Using them needs approval for that run |
 
 ## Discovery
@@ -59,7 +61,7 @@ The parent CLAUDE.md wins on any conflict and is never edited.
 
 | Class | Item |
 | --- | --- |
-| Confirmed | D-016 flow; paise integers; 500–10,000 credits per purchase (D-047); credit only on a valid signature, `captured` and an amount equal to the order; one crediting routine |
+| Confirmed | D-016 flow; paise integers; 1,000–10,000 credits per purchase (D-047, D-059); the customer pays the payment fee (D-060); credit only on a valid signature, `captured` and an amount equal to the order; one crediting routine |
 | Confirmed | ₹1 buys 1 credit with no GST (Q-03 answered: not applicable). Bought credits are not refundable (D-053) |
 | Assumed | Reconciliation looks at orders older than 30 minutes, every 5 minutes, for up to 3 days. Quick picks 500 / 1,000 / 2,500 / 5,000 credits |
 | Needs Verification | Key prefixes, the order-payments list, retry intervals and the webhook digest encoding (hex). All in T-407 |
@@ -74,6 +76,8 @@ The parent CLAUDE.md wins on any conflict and is never edited.
 | `RAZORPAY_KEY_ID` | Public key id; the only Razorpay value sent to the browser |
 | `RAZORPAY_KEY_SECRET` | API secret; used for basic auth and the checkout signature |
 | `RAZORPAY_WEBHOOK_SECRET` | The secret typed when adding the webhook in the Dashboard |
+| `AVATAR_PAYMENT_FEE_BPS` | Payment fee the customer pays, in basis points (default 200 = 2%; D-060) |
+| `AVATAR_PAYMENT_FEE_GST_BPS` | GST on that fee, in basis points (default 0 = off) |
 
 `backend/.env` has these four lines with empty values (D-042: `razorpay` mode refuses to start if
 one is empty, or if a non-test key is used outside production).
@@ -87,12 +91,13 @@ When the test-mode run is approved, the owner adds a webhook in the Razorpay Das
 
 | Route | Body → result | Errors |
 | --- | --- | --- |
-| `POST /api/v1/payments/orders` | `{credits}` (D-047) → `{order_id, razorpay_order_id, amount_paise, credits, key_id, status}` | 401, 403 `email_not_verified` (D-049, Proposed), 422 `fields.credits`, 502 `payment_provider_unavailable` |
+| `GET /api/v1/payments/quote?credits=N` | → `{credits, price_paise, fee_paise, fee_gst_paise, amount_paise}` (D-060) | 401, 422 `fields.credits` |
+| `POST /api/v1/payments/orders` | `{credits}` (D-047) → `{order_id, razorpay_order_id, price_paise, fee_paise, fee_gst_paise, amount_paise, credits, key_id, status}`; `amount_paise` is the total the customer pays | 401, 403 `email_not_verified` (D-049, Proposed), 422 `fields.credits`, 502 `payment_provider_unavailable` |
 | `GET /api/v1/payments/orders/{order_id}` | → `{order_id, status, credits, created_at}` | 401, 404 (missing or not yours) |
 | `POST /api/v1/payments/verify` | `{order_id, razorpay_payment_id, razorpay_signature}` → `{order_id, status, credits, wallet}` | 401, 404, 400 `payment_signature_invalid`, 409 `payment_not_captured`, 502 |
 | `POST /api/v1/webhooks/razorpay` | raw body, `X-Razorpay-Signature`, `x-razorpay-event-id` → 200 | 400 `webhook_signature_invalid` (no session, no origin check) |
 | `POST /api/v1/payments/mock/complete` | development and mock mode only: `{order_id, outcome: "captured"\|"failed"}` → the Checkout handler's fields, signed with the mock secret | 404 in any other mode |
-| `GET /api/v1/config` | adds `payments`, `razorpay_key_id` (null in mock), `min_purchase_credits`, `max_purchase_credits` | — |
+| `GET /api/v1/config` | adds `payments`, `razorpay_key_id` (null in mock), `min_purchase_credits`, `max_purchase_credits`, `payment_fee_bps`, `payment_fee_gst_bps` (display only), `support_email` | — |
 
 The order `status` is one of `created`, `paid` or `failed`. `failed` is shown only after a
 definite failure, and a later capture still credits.
@@ -118,8 +123,9 @@ Phase 1 and later start after M3 is done (its build is done; the M3 browser chec
   httpx transport.
 - Browser check in mock mode at 1440 and 1024 px:
   1. Confirm `"payments":"mock"` and `"provider":"mock"` first.
-  2. Buy 500 credits → mock checkout → "Payment received" → the wallet shows `purchase` +500.
-  3. 499 and 10,001 credits are refused under the field.
+  2. Buy 1,000 credits → the dialog shows ₹1,000 + ₹20 fee = ₹1,020 → mock checkout → "Payment received" → the wallet shows `purchase` +1,000.
+  2b. A video the customer cannot afford → "Add credits" → pay → "Back to your video" → Approve enabled (D-061).
+  3. 999 and 10,001 credits are refused under the field.
   4. Failed and cancelled endings appear.
   5. No request leaves the machine.
 - Not verified until T-407: Razorpay's real API, Checkout and webhooks.

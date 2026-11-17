@@ -260,8 +260,10 @@ returned.
 - When credits are short, the approve button is disabled and the server's shortfall message is
   shown ("This video costs 240 credits. You have 200."), with a "Buy credits" action that
   returns the customer to the same step (the action appears with M4).
-- Buying is in credits (D-047): the customer chooses 500 to 10,000 credits and sees the rupees to
-  pay (₹1 = 1 credit).
+- Buying is in credits (D-047): the customer chooses 1,000 to 10,000 credits (D-059) and sees,
+  from the server, the price, the payment fee and the total to pay (D-060).
+- When a video costs more than the credits available, the review screen offers "Add credits"; after
+  paying, the customer returns to the same video and can approve it (D-061).
 - Banners are always labelled "Free". They are added only when the customer switches on "Add
   banners" (D-058); without banners the progress has no "Adding your banners" step.
 

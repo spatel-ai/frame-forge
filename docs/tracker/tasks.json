@@ -415,9 +415,9 @@
     "starts_after": "T-311, T-212",
     "task": "Move code shared between features into `lib/` (validation, job storage, wallet refresh, credit formatting)",
     "acceptance": "No feature imports another feature; shared folders import no feature; checks pass",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Merged. Shared code moved to lib/ (validation, jobStorage, wallet); src/layering.test.ts fails on any feature-to-feature or shared-to-feature import; top-bar \"Buy credits\" opens the dialog via /wallet?buy=1. npm run check 379 passed."
   },
   {
     "id": "T-156",
@@ -864,7 +864,7 @@
     "traces_to": "R-02",
     "starts_after": "T-310, T-400",
     "task": "Buy-credits screen with Razorpay Checkout",
-    "acceptance": "Amount entry in whole credits, 500 to 10,000 (D-047); shows the rupees to pay (₹1 = 1 credit)",
+    "acceptance": "Amount entry in whole credits, 1,000 to 10,000 (D-047, D-059); shows the price, the payment fee and the total from the server (D-060)",
     "status": "In progress",
     "verification": "IMPLEMENTED, UNVERIFIED",
     "evidence": "Merged. BuyCreditsDialog on the wallet page: amount in credits (500–10,000, quick picks), validation, server fields.credits errors, one order per click, 403 email_not_verified with a link; Checkout loader (lib/checkout.ts) only in razorpay mode, options only from RAZORPAY-FACTS §E; mock Pay/Fail/Cancel calls the mock route then the real verify. npm run check 372 passed. Not yet seen in a browser against the real backend (waits for T-402–T-406)."
@@ -883,6 +883,21 @@
     "status": "In progress",
     "verification": "IMPLEMENTED, UNVERIFIED",
     "evidence": "Merged. Success with the server balance (wallet refetched), confirming (polls the order every 2 s, after 60 s \"taking longer than usual\"), failed, cancelled with Try again; network or 5xx on verify shows confirming, never \"no credits were added\". Tests in BuyCredits.test.tsx (20, R-02). Browser check pending."
+  },
+  {
+    "id": "T-412",
+    "milestone": "M4",
+    "area": "Frontend",
+    "lane": "FE-Wallet",
+    "owner": "Sonnet",
+    "need": "Acceptance",
+    "traces_to": "R-86, R-87",
+    "starts_after": "T-411, T-402",
+    "task": "Fee line from the quote; top up from the review screen and return to the video (D-060, D-061)",
+    "acceptance": "The dialog shows price, fee and total from `GET /payments/quote`; \"Add credits\" on a short review opens Buy credits at 1,000 with a safe return address; success returns to the job with Approve enabled",
+    "status": "To do",
+    "verification": "",
+    "evidence": ""
   },
   {
     "id": "T-500",

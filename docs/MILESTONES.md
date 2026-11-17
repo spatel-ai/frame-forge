@@ -159,7 +159,7 @@ overspend, and that the stored balance equals the sum of the ledger.
 
 ## M4 — Razorpay payments
 
-**Gate A needs:** Q-06 answered (done 2026-11-17: ₹500 to ₹10,000); Razorpay facts re-checked (T-401,
+**Gate A needs:** Q-06 answered (done 2026-11-17; now 1,000 to 10,000 credits, D-059; the customer pays the payment fee, D-060); Razorpay facts re-checked (T-401,
 done: [RAZORPAY-FACTS.md](RAZORPAY-FACTS.md)); plan in [M4-PLAN.md](M4-PLAN.md). **Gate C:** T-407 needs the
 owner's test keys (Q-10: the owner has them). Test mode is free, but it is an external run and needs the owner's
 go-ahead.
@@ -179,8 +179,9 @@ only after T-407.
 | T-405 | BE | Sonnet | Correctness | R-03 | Reconcile stale orders | An order paid but never confirmed is credited |
 | T-406 | BE | Sonnet | Correctness | R-03 | Tests with signed fixtures | All five cases above, without network |
 | T-407 | BE | Fable | Acceptance | R-02, R-22 | End-to-end run in Razorpay test mode | Owner-approved run; evidence recorded |
-| T-410 | FE | Sonnet | Acceptance | R-02 | Buy-credits screen with Razorpay Checkout | Amount entry in whole credits, 500 to 10,000 (D-047); shows the rupees to pay (₹1 = 1 credit) |
+| T-410 | FE | Sonnet | Acceptance | R-02 | Buy-credits screen with Razorpay Checkout | Amount entry in whole credits, 1,000 to 10,000 (D-047, D-059); shows the price, the payment fee and the total from the server (D-060) |
 | T-411 | FE | Sonnet | Acceptance | R-02 | After-payment states | Success, still confirming, failed, cancelled |
+| T-412 | FE | Sonnet | Acceptance | R-86, R-87 | Fee line from the quote; top up from the review screen and return to the video (D-060, D-061) | The dialog shows price, fee and total from `GET /payments/quote`; "Add credits" on a short review opens Buy credits at 1,000 with a safe return address; success returns to the job with Approve enabled |
 
 ## M5 — Product completeness
 
@@ -384,6 +385,7 @@ its lane free, can start.
 | T-407 | Review | T-406, T-411 |
 | T-410 | FE-Wallet | T-310, T-400 |
 | T-411 | FE-Wallet | T-410 |
+| T-412 | FE-Wallet | T-411, T-402 |
 | T-500 | Contract | T-400 |
 | T-501 | BE-Jobs | T-304, T-500 |
 | T-502 | BE-Jobs | T-501 |

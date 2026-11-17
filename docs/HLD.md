@@ -166,7 +166,7 @@ sequenceDiagram
     participant B as Browser
     participant A as Backend
     participant R as Razorpay
-    B->>A: POST /payments/orders {credits: 500}
+    B->>A: POST /payments/orders {credits: 1000}
     A->>R: Create order (amount 50000 paise, INR)
     A-->>B: our order id, Razorpay order id, public key id
     B->>R: Checkout popup, customer pays
@@ -174,11 +174,16 @@ sequenceDiagram
     B->>A: POST /payments/verify
     A->>A: Verify signature with OUR stored order id
     A->>R: Fetch payment: status captured? amount matches?
-    A->>A: One transaction: mark order paid + ledger purchase +500
+    A->>A: One transaction: mark order paid + ledger purchase +1000
     A-->>B: New balance
     R->>A: Webhook payment.captured / order.paid (signed)
     A->>A: Verify signature on raw body, dedupe by event id, same crediting step (no-op if done)
 ```
+
+The customer buys 1,000 to 10,000 credits (D-059) and pays the credits' price plus a payment fee
+(2% by default, D-060), all computed by the server in paise; the order is created for that total
+and only the credits bought are added to the wallet. A customer short of credits for a video can
+top up from the review screen and return to the same video (D-061).
 
 Rules, each traced to Razorpay's documentation (checked 2026-11-17):
 
@@ -288,7 +293,7 @@ into the OpenAPI document before backend or frontend work begins.
 | --- | --- |
 | Auth | `POST /auth/signup`, `POST /auth/login`, `POST /auth/logout`, `POST /auth/logout-all`, `GET /auth/me`, `POST /auth/verify-email`, `POST /auth/verify-email/resend`, `POST /auth/password/forgot`, `POST /auth/password/reset/check`, `POST /auth/password/reset`, `POST /auth/password/change` (M2 contract in [M2-PLAN.md](M2-PLAN.md)) |
 | Wallet | `GET /wallet`, `GET /wallet/transactions` |
-| Payments | `POST /payments/orders {credits}` (D-047), `GET /payments/orders/{id}`, `POST /payments/verify`, `POST /webhooks/razorpay`; development and mock mode only: `POST /payments/mock/complete` (D-042). Contract in [M4-PLAN.md](M4-PLAN.md) |
+| Payments | `GET /payments/quote?credits=N` (price, fee, total; D-060), `POST /payments/orders {credits}` (D-047), `GET /payments/orders/{id}`, `POST /payments/verify`, `POST /webhooks/razorpay`; development and mock mode only: `POST /payments/mock/complete` (D-042). Contract in [M4-PLAN.md](M4-PLAN.md) |
 | Scripts | `GET /scripts`, `GET /scripts/{id}`, `DELETE /scripts/{id}` |
 | Templates | `GET /templates`, `GET /templates/{id}/preview` |
 | Jobs | `POST /jobs` (script text **or** script id; optional start and end template ids), `GET /jobs`, `GET /jobs/{id}`, `POST /jobs/{id}/approve`, `GET /jobs/{id}/audio`, `GET /jobs/{id}/video` |

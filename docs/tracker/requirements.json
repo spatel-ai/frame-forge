@@ -574,5 +574,21 @@
     "requirement": "Banners appear only after the customer switches on \"Add banners\" (off by default); without banners there is no joining step on the progress screen.",
     "source": "Owner change request, 2026-11-17 (D-058)",
     "discovery_item": ""
+  },
+  {
+    "id": "R-86",
+    "class": "Confirmed",
+    "area": "Payments",
+    "requirement": "The customer pays a payment fee (2% by default, a setting; GST on the fee optional) on top of the credits, shown before paying; the fee never becomes credits. Minimum purchase 1,000 credits.",
+    "source": "Owner change request, 2026-11-17 (D-059, D-060)",
+    "discovery_item": ""
+  },
+  {
+    "id": "R-87",
+    "class": "Confirmed",
+    "area": "Create",
+    "requirement": "A customer short of credits for a ready video can add credits from the review screen and return to the same video, where Approve is then enabled.",
+    "source": "Owner change request, 2026-11-17 (D-061)",
+    "discovery_item": ""
   }
 ]

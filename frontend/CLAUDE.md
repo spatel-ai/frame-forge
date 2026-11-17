@@ -87,14 +87,15 @@ src/
     account/    account page
     create/     the create flow: form, review with price, progress, result, job queries
     wallet/     credits pill data, wallet page
-  lib/          small shared helpers (session, formatting)
+  lib/          shared helpers used by several features (session, validation, job storage,
+                wallet query and refresh, checkout loader)
   styles/       tokens.css + base.css
 ```
 
 Later features add their own folder under `features/`: `scripts/ videos/ admin/ home/`. A feature
 folder owns its screens, hooks and tests. Features do not import from each other; shared code
-moves to `components/`, `lib/` or `api/`. Known gap: some files still break this rule (for
-example account imports from auth and create); task T-158 moves that shared code into `lib/`.
+moves to `components/`, `lib/` or `api/`. `src/layering.test.ts` fails the build if a feature
+imports another feature, or if `components/` or `lib/` imports a feature (T-158).
 
 ## Screens
 
@@ -138,8 +139,12 @@ example account imports from auth and create); task T-158 moves that shared code
 3. **Never show "credits added" from client state.** Refetch the wallet.
 4. **Buttons that spend or pay are disabled while the request is in flight.**
 5. **Show the price before approval** and the shortfall when credits are not enough (HTTP 402,
-   code `insufficient_credits`), with a route to buy more that returns to the same job.
+   code `insufficient_credits`), with an "Add credits" action that opens Buy credits and returns
+   to the same job after the server confirms the payment (D-061). Accept only internal return
+   addresses.
 6. **Display credits as whole numbers and rupees with `Intl.NumberFormat('en-IN')`.**
+7. **The payment fee comes from the server** (`GET /payments/quote`, D-060). Never compute a fee or
+   a total in the browser.
 
 ## Rules that protect customers
 

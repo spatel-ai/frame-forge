@@ -947,3 +947,51 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 **Trade-off:** One more control on the banners step.
 
 **Validation:** Frontend tests: lists hidden until the switch is on; switching off clears the choice; progress has three steps without banners and four with. Backend: a job without template ids never enters `video_assembling` (T-509).
+
+---
+
+## D-059 — The minimum purchase is 1,000 credits
+
+**Status:** Confirmed (owner change request, 2026-11-17) · 2026-11-17 · Area: both
+
+**Choice:** A purchase is 1,000 to 10,000 whole credits (₹1,000 to ₹10,000 before the payment fee, D-060). Quick picks 1,000 / 2,500 / 5,000 / 10,000. `min_purchase_credits` and `max_purchase_credits` are settings. Replaces the 500 minimum of Q-06 and D-047.
+
+**Alternatives:** Keep 500.
+
+**Why:** Owner's decision.
+
+**Trade-off:** A customer who needs fewer credits still buys 1,000.
+
+**Validation:** Limits test: 999 refused, 1,000 and 10,000 accepted, 10,001 refused (422 `fields.credits`).
+
+---
+
+## D-060 — The customer pays the payment fee
+
+**Status:** Confirmed (owner change request, 2026-11-17) · 2026-11-17 · Area: both
+
+**Choice:** On top of the credits' price (₹1 = 1 credit), the customer pays a payment fee of `payment_fee_bps` (default 200 = 2%) and, if the owner turns it on, GST on that fee (`payment_fee_gst_bps`, default 0). The server computes everything in paise: price = credits × 100; fee = ceil(price × fee_bps / 10,000); fee GST = ceil(fee × gst_bps / 10,000); the Razorpay order and the captured amount must equal price + fee + fee GST. The credits granted equal the credits bought; the fee never becomes credits. `GET /api/v1/payments/quote?credits=N` returns the breakdown so the browser shows it without computing money; the Buy-credits dialog shows "Payment fee (2%)" and "You pay" before paying.
+
+**Alternatives:** The company absorbs the fee. Razorpay's own 'customer fee bearer' feature (varies by method; must be enabled on the account and checked in the docs first).
+
+**Why:** Owner's decision: Razorpay deducts its fee from each payment, so the customer pays it. A fixed percentage we add is the same for every method and is known before paying.
+
+**Trade-off:** Razorpay's real fee is not verified (its pricing page gave conflicting UPI figures, 2026-11-17); the rate is a setting the owner can change. The fee is shown on every purchase.
+
+**Validation:** Tests: quote equals the order; rounding with a non-whole-paise fee; a captured amount without the fee is refused; credits granted equal credits bought.
+
+---
+
+## D-061 — Short of credits for a video: top up and come straight back
+
+**Status:** Confirmed (owner change request, 2026-11-17) · 2026-11-17 · Area: frontend
+
+**Choice:** When the voice is ready but the video costs more than the credits available, the review screen shows a banner ("Not enough credits. This video costs 600 credits. You have 290.", amounts from the server) with an "Add credits" button; Approve stays disabled. The button opens Buy credits with the minimum amount (1,000) and a return address to this job (`/wallet?buy=1&return=/create/<job id>`; only internal addresses are accepted). After the server confirms the payment, the success state offers "Back to your video" and returns there; the wallet is refetched, so Approve becomes enabled when the credits now cover the price. Nothing about the job changes while the customer is away; the voice charge already paid stays.
+
+**Alternatives:** Send the customer to the wallet page and let them find their way back. Prefill the exact shortfall (owner chose the minimum).
+
+**Why:** Owner's change request: a customer short of credits should finish the video without losing their place.
+
+**Trade-off:** If the top-up is still not enough, the banner shows the new shortfall.
+
+**Validation:** Frontend tests: the banner and button appear only when short; the return address is kept and validated; success returns to the job and Approve is enabled; the browser check in M4 covers the full loop in mock mode (T-412).

@@ -636,5 +636,38 @@
     "trade_off": "One more control on the banners step.",
     "validation": "Frontend tests: lists hidden until the switch is on; switching off clears the choice; progress has three steps without banners and four with. Backend: a job without template ids never enters `video_assembling` (T-509).",
     "date": "2026-11-17"
+  },
+  {
+    "id": "D-059",
+    "decision": "The minimum purchase is 1,000 credits",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Both",
+    "choice": "A purchase is 1,000 to 10,000 whole credits (₹1,000 to ₹10,000 before the payment fee, D-060). Quick picks 1,000 / 2,500 / 5,000 / 10,000. `min_purchase_credits` and `max_purchase_credits` are settings. Replaces the 500 minimum of Q-06 and D-047.",
+    "trade_off": "A customer who needs fewer credits still buys 1,000.",
+    "validation": "Limits test: 999 refused, 1,000 and 10,000 accepted, 10,001 refused (422 `fields.credits`).",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-060",
+    "decision": "The customer pays the payment fee",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Both",
+    "choice": "On top of the credits' price (₹1 = 1 credit), the customer pays a payment fee of `payment_fee_bps` (default 200 = 2%) and, if the owner turns it on, GST on that fee (`payment_fee_gst_bps`, default 0). The server computes everything in paise: price = credits × 100; fee = ceil(price × fee_bps / 10,000); fee GST = ceil(fee × gst_bps / 10,000); the Razorpay order and the captured amount must equal price + fee + fee GST. The credits granted equal the credits bought; the fee never becomes credits. `GET /api/v1/payments/quote?credits=N` returns the breakdown so the browser shows it without computing money; the Buy-credits dialog shows \"Payment fee (2%)\" and \"You pay\" before paying.",
+    "trade_off": "Razorpay's real fee is not verified (its pricing page gave conflicting UPI figures, 2026-11-17); the rate is a setting the owner can change. The fee is shown on every purchase.",
+    "validation": "Tests: quote equals the order; rounding with a non-whole-paise fee; a captured amount without the fee is refused; credits granted equal credits bought.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-061",
+    "decision": "Short of credits for a video: top up and come straight back",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Frontend",
+    "choice": "When the voice is ready but the video costs more than the credits available, the review screen shows a banner (\"Not enough credits. This video costs 600 credits. You have 290.\", amounts from the server) with an \"Add credits\" button; Approve stays disabled. The button opens Buy credits with the minimum amount (1,000) and a return address to this job (`/wallet?buy=1&return=/create/<job id>`; only internal addresses are accepted). After the server confirms the payment, the success state offers \"Back to your video\" and returns there; the wallet is refetched, so Approve becomes enabled when the credits now cover the price. Nothing about the job changes while the customer is away; the voice charge already paid stays.",
+    "trade_off": "If the top-up is still not enough, the banner shows the new shortfall.",
+    "validation": "Frontend tests: the banner and button appear only when short; the return address is kept and validated; success returns to the job and Approve is enabled; the browser check in M4 covers the full loop in mock mode (T-412).",
+    "date": "2026-11-17"
   }
 ]
