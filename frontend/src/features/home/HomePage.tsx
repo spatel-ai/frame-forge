@@ -9,14 +9,14 @@ import { jobStatusHint, jobStatusLabel } from '../../lib/jobStatus'
 import { errMsg } from '../../lib/util'
 import styles from './HomePage.module.css'
 
-export const POLL_MS = 5000
+const POLL_MS = 5000
 const IN_PROGRESS = { status: 'in_progress', page_size: 3 } as const
 const RECENT = { status: 'ready', page_size: 6 } as const
 
 const dateFormat = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' })
 
 /** m:ss from seconds the server sent. */
-export function formatLength(seconds: number): string {
+function formatLength(seconds: number): string {
   const total = Math.round(seconds)
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`
 }
