@@ -59,16 +59,6 @@
 }
 /* Full-width buttons on phones; the short-screen and tablet rules below make them auto width (so this comes first). */
 .actions > * { width: 100%; }
-@media (max-height: 500px) {
-  .confirm textarea { max-height: 30dvh; }
-  .actions { flex-direction: row; justify-content: flex-end; }
-  .actions > * { width: auto; }
-}
-/* Very short screens (sideways phone, keyboard open): the bar is not pinned, it follows the form, as in
-   the shared Dialog footer. */
-@media (max-height: 420px) {
-  .actions { position: static; }
-}
 @media (min-width: 768px) {
   .head { flex-direction: row; align-items: center; justify-content: space-between; gap: var(--space-4); }
   .head > button { width: auto; }
@@ -81,6 +71,17 @@
   .confirm textarea { max-height: none; }
   .actions { flex-direction: row; justify-content: flex-end; }
   .actions > * { width: auto; }
+}
+/* Short screens come after the tablet rules so a sideways phone 768 px or wider keeps the cap. */
+@media (max-height: 500px) {
+  .confirm textarea { max-height: 30dvh; }
+  .actions { flex-direction: row; justify-content: flex-end; }
+  .actions > * { width: auto; }
+}
+/* Very short screens (sideways phone, keyboard open): the bar is not pinned, it follows the form, as in
+   the shared Dialog footer. */
+@media (max-height: 420px) {
+  .actions { position: static; }
 }
 @media (min-width: 1024px) {
   .skeletonRow { height: 80px; }

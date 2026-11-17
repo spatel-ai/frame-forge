@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, createScript, deleteScript, getConfig, getMe, getWallet, listScripts } from '../../api/client'
+import { ApiError, createScript, NetworkError, deleteScript, getConfig, getMe, getWallet, listScripts } from '../../api/client'
 import type { Config, SavedScript, ScriptsPage, User } from '../../api/client'
 import { routes } from '../../routes'
 
@@ -234,6 +234,61 @@ describe('new script', () => {
     expect(d.queryByText(/longer than 800 characters/)).toBeNull()
   })
 
+  it('R-43 the over-limit message shows as soon as the text is over the limit, with no "required" message before Save', async () => {
+    vi.mocked(listScripts).mockResolvedValue(page([]))
+    renderAt('/scripts')
+    await userEvent.click(await screen.findByRole('button', { name: 'New script' }))
+    const d = within(await screen.findByRole('dialog'))
+    const box = d.getByLabelText('What should the person say?')
+    expect(d.queryByText('Type what the person should say.')).toBeNull()
+    await userEvent.click(box)
+    await userEvent.paste('x'.repeat(801))
+    expect(d.getByText(/longer than 800 characters/)).toBeTruthy()
+    expect(createScript).not.toHaveBeenCalled()
+  })
+
+  it('R-43 a failed save shows two proper sentences, and the banner is cleared on close and on the next save', async () => {
+    vi.mocked(listScripts).mockResolvedValue(page([]))
+    vi.mocked(createScript).mockRejectedValueOnce(new NetworkError('Network error'))
+    renderAt('/scripts')
+    await userEvent.click(await screen.findByRole('button', { name: 'New script' }))
+    let d = within(await screen.findByRole('dialog'))
+    await userEvent.type(d.getByLabelText('What should the person say?'), 'Hello')
+    await userEvent.click(d.getByRole('button', { name: 'Save script' }))
+    expect(await d.findByText('We could not reach the server. Check your connection and try again. Your text is still here.')).toBeTruthy()
+    expect((d.getByLabelText('What should the person say?') as HTMLTextAreaElement).value).toBe('Hello')
+    await userEvent.click(d.getByRole('button', { name: 'Cancel' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'New script' }))
+    d = within(await screen.findByRole('dialog'))
+    expect(d.queryByText('We could not save the script')).toBeNull()
+    expect((d.getByLabelText('What should the person say?') as HTMLTextAreaElement).value).toBe('Hello')
+  })
+
+  it('R-43 a server message is followed by our own sentence with a full stop between', async () => {
+    vi.mocked(listScripts).mockResolvedValue(page([]))
+    vi.mocked(createScript).mockRejectedValueOnce(new ApiError(500, 'Server broke', 'unknown'))
+    renderAt('/scripts')
+    await userEvent.click(await screen.findByRole('button', { name: 'New script' }))
+    const d = within(await screen.findByRole('dialog'))
+    await userEvent.type(d.getByLabelText('What should the person say?'), 'Hello')
+    await userEvent.click(d.getByRole('button', { name: 'Save script' }))
+    expect(await d.findByText('Server broke. Your text is still here. Try again.')).toBeTruthy()
+  })
+
+  it('R-43 the error banner is cleared when a new save starts', async () => {
+    vi.mocked(listScripts).mockResolvedValue(page([]))
+    vi.mocked(createScript).mockRejectedValueOnce(new ApiError(500, 'Server broke', 'unknown'))
+    vi.mocked(createScript).mockReturnValueOnce(new Promise(() => {}))
+    renderAt('/scripts')
+    await userEvent.click(await screen.findByRole('button', { name: 'New script' }))
+    const d = within(await screen.findByRole('dialog'))
+    await userEvent.type(d.getByLabelText('What should the person say?'), 'Hello')
+    await userEvent.click(d.getByRole('button', { name: 'Save script' }))
+    await d.findByText('We could not save the script')
+    await userEvent.click(d.getByRole('button', { name: 'Save script' }))
+    expect(d.queryByText('We could not save the script')).toBeNull()
+  })
+
   it('R-43 spaces at the ends do not count: 800 characters plus trailing spaces show "800 / 800" and save', async () => {
     vi.mocked(listScripts).mockResolvedValue(page([]))
     vi.mocked(createScript).mockResolvedValue(script(1))
@@ -268,13 +323,23 @@ describe('search box', () => {
     renderAt('/scripts')
     await screen.findByText('Saved script number 1')
     const box = screen.getByLabelText('Search scripts') as HTMLInputElement
-    expect(box.maxLength).toBe(200)
+    expect(box.maxLength).toBe(-1)
     await userEvent.click(box)
     await userEvent.paste('y'.repeat(300))
     expect(box.value.length).toBe(200)
     expect(await screen.findByText(`No script matches "${'y'.repeat(40)}…"`)).toBeTruthy()
     const sent = vi.mocked(listScripts).mock.calls.at(-1)![0]!.q as string
     expect(sent.length).toBe(200)
+  })
+
+  it('R-43 a search of 200 emoji is kept whole (no native UTF-16 cut at 100)', async () => {
+    vi.mocked(listScripts).mockResolvedValue(page([script(1)]))
+    renderAt('/scripts')
+    await screen.findByText('Saved script number 1')
+    const box = screen.getByLabelText('Search scripts') as HTMLInputElement
+    await userEvent.click(box)
+    await userEvent.paste('😀'.repeat(200))
+    expect([...box.value].length).toBe(200)
   })
 
   it('R-43 when the list fails, the search and language controls stay so the query can be changed', async () => {

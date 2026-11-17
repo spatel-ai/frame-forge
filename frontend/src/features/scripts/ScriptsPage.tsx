@@ -10,7 +10,7 @@ import { ScriptIcon } from '../../components/icons'
 import { Pagination } from '../../components/layout'
 import { errMsg } from '../../lib/util'
 import { scriptMeta, useScriptFilters, useScripts } from '../../lib/scripts'
-import { capSearch, HEADING_QUERY_CHARS, MAX_SEARCH_CHARS, shortQuery, validateScriptText } from './scriptText'
+import { capSearch, HEADING_QUERY_CHARS, overLimitMessage, saveErrorText, shortQuery, validateScriptText } from './scriptText'
 import styles from './scripts.module.css'
 
 const SKELETON_ROWS = 3
@@ -42,7 +42,7 @@ function NewScriptDialog({ open, onClose, languages, maxChars }: {
     onError: (err) => {
       if (err instanceof ApiError && (err.fields.script || err.fields.language)) {
         setErrors({ script: err.fields.script, language: err.fields.language })
-      } else setErrors({ other: `${errMsg(err)} Your text is still here; try again.` })
+      } else setErrors({ other: saveErrorText(err) })
     },
   })
   const submit = (e: React.FormEvent) => {
@@ -53,10 +53,16 @@ function NewScriptDialog({ open, onClose, languages, maxChars }: {
       textRef.current?.focus()
       return
     }
+    setErrors((prev) => ({ ...prev, other: undefined }))
     save.mutate()
   }
+  // Closing (Escape, Cancel, backdrop) forgets an old save error; the typed text is kept.
+  const close = () => {
+    setErrors((prev) => (prev.other ? { ...prev, other: undefined } : prev))
+    onClose()
+  }
   return (
-    <Dialog open={open} onClose={onClose} title="New script">
+    <Dialog open={open} onClose={close} title="New script">
       <form className={styles.confirm} onSubmit={submit} noValidate>
         <p className={styles.confirmText}>Save a script to use later. No voice is made and no credits are taken.</p>
         <Select label="Language" value={language} onChange={(e) => setLanguage(e.target.value)} error={errors.language}>
@@ -74,11 +80,11 @@ function NewScriptDialog({ open, onClose, languages, maxChars }: {
             // After a first error the field is checked on every change and the message clears when it is fixed.
             if (errors.script) setErrors((prev) => ({ ...prev, script: validateScriptText(e.target.value, maxChars) }))
           }}
-          error={errors.script}
+          error={errors.script ?? overLimitMessage(text, maxChars)}
         />
         {errors.other && <Banner tone="danger" title="We could not save the script">{errors.other}</Banner>}
         <div className={styles.actions}>
-          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="button" variant="secondary" onClick={close}>Cancel</Button>
           <Button type="submit" busy={save.isPending} busyLabel="Saving…">Save script</Button>
         </div>
       </form>
@@ -250,7 +256,6 @@ export default function ScriptsPage() {
           <TextField
             label="Search scripts"
             type="search"
-            maxLength={MAX_SEARCH_CHARS}
             disabled={query.isPending}
             value={f.search}
             onChange={(e) => f.setSearch(capSearch(e.target.value))}
