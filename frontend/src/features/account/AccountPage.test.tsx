@@ -201,6 +201,25 @@ describe('sessions', () => {
     expect(await screen.findByText('We could not reach the server. Check your connection and try again.')).toBeTruthy()
     expect(where()).toBe('/account')
   })
+
+  it('a failed log out everywhere keeps the dialog open with the error inside it', async () => {
+    vi.mocked(logoutAll).mockRejectedValue(new NetworkError())
+    const { user } = renderAccount()
+    await user.click(await screen.findByRole('button', { name: 'Log out everywhere' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Log out everywhere?' })
+    await user.click(within(dialog).getByRole('button', { name: 'Log out everywhere' }))
+    expect(await within(dialog).findByRole('alert')).toBeTruthy()
+    expect(screen.getByRole('dialog', { name: 'Log out everywhere?' })).toBeTruthy()
+  })
+
+  it('a double click sends one log out everywhere request', async () => {
+    vi.mocked(logoutAll).mockImplementation(() => new Promise(() => {}))
+    const { user } = renderAccount()
+    await user.click(await screen.findByRole('button', { name: 'Log out everywhere' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Log out everywhere?' })
+    await user.dblClick(within(dialog).getByRole('button', { name: 'Log out everywhere' }))
+    expect(logoutAll).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('log out', () => {

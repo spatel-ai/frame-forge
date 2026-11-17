@@ -86,6 +86,7 @@ export default function VideosPage() {
           </Select>
         </div>
       )}
+      <h2 className={styles.srOnly}>Your videos</h2>
       {body}
       {data && !body && (
         data.items.length === 0 ? (

@@ -128,4 +128,22 @@ describe('Home page', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(20000) })
     expect(vi.mocked(progress as ReturnType<typeof vi.fn>).mock.calls.length).toBe(after)
   })
+
+  it('refetches Recent videos when a video leaves In progress, and not before', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    progress = () => Promise.resolve(page([job({})]))
+    renderHome()
+    await screen.findByText('Generating the video')
+    const recentCalls = () => vi.mocked(listJobs).mock.calls.filter(([p]) => p?.status === 'ready').length
+    // Still in progress after a poll: Recent is not refetched.
+    const before = recentCalls()
+    await act(async () => { await vi.advanceTimersByTimeAsync(5100) })
+    expect(recentCalls()).toBe(before)
+    // The video finishes: it leaves In progress and appears in Recent.
+    progress = () => Promise.resolve(page([]))
+    recent = () => Promise.resolve(page([job({ status: 'completed', script_excerpt: 'Finished Diwali video' })]))
+    await act(async () => { await vi.advanceTimersByTimeAsync(5100) })
+    expect(await screen.findByText('Finished Diwali video')).toBeTruthy()
+    expect(recentCalls()).toBe(before + 1)
+  })
 })

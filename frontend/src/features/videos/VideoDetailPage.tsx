@@ -17,15 +17,16 @@ function Cost({ job, creditsPerSecond }: { job: Job; creditsPerSecond: number | 
   const secs = formatSeconds(job.audio_duration_seconds)
   const hasBanner = Boolean(job.start_template || job.end_template)
   return (
-    <Card title="What it cost" padding="lg">
+    <Card padding="lg">
+      <h2 className={styles.cardTitle}>What it cost</h2>
       <dl className={styles.facts}>
-        <div className={styles.fact}><dt>Voice</dt><dd>{formatCredits(job.voice_credits)} credits</dd></div>
+        <div className={styles.fact}><dt>Voice</dt><dd className={styles.amount}>{formatCredits(job.voice_credits)} credits</dd></div>
         <div className={styles.fact}>
           <dt>Video{secs && creditsPerSecond !== null ? `, ${secs} at ${formatCredits(creditsPerSecond)} credits a second` : ''}</dt>
-          <dd>{formatCredits(job.video_credits)} credits</dd>
+          <dd className={styles.amount}>{formatCredits(job.video_credits)} credits</dd>
         </div>
-        {hasBanner && <div className={styles.fact}><dt>Banners</dt><dd>Free</dd></div>}
-        <div className={`${styles.fact} ${styles.total}`}><dt>Total</dt><dd>{formatCredits(job.charged_credits)} credits</dd></div>
+        {hasBanner && <div className={styles.fact}><dt>Banners</dt><dd className={styles.amount}>Free</dd></div>}
+        <div className={`${styles.fact} ${styles.total}`}><dt>Total</dt><dd className={styles.amount}>{formatCredits(job.charged_credits)} credits</dd></div>
       </dl>
     </Card>
   )
@@ -48,7 +49,13 @@ export default function VideoDetailPage() {
   }
   if (isNotFound(query.error)) return <NotFound />
   if (!job) {
-    return <ErrorState title="We could not load this video" message={errMsg(query.error)} onRetry={() => void query.refetch()} />
+    return (
+      <section className={styles.page}>
+        <h1 className={styles.title}>Video</h1>
+        <h2 className={styles.srOnly}>What went wrong</h2>
+        <ErrorState title="We could not load this video" message={errMsg(query.error)} onRetry={() => void query.refetch()} />
+      </section>
+    )
   }
 
   const back = <Link className={styles.textLink} to="/videos">All videos</Link>
@@ -92,6 +99,7 @@ export default function VideoDetailPage() {
       )}
       <div className={styles.detail}>
         <div className={styles.left}>
+          <h2 className={styles.srOnly}>Your video</h2>
           {job.video_expired ? (
             // D-065: the provider keeps the video 30 days; the route answers 410 after that.
             <ErrorState title="This video has expired" message="This video has expired. Videos are kept for 30 days." />
@@ -103,18 +111,20 @@ export default function VideoDetailPage() {
           ) : (
             <ErrorState title="Your video file is not available" message="The video finished but we could not find its file." />
           )}
-          <Card title="Script" padding="lg">
+          <Card padding="lg">
+            <h2 className={styles.cardTitle}>Script</h2>
             <p className={styles.script}>{job.script}</p>
             <p className={styles.note}>This is the text used for this video. Changing or deleting a saved script does not change it.</p>
           </Card>
         </div>
         <div className={styles.right}>
-          <Card title="Video details" padding="lg">
+          <Card padding="lg">
+            <h2 className={styles.cardTitle}>Video details</h2>
             <dl className={styles.facts}>
               <div className={styles.fact}><dt>Status</dt><dd>{statusLabel(job)}</dd></div>
-              <div className={styles.fact}><dt>Made on</dt><dd>{formatWhen(job.created_at)}</dd></div>
+              <div className={styles.fact}><dt>Made on</dt><dd className={styles.amount}>{formatWhen(job.created_at)}</dd></div>
               <div className={styles.fact}><dt>Language</dt><dd>{job.language}</dd></div>
-              {secs && <div className={styles.fact}><dt>Length</dt><dd>{secs}</dd></div>}
+              {secs && <div className={styles.fact}><dt>Length</dt><dd className={styles.amount}>{secs}</dd></div>}
               {job.start_template && <div className={styles.fact}><dt>Start banner</dt><dd>{job.start_template.name}</dd></div>}
               {job.end_template && <div className={styles.fact}><dt>End banner</dt><dd>{job.end_template.name}</dd></div>}
             </dl>
