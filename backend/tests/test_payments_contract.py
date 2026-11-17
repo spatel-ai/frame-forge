@@ -180,17 +180,19 @@ def test_config_tells_the_browser_the_payment_mode_and_limits():
 
 
 def test_fee_settings_default_and_validation(monkeypatch):
-    """R-02, D-060: the fee defaults to 200 bps (2%) and GST on it to 0; both must be whole numbers
-    of 0 or more."""
+    """R-02, D-062: Razorpay's Standard rate, 200 bps (2%) with 18% GST on it, by default; both
+    must be whole numbers of 0 or more, and together below 100%."""
     monkeypatch.delenv("AVATAR_PAYMENT_FEE_BPS", raising=False)
     monkeypatch.delenv("AVATAR_PAYMENT_FEE_GST_BPS", raising=False)
     s = Settings()
-    assert (s.payment_fee_bps, s.payment_fee_gst_bps) == (200, 0)
-    monkeypatch.setenv("AVATAR_PAYMENT_FEE_GST_BPS", "1800")
-    assert Settings().payment_fee_gst_bps == 1800
+    assert (s.payment_fee_bps, s.payment_fee_gst_bps) == (200, 1800)
+    monkeypatch.setenv("AVATAR_PAYMENT_FEE_GST_BPS", "0")
+    assert Settings().payment_fee_gst_bps == 0
     for bad in (-1, 2.5, True):
         with pytest.raises(ValueError, match="basis points"):
             replace(Settings(), payment_fee_bps=bad)
+    with pytest.raises(ValueError, match="below 100%"):
+        replace(Settings(), payment_fee_bps=10_000)
 
 
 def test_config_hides_the_key_id_in_mock_mode(tmp_path, database_url):

@@ -968,7 +968,7 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 
 ## D-060 — The customer pays the payment fee
 
-**Status:** Confirmed (owner change request, 2026-11-17) · 2026-11-17 · Area: both
+**Status:** Confirmed; formula amended by D-062 (owner change request, 2026-11-17) · 2026-11-17 · Area: both
 
 **Choice:** On top of the credits' price (₹1 = 1 credit), the customer pays a payment fee of `payment_fee_bps` (default 200 = 2%) and, if the owner turns it on, GST on that fee (`payment_fee_gst_bps`, default 0). The server computes everything in paise: price = credits × 100; fee = ceil(price × fee_bps / 10,000); fee GST = ceil(fee × gst_bps / 10,000); the Razorpay order and the captured amount must equal price + fee + fee GST. The credits granted equal the credits bought; the fee never becomes credits. `GET /api/v1/payments/quote?credits=N` returns the breakdown so the browser shows it without computing money; the Buy-credits dialog shows "Payment fee (2%)" and "You pay" before paying.
 
@@ -995,3 +995,36 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 **Trade-off:** If the top-up is still not enough, the banner shows the new shortfall.
 
 **Validation:** Frontend tests: the banner and button appear only when short; the return address is kept and validated; success returns to the job and Approve is enabled; the browser check in M4 covers the full loop in mock mode (T-412).
+
+---
+
+## D-062 — The payment fee is grossed up so the owner receives exactly the credits' price
+
+**Status:** Confirmed (owner, 2026-11-17; amends D-060) · 2026-11-17 · Area: both
+
+**Choice:** Razorpay's Standard plan takes 2% of the whole amount charged plus 18% GST on that fee (2.36% in total; cards, UPI, netbanking and wallets alike; Razorpay pricing page read 2026-11-17). So that 1,000 credits bring the owner exactly ₹1,000, the server charges total = ceil(price ÷ (1 − rate × (1 + GST))): ₹1,024.18 for 1,000 credits. `payment_fee_bps` is Razorpay's rate (default 200) and `payment_fee_gst_bps` the GST on it (default 1800). The quote shows the extra as "Payment fee" (₹20.50) and "GST on the fee" (₹3.68, its GST share rounded down); the credits granted equal the credits bought.
+
+**Alternatives:** Charge 2% of the price only (₹1,020; the owner receives about ₹995.93). Razorpay's "customer fee bearer" convenience-fee feature (needs Razorpay to enable it; changes the checkout).
+
+**Why:** Owner's decision: "I want 1000 to be added", so Razorpay's whole charge, GST included, is passed to the customer.
+
+**Trade-off:** International cards (up to 3%) still leave the owner slightly short; Razorpay's own rounding of its fee may differ by a paisa. A negotiated rate later is one setting. Whether the owner must also charge GST on the sale of credits is a tax question for the review in T-707, not decided here.
+
+**Validation:** Tests: 1,000 credits → 102418 paise (2050 fee + 368 GST); for every amount from 1,000 to 10,000 credits, the total less 2.36% is at least the price; defaults 200 and 1800. The T-407 test-mode run confirms the settled amount.
+
+---
+
+## D-063 — Banner clips are portrait 9:16
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: backend
+
+**Choice:** Videos are mostly short and watched on phones, so banner templates are portrait 9:16. The template command refuses a clip that is not portrait 9:16 (within 2%). The starter clips are remade at 720×1280. The joining step keeps scaling a clip to the AI video's exact size; a small difference in shape is padded, as built in T-507.
+
+**Alternatives:** Accept any shape and add black bars, or centre it over a blurred copy.
+
+**Why:** Owner's answer: "these videos would be short videos mostly on mobile".
+
+**Trade-off:** The company must supply clips in portrait. Whether the AI video itself comes out portrait depends on the photo and the model: Not verified — requires documentation review, execution, or live integration testing.
+
+**Validation:** Tests: the add command refuses a landscape clip and accepts a 720×1280 one; the starter-clip script makes 720×1280 clips.
+

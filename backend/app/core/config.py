@@ -102,14 +102,15 @@ class Settings:
     # on 2026-11-17, D-059). ₹1 = 1 credit (D-007).
     min_purchase_credits: int = 1_000
     max_purchase_credits: int = 10_000
-    # The customer pays the payment fee (owner, 2026-11-17, D-060), in basis points of the
-    # price: 200 = 2%. GST on that fee is off (0) unless the owner sets it. Whole numbers only;
-    # the fee is rounded up to whole paise and never becomes credits.
+    # The customer pays Razorpay's charge so the owner receives exactly the credits' price
+    # (owner, 2026-11-17, D-060 as amended by D-062). Razorpay's rate, in basis points of the
+    # WHOLE amount charged (Standard plan: 200 = 2%), and the GST it adds on that fee (1800 =
+    # 18%). The total is grossed up so that total - Razorpay's fee - GST >= the price.
     payment_fee_bps: int = field(
         default_factory=lambda: int(os.getenv("AVATAR_PAYMENT_FEE_BPS", "200"))
     )
     payment_fee_gst_bps: int = field(
-        default_factory=lambda: int(os.getenv("AVATAR_PAYMENT_FEE_GST_BPS", "0"))
+        default_factory=lambda: int(os.getenv("AVATAR_PAYMENT_FEE_GST_BPS", "1800"))
     )
     # Consent on Create (D-045). The wording is the owner's (Q-11, 2026-11-17); a legal review
     # may replace it, and then the version changes so each job records what was agreed to.
@@ -135,6 +136,8 @@ class Settings:
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
                 raise ValueError(f"{name} must be a whole number of basis points, 0 or more.")
+        if self.payment_fee_bps * (10_000 + self.payment_fee_gst_bps) >= 100_000_000:
+            raise ValueError("The payment fee with its GST must be below 100% of the amount.")
         # D-042: fail closed. The mock gateway signs with a public secret and moves no money,
         # so production never runs it.
         if self.environment == "production" and self.payments == "mock":

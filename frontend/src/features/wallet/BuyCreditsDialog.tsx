@@ -293,7 +293,6 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
 
   const youGet = valid && parsed !== null ? parsed : null
   const balanceAfter = youGet !== null && wallet.data ? wallet.data.available_credits + youGet : null
-  const feePercent = config ? `${config.payment_fee_bps / 100}%` : null
   const backLink = returnTo ? (
     <Link to={returnTo} onClick={close}>Back to your video</Link>
   ) : null
@@ -344,7 +343,7 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
               <dd>{quote ? formatRupees(quote.price_paise) : '—'}</dd>
             </div>
             <div className={styles.row}>
-              <dt>{feePercent ? `Payment fee (${feePercent})` : 'Payment fee'}</dt>
+              <dt>Payment fee</dt>
               <dd>{quote ? formatRupees(quote.fee_paise) : '—'}</dd>
             </div>
             {quote && quote.fee_gst_paise > 0 && (

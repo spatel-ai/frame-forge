@@ -38,7 +38,7 @@ The parent CLAUDE.md wins on any conflict and is never edited.
 | Question | Answer |
 | --- | --- |
 | Q-06 amounts | Any whole number of credits from 1,000 to 10,000 per purchase (D-059; ₹1 = 1 credit). The contract is in credits (D-047) |
-| Payment fee | The customer pays it: 2% on top, a setting; GST on the fee off unless set (D-060) |
+| Payment fee | The customer pays Razorpay's whole charge, grossed up so the owner receives exactly the price: ₹1,024.18 for 1,000 credits (D-060, D-062) |
 | Short of credits | Top up from the review screen and come back to the same video (D-061) |
 | Q-10 account | The owner has keys and a webhook secret and pastes them into `backend/.env`. Using them needs approval for that run |
 
@@ -76,8 +76,8 @@ The parent CLAUDE.md wins on any conflict and is never edited.
 | `RAZORPAY_KEY_ID` | Public key id; the only Razorpay value sent to the browser |
 | `RAZORPAY_KEY_SECRET` | API secret; used for basic auth and the checkout signature |
 | `RAZORPAY_WEBHOOK_SECRET` | The secret typed when adding the webhook in the Dashboard |
-| `AVATAR_PAYMENT_FEE_BPS` | Payment fee the customer pays, in basis points (default 200 = 2%; D-060) |
-| `AVATAR_PAYMENT_FEE_GST_BPS` | GST on that fee, in basis points (default 0 = off) |
+| `AVATAR_PAYMENT_FEE_BPS` | Razorpay's fee on the whole amount, in basis points (default 200 = 2%; D-062) |
+| `AVATAR_PAYMENT_FEE_GST_BPS` | GST Razorpay adds on its fee, in basis points (default 1800 = 18%; D-062) |
 
 `backend/.env` has these four lines with empty values (D-042: `razorpay` mode refuses to start if
 one is empty, or if a non-test key is used outside production).
@@ -125,7 +125,7 @@ Phase 1 and later start after M3 is done (its build is done; the M3 browser chec
   httpx transport.
 - Browser check in mock mode at 1440 and 1024 px:
   1. Confirm `"payments":"mock"` and `"provider":"mock"` first.
-  2. Buy 1,000 credits → the dialog shows ₹1,000 + ₹20 fee = ₹1,020 → mock checkout → "Payment received" → the wallet shows `purchase` +1,000.
+  2. Buy 1,000 credits → the dialog shows ₹1,000 + ₹20.50 fee + ₹3.68 GST = ₹1,024.18 (₹1,020 before D-062) → mock checkout → "Payment received" → the wallet shows `purchase` +1,000.
   2b. A video the customer cannot afford → "Add credits" → pay → "Back to your video" → Approve enabled (D-061).
   3. 999 and 10,001 credits are refused under the field.
   4. Failed and cancelled endings appear.
@@ -179,5 +179,7 @@ Each is given an honest status. Then ask whether to refresh the tracker dashboar
    takes the 200 oldest due orders per run. Changing ₹1 = 1 credit needs a migration. The
    Razorpay fee rate itself was not verified on Razorpay's pricing page (owner to check).
 7. **Next.** T-407 when the owner approves a test-mode run through a tunnel. M5 phase 1 starts now.
+
+**Amended after the report (owner, D-062):** the fee is now grossed up, ₹1,024.18 for 1,000 credits, so the owner receives exactly ₹1,000; backend and frontend checks re-run green.
 
 **Status: M4 MOCK-VERIFIED.** Live payments: BLOCKED on the owner's approval for T-407.

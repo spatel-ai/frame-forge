@@ -79,13 +79,22 @@ def _ceil_div(a: int, b: int) -> int:
 
 
 def quote(credits: int, fee_bps: int, fee_gst_bps: int) -> Quote:
-    """Integers only (D-014). ₹1 = 1 credit (D-007), so the price is credits × 100 paise. The
-    customer pays the fee (rounded up to whole paise) and GST on the fee (rounded up); neither
-    becomes credits."""
+    """Integers only (D-014). ₹1 = 1 credit (D-007), so the price is credits × 100 paise.
+
+    Razorpay takes `fee_bps` of the WHOLE amount charged plus `fee_gst_bps` GST on that fee
+    (Standard plan, checked 2026-11-17: 2% + 18%). So the owner receives exactly the price
+    (D-062), the total is grossed up: total = ceil(price / (1 - rate x (1 + gst))). For 1,000
+    credits at 2% + 18%: ceil(100000 / 0.9764) = 102418 paise (₹1,024.18).
+
+    The extra is shown as two lines: the GST share of it (rounded down) and the rest as the
+    payment fee. Neither becomes credits."""
     price = credits * 100
-    fee = _ceil_div(price * fee_bps, 10_000)
-    fee_gst = _ceil_div(fee * fee_gst_bps, 10_000)
-    return Quote(credits, price, fee, fee_gst, price + fee + fee_gst)
+    scale = 100_000_000  # 10_000 x 10_000: basis points of basis points
+    denominator = scale - fee_bps * (10_000 + fee_gst_bps)
+    total = _ceil_div(price * scale, denominator)
+    extra = total - price
+    fee_gst = extra * fee_gst_bps // (10_000 + fee_gst_bps)
+    return Quote(credits, price, extra - fee_gst, fee_gst, total)
 
 
 # ---- signatures (facts §F, §G) ----------------------------------------------------------

@@ -167,7 +167,7 @@ sequenceDiagram
     participant A as Backend
     participant R as Razorpay
     B->>A: POST /payments/orders {credits: 1000}
-    A->>R: Create order (amount 102000 paise = ₹1,000 + ₹20 fee, INR)
+    A->>R: Create order (amount 102418 paise = ₹1,000 + ₹24.18 fee and GST, INR)
     A-->>B: our order id, Razorpay order id, public key id
     B->>R: Checkout popup, customer pays
     R-->>B: payment id, order id, signature
@@ -181,7 +181,7 @@ sequenceDiagram
 ```
 
 The customer buys 1,000 to 10,000 credits (D-059) and pays the credits' price plus a payment fee
-(2% by default, D-060), all computed by the server in paise; the order is created for that total
+grossed up so Razorpay's 2% + 18% GST leaves exactly the price: ₹1,024.18 for 1,000 credits, D-060, D-062), all computed by the server in paise; the order is created for that total
 and only the credits bought are added to the wallet. A customer short of credits for a video can
 top up from the review screen and return to the same video (D-061).
 

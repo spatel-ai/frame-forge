@@ -90,13 +90,13 @@ describe('buy-credits form', () => {
     expect(getQuote).toHaveBeenCalledWith(1000)
     const row = (label: string) => d.getByText(label).closest('div') as HTMLElement
     expect(within(row('Price')).getByText('₹1,000')).toBeTruthy()
-    expect(within(row('Payment fee (2%)')).getByText('₹20')).toBeTruthy()
+    expect(within(row('Payment fee')).getByText('₹20')).toBeTruthy()
     expect(within(row('You pay')).getByText('₹1,020')).toBeTruthy()
     expect(within(row('Balance after')).getByText('2,000 credits')).toBeTruthy() // 1,000 held + 1,000 bought
     expect(d.queryByText('GST on the fee')).toBeNull() // only when the server says there is some
     await userEvent.click(d.getByRole('button', { name: '2,500 credits' }))
     expect(await d.findByRole('button', { name: 'Pay ₹2,550' })).toBeTruthy()
-    expect(within(row('Payment fee (2%)')).getByText('₹50')).toBeTruthy()
+    expect(within(row('Payment fee')).getByText('₹50')).toBeTruthy()
     expect(d.getByText('3,500 credits')).toBeTruthy()
   })
 

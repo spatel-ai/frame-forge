@@ -451,30 +451,35 @@ def test_quote_equals_the_order_amounts(client):
     assert q == {
         "credits": 2500,
         "price_paise": 250_000,
-        "fee_paise": 5_000,
+        "fee_paise": 5_103,
         "fee_gst_paise": 0,
-        "amount_paise": 255_000,
+        "amount_paise": 255_103,
     }
     order = buy(client, 2500)
     assert {k: order[k] for k in q} == q
     with engine_of(client).connect() as conn:
         row = conn.execute(text("SELECT amount_paise, credits FROM payment_orders")).one()
-    assert tuple(row) == (255_000, 2500)
-    assert mock_gateway(client)._orders[order["razorpay_order_id"]] == 255_000
+    assert tuple(row) == (255_103, 2500)
+    assert mock_gateway(client)._orders[order["razorpay_order_id"]] == 255_103
 
 
-def test_fee_rounds_up_to_whole_paise():
-    """R-02, D-060, D-014: 1,001 credits at 1.99% with 18% GST on the fee: fee
-    ceil(1991.99) = 1992, GST ceil(358.56) = 359; total 100100 + 1992 + 359. Exact amounts are
-    not rounded."""
-    q = quote(1001, 199, 1800)
+def test_fee_is_grossed_up_so_the_price_arrives_in_full():
+    """R-02, D-062, D-014: Razorpay takes 2% of the whole amount plus 18% GST on that fee, so the
+    total is grossed up. 1,000 credits: ceil(100000 / 0.9764) = 102418 paise (₹1,024.18), shown as
+    a ₹20.50 fee and ₹3.68 GST. For every amount, what Razorpay leaves is at least the price."""
+    q = quote(1000, 200, 1800)
     assert (q.price_paise, q.fee_paise, q.fee_gst_paise, q.amount_paise) == (
-        100_100,
-        1_992,
-        359,
-        102_451,
+        100_000,
+        2_050,
+        368,
+        102_418,
     )
-    assert quote(1000, 200, 0).fee_paise == 2000  # exact: no rounding
+    for credits in range(1000, 10_001, 37):
+        q = quote(credits, 200, 1800)
+        razorpay_keeps = q.amount_paise * 200 * 11_800 / 100_000_000
+        assert q.amount_paise - razorpay_keeps >= q.price_paise
+        assert q.amount_paise == q.price_paise + q.fee_paise + q.fee_gst_paise
+    assert quote(1000, 200, 0).amount_paise == 102_041  # ceil(100000 / 0.98)
     assert quote(1000, 0, 1800) == quote(1000, 0, 0)  # no fee, no GST on it
     assert all(isinstance(v, int) for v in vars(quote(1001, 199, 1800)).values())
 
@@ -488,9 +493,9 @@ def test_purchase_with_a_rounded_fee_credits_the_credits(settings, make_user):
         c.anon = anon
         order = buy(c, 1001)
         assert (order["fee_paise"], order["fee_gst_paise"], order["amount_paise"]) == (
-            1992,
-            359,
-            102_451,
+            2041,
+            367,
+            102_508,
         )
         r = verify(c, order["order_id"], pay(c, order["order_id"]))
         assert r.status_code == 200, r.text
