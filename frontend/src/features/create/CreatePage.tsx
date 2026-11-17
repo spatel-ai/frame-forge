@@ -1,4 +1,4 @@
-import { Navigate, useNavigate, useOutletContext } from 'react-router'
+import { Navigate, useNavigate, useOutletContext, useSearchParams } from 'react-router'
 import type { Job } from '../../api/client'
 import type { ShellContext } from '../../components/AppShell'
 import { Banner, Skeleton, SkeletonGroup } from '../../components/feedback'
@@ -31,6 +31,7 @@ export default function CreatePage() {
   const { config, configError } = useOutletContext<ShellContext>()
   const navigate = useNavigate()
   const { data: me } = useMe()
+  const [params] = useSearchParams()
 
   const stored = readStoredId()
   if (stored) return <Navigate to={`/create/${encodeURIComponent(stored)}`} replace />
@@ -43,7 +44,7 @@ export default function CreatePage() {
   return (
     <CreateLayout step={STEP_DETAILS}>
       {config ? (
-        <JobForm config={config} onCreated={onCreated} canGenerate={!me || me.email_verified} />
+        <JobForm config={config} onCreated={onCreated} canGenerate={!me || me.email_verified} initialScriptId={params.get('script')} />
       ) : (
         <>
           {configError && <Banner tone="warning" title={`Cannot load configuration (${configError}). Retrying…`} />}

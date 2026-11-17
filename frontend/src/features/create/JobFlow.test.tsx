@@ -132,7 +132,7 @@ describe('job screens by status', () => {
     await user.click(await screen.findByRole('button', { name: 'Start over' }))
     expect(router.state.location.pathname).toBe('/create')
     expect(localStorage.getItem(KEY)).toBeNull()
-    expect(await screen.findByRole('button', { name: 'Generate voice' })).toBeTruthy()
+    expect(await screen.findByRole('button', { name: /^Make my voice/ })).toBeTruthy()
   })
 
   it('R-08: "Create another" clears the stored id and goes to /create', async () => {
@@ -211,7 +211,7 @@ describe('polling', () => {
     expect(router.state.location.pathname).toBe('/create')
     expect(localStorage.getItem(KEY)).toBeNull()
     await tick(0)
-    expect(screen.getByRole('button', { name: 'Generate voice' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^Make my voice/ })).toBeTruthy()
     expect(getJob).toHaveBeenCalledTimes(1)
   })
 
@@ -223,7 +223,7 @@ describe('polling', () => {
     expect(screen.getByText('Loading the form')).toBeTruthy()
     await tick(3000)
     expect(getConfig).toHaveBeenCalledTimes(2)
-    expect(screen.getByRole('button', { name: 'Generate voice' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^Make my voice/ })).toBeTruthy()
     await tick(10000)
     expect(getConfig).toHaveBeenCalledTimes(2)
   })
@@ -291,7 +291,7 @@ describe('returning visitors', () => {
 
   it('R-55: opening /create without a stored id shows the form', async () => {
     renderAt('/create')
-    expect(await screen.findByRole('button', { name: 'Generate voice' })).toBeTruthy()
+    expect(await screen.findByRole('button', { name: /^Make my voice/ })).toBeTruthy()
     expect(router.state.location.pathname).toBe('/create')
     expect(getJob).not.toHaveBeenCalled()
   })
@@ -329,7 +329,7 @@ describe('stepper and heading', () => {
 
   it('R-76: the details screen marks "Details" as current and has exactly one h1', async () => {
     renderAt('/create')
-    await screen.findByRole('button', { name: 'Generate voice' })
+    await screen.findByRole('button', { name: /^Make my voice/ })
     expect(currentStep()).toContain('Details')
     expect(screen.getAllByRole('heading', { level: 1 }).map((h) => h.textContent)).toEqual(['Create a video'])
   })

@@ -548,9 +548,9 @@ export interface components {
             /** Image */
             image: string;
             /** Language */
-            language: string;
+            language?: string | null;
             /** Script */
-            script: string;
+            script?: string | null;
             /** Script Id */
             script_id?: string | null;
             /** Start Template Id */
@@ -2245,15 +2245,6 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorOut"];
                 };
             };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorOut"];
-                };
-            };
         };
     };
     get_preview_api_v1_templates__template_id__preview_get: {
@@ -2294,15 +2285,6 @@ export interface operations {
             };
             /** @description Unprocessable Content */
             422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorOut"];
-                };
-            };
-            /** @description Not Implemented */
-            501: {
                 headers: {
                     [name: string]: unknown;
                 };

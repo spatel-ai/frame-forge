@@ -14,6 +14,7 @@ from sqlalchemy import create_engine
 from app.core.config import Settings
 from app.jobs.schemas import ConfigOut, JobOut
 from app.main import create_app
+from tests.conftest import CONSENT_FORM
 
 
 @pytest.fixture
@@ -57,7 +58,7 @@ def create_job(client) -> dict:
     r = client.post(
         "/api/v1/jobs",
         files={"image": ("me.png", png(), "image/png")},
-        data={"script": "Hello.", "language": "English"},
+        data={**CONSENT_FORM, "script": "Hello.", "language": "English"},
     )
     assert r.status_code == 201
     return r.json()
@@ -89,7 +90,7 @@ def test_invalid_input_error_shape(client):
     r = client.post(
         "/api/v1/jobs",
         files={"image": ("x.png", b"junk", "image/png")},
-        data={"script": "hi", "language": "English"},
+        data={**CONSENT_FORM, "script": "hi", "language": "English"},
     )
     body = assert_error(r, 422, "invalid_input")
     assert body["detail"].startswith("The file is not a readable image.")
@@ -101,11 +102,10 @@ def test_missing_form_field_gives_validation_error(client):
     r = client.post(
         "/api/v1/jobs",
         files={"image": ("me.png", png(), "image/png")},
-        data={"language": "English"},
+        data={**CONSENT_FORM, "language": "English"},
     )
     body = assert_error(r, 422, "validation_error")
-    assert "script" in body["detail"]
-    assert body["fields"] == {"script": "This is required."}
+    assert body["fields"] == {"script": "Write a script, or choose one from My scripts."}
 
 
 def test_unknown_route_and_wrong_method(client):
@@ -282,7 +282,7 @@ def test_job_and_config_json_keys_are_unchanged(client):
 def _post_job(client, *, image=("me.png", None), script="Hello.", language="English", omit=()):
     name, data = image
     files = {"image": (name, png() if data is None else data, "image/png")}
-    form = {"script": script, "language": language}
+    form = {**CONSENT_FORM, "script": script, "language": language}
     if "image" in omit:
         files = None
     for key in omit:
@@ -330,7 +330,7 @@ def test_all_missing_inputs_are_all_named(client):
     """D-029: several missing inputs are reported together, each under its own name."""
     r = client.post("/api/v1/jobs", data={})
     body = assert_error(r, 422, "validation_error")
-    assert set(body["fields"]) == {"image", "script", "language"}
+    assert set(body["fields"]) == {"image"}  # script/language are checked once the image is read
     assert set(body["fields"].values()) == {"This is required."}
 
 

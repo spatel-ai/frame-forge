@@ -81,11 +81,19 @@ class JobStore:
         script: str,
         image_file: str,
         ledger: LedgerStep | None = None,
+        consent_version: str | None = None,
+        save_script: Callable[[Connection], str] | None = None,
     ) -> dict:
-        """Insert the job in `audio_generating`. `ledger`, if given, runs in the same transaction
-        after the insert; if it raises, no job row is written and the exception propagates."""
+        """Insert the job in `audio_generating`, recording the consent version and the time
+        (R-14, D-045). The service always passes it; only fixtures for old jobs omit it.
+        `ledger`, if given, runs in the same transaction after the insert; if it raises, no
+        job row is written and the exception propagates.
+        `save_script`, if given, runs first in the same transaction and returns the library
+        script's id, stored in `jobs.script_id` (T-505, R-43, R-51); it never commits, and a
+        later failure (such as the voice charge) rolls the script save back too."""
         ts = _to_db("created_at", now_iso())
         with self.engine.begin() as conn:
+            script_id = save_script(conn) if save_script is not None else None
             conn.execute(
                 insert(_jobs).values(  # type: ignore[arg-type]  # Table typed as FromClause
                     id=job_id,
@@ -94,6 +102,9 @@ class JobStore:
                     language=language,
                     script=script,
                     image_file=image_file,
+                    consent_version=consent_version,
+                    script_id=script_id,
+                    consent_at=ts if consent_version is not None else None,
                     created_at=ts,
                     updated_at=ts,
                 )

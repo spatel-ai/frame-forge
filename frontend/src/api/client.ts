@@ -70,11 +70,26 @@ export const getJob = (id: string) => request<Job>(`/api/v1/jobs/${encodeURIComp
 export const approveJob = (id: string) =>
   request<Job>(`/api/v1/jobs/${encodeURIComponent(id)}/approve`, { method: 'POST' })
 
-export function createJob(image: File, script: string, language: string): Promise<Job> {
+/**
+ * Start a job. `scriptId` is sent instead of the text, only for a saved script the customer did not
+ * change (the server fills in the text); otherwise the text is sent. The language always goes.
+ */
+export function createJob(
+  image: File,
+  script: string,
+  language: string,
+  scriptId?: string,
+  consent?: { consent: boolean; version: string },
+): Promise<Job> {
   const body = new FormData()
   body.append('image', image)
-  body.append('script', script)
+  if (scriptId) body.append('script_id', scriptId)
+  else body.append('script', script)
   body.append('language', language)
+  if (consent?.consent) {
+    body.append('consent', 'true')
+    body.append('consent_version', consent.version)
+  }
   return request<Job>('/api/v1/jobs', { method: 'POST', body })
 }
 
@@ -157,3 +172,23 @@ export function listJobs(params: JobListParams = {}) {
   const query = qs.toString()
   return request<JobsPage>(`/api/v1/jobs${query ? `?${query}` : ''}`)
 }
+
+// Saved scripts (M5 contract, T-504). Script text is plain text; the server decides what counts as a duplicate.
+export type SavedScript = components['schemas']['ScriptOut']
+export type ScriptsPage = components['schemas']['ScriptsOut']
+export type ScriptListParams = { q?: string; language?: string; page?: number; page_size?: number }
+
+/** Prefix of every saved-script query: invalidate it after a delete or a job that saves or touches a script. */
+export const scriptsKey = ['scripts'] as const
+export const scriptListKey = (params: ScriptListParams = {}) => ['scripts', 'list', params] as const
+export const scriptKey = (id: string) => ['scripts', 'one', id] as const
+
+export function listScripts(params: ScriptListParams = {}) {
+  const qs = new URLSearchParams()
+  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') qs.set(k, String(v))
+  const query = qs.toString()
+  return request<ScriptsPage>(`/api/v1/scripts${query ? `?${query}` : ''}`)
+}
+export const getScript = (id: string) => request<SavedScript>(`/api/v1/scripts/${encodeURIComponent(id)}`)
+export const deleteScript = (id: string) =>
+  request<void>(`/api/v1/scripts/${encodeURIComponent(id)}`, { method: 'DELETE' })

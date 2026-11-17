@@ -42,12 +42,26 @@
             "type": "string"
           },
           "language": {
-            "title": "Language",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
           },
           "script": {
-            "title": "Script",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script"
           },
           "script_id": {
             "anyOf": [
@@ -84,9 +98,7 @@
           }
         },
         "required": [
-          "image",
-          "script",
-          "language"
+          "image"
         ],
         "title": "Body_create_job_api_v1_jobs_post",
         "type": "object"
@@ -2827,16 +2839,6 @@
               }
             },
             "description": "Unauthorized"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorOut"
-                }
-              }
-            },
-            "description": "Not Implemented"
           }
         },
         "summary": "Active banner templates for the Create banners step (D-058)",
@@ -2892,16 +2894,6 @@
               }
             },
             "description": "Unprocessable Content"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorOut"
-                }
-              }
-            },
-            "description": "Not Implemented"
           }
         },
         "summary": "A template's preview clip (video/mp4)",

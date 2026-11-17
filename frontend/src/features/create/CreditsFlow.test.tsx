@@ -63,11 +63,12 @@ async function settledWalletCalls() {
 }
 
 const approveButton = () => screen.getByRole('button', { name: 'Approve and make video' }) as HTMLButtonElement
-const generateButton = () => screen.getByRole('button', { name: 'Generate voice' }) as HTMLButtonElement
+const generateButton = () => screen.getByRole('button', { name: /^Make my voice/ }) as HTMLButtonElement
 
 async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
   await user.upload(await screen.findByLabelText(/upload a photo/i), new File([new Uint8Array(10)], 'f.jpg', { type: 'image/jpeg' }))
   await user.type(screen.getByLabelText(/what should the person say/i), 'Hello')
+  await user.click(screen.getByRole('checkbox', { name: 'I have permission.' }))
   await user.click(generateButton())
 }
 
@@ -103,6 +104,7 @@ describe('details screen prices', () => {
     await screen.findByText(/Generating the voice costs/)
     await vi.waitFor(() => expect(getWallet).toHaveBeenCalled())
     expect(screen.queryByText('Not enough credits')).toBeNull()
+    await userEvent.setup().click(screen.getByRole('checkbox', { name: 'I have permission.' }))
     expect(generateButton().disabled).toBe(false)
   })
 

@@ -15,6 +15,7 @@ from app.jobs.db import JobStore
 from app.jobs.service import Conflict, JobService, ValidationError
 from app.main import create_app
 from app.providers import MockProvider, ProviderError, VideoPoll
+from tests.conftest import CONSENT_FORM, CONSENT_VERSION
 
 
 def png(size=(512, 512)) -> bytes:
@@ -83,7 +84,7 @@ async def drain(service: JobService) -> None:
 
 
 async def ready_job(service: JobService, script="Hello there, this is a test.") -> str:
-    job = service.create_job(service.owner_id, png(), script, "English")
+    job = service.create_job(service.owner_id, png(), script, "English", CONSENT_VERSION)
     assert job["status"] == db.AUDIO_GENERATING
     await drain(service)
     return job["id"]
@@ -321,7 +322,9 @@ def test_restart_fails_jobs_cut_off_mid_call_instead_of_rerunning_them(settings)
         # before it reaches the provider, as a crash would.
         service.approve_audio(service.owner_id, mid_submit)
         # A real job (row and voice charge together, T-304) whose voice call is cut off too.
-        mid_voice = service.create_job(service.owner_id, png(), "hi", "English")["id"]
+        mid_voice = service.create_job(service.owner_id, png(), "hi", "English", CONSENT_VERSION)[
+            "id"
+        ]
         for task in list(service._tasks):
             task.cancel()
         await asyncio.gather(*service._tasks, return_exceptions=True)
@@ -363,7 +366,7 @@ def test_invalid_input_is_rejected_before_any_provider_call(
     async def run():
         service = make_service(settings)
         with pytest.raises(ValidationError, match=expected):
-            service.create_job(service.owner_id, image, script, language)
+            service.create_job(service.owner_id, image, script, language, CONSENT_VERSION)
         assert not list(settings.jobs_dir.glob("*"))
 
     asyncio.run(run())
@@ -375,7 +378,7 @@ def test_gif_is_rejected(settings):
         Image.new("RGB", (512, 512)).save(out, "GIF")
         svc = make_service(settings)
         with pytest.raises(ValidationError, match="JPEG, PNG or WebP"):
-            svc.create_job(svc.owner_id, out.getvalue(), "hi", "English")
+            svc.create_job(svc.owner_id, out.getvalue(), "hi", "English", CONSENT_VERSION)
 
     asyncio.run(run())
 
@@ -401,7 +404,7 @@ def test_http_flow_end_to_end(settings, sign_up, grant):
         created = client.post(
             "/api/v1/jobs",
             files={"image": ("me.png", png(), "image/png")},
-            data={"script": "Hello from the test suite.", "language": "Hindi"},
+            data={**CONSENT_FORM, "script": "Hello from the test suite.", "language": "Hindi"},
         )
         assert created.status_code == 201
         job_id = created.json()["id"]
@@ -429,14 +432,14 @@ def test_http_errors(settings, sign_up, grant):
         bad = client.post(
             "/api/v1/jobs",
             files={"image": ("x.png", b"junk", "image/png")},
-            data={"script": "hi", "language": "English"},
+            data={**CONSENT_FORM, "script": "hi", "language": "English"},
         )
         assert bad.status_code == 422
         assert bad.json()["detail"].startswith("The file is not a readable image.")
         too_big = client.post(
             "/api/v1/jobs",
             files={"image": ("x.png", b"0" * (10 * 1024 * 1024 + 1), "image/png")},
-            data={"script": "hi", "language": "English"},
+            data={**CONSENT_FORM, "script": "hi", "language": "English"},
         )
         assert too_big.status_code == 422
         assert "larger than 10 MB" in too_big.json()["detail"]
@@ -542,7 +545,9 @@ def test_script_in_its_own_language_is_accepted(settings):
         service = make_service(settings)
         for script, language in (("ਸਤ ਸ੍ਰੀ ਅਕਾਲ। AI", "Punjabi"), ("नमस्ते दोस्तों", "Hindi")):
             assert (
-                service.create_job(service.owner_id, png(), script, language)["language"]
+                service.create_job(service.owner_id, png(), script, language, CONSENT_VERSION)[
+                    "language"
+                ]
                 == language
             )
         await drain(service)

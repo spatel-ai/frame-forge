@@ -172,6 +172,9 @@ def test_timestamps_round_trip_as_now_iso_text(database_url, owner):
             "price_credits",  # 0005 (T-303, T-304)
             "approve_attempt",
             "needs_review",
+            "consent_version",  # 0008 (T-502)
+            "consent_at",
+            "script_id",  # 0010 (T-505)
         ]
         assert (job["price_credits"], job["approve_attempt"], job["needs_review"]) == (
             None,

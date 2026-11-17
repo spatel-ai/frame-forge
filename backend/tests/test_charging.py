@@ -25,6 +25,7 @@ from app.jobs.service import Conflict, JobService, NotEnoughCredits, video_price
 from app.main import create_app
 from app.providers import MockProvider, ProviderError, VideoPoll
 from app.wallet import ledger
+from tests.conftest import CONSENT_FORM, CONSENT_VERSION
 
 HTTPS = "https://testserver"
 VOICE = 10  # Settings.voice_price_credits (D-038)
@@ -99,7 +100,7 @@ class Charging:
             await asyncio.gather(*list(self.service._tasks), return_exceptions=True)
 
     async def ready_job(self, script: str = SCRIPT) -> str:
-        job = self.service.create_job(self.owner, png(), script, "English")
+        job = self.service.create_job(self.owner, png(), script, "English", CONSENT_VERSION)
         await self.drain()
         return job["id"]
 
@@ -213,7 +214,7 @@ def test_row_create_charges_the_voice_with_the_job(charging):
 
     async def run():
         c = charging(credits=100)
-        job = c.service.create_job(c.owner, png(), SCRIPT, "English")
+        job = c.service.create_job(c.owner, png(), SCRIPT, "English", CONSENT_VERSION)
         assert c.job(job["id"])["status"] == db.AUDIO_GENERATING
         assert without_grants(c.entries()) == [voice_charge(job["id"])]
         assert c.wallet() == (90, 0)
@@ -474,7 +475,7 @@ def test_row_restart_mid_voice_returns_the_charge_and_flags(charging):
 
     async def run():
         c = charging(credits=100)
-        job = c.service.create_job(c.owner, png(), SCRIPT, "English")
+        job = c.service.create_job(c.owner, png(), SCRIPT, "English", CONSENT_VERSION)
         for task in list(c.service._tasks):
             task.cancel()
         await c.drain()
@@ -501,7 +502,7 @@ def test_service_create_without_credits_leaves_no_job_and_no_files(charging):
     async def run():
         c = charging(credits=5)
         with pytest.raises(NotEnoughCredits, match="costs 10 credits. You have 5."):
-            c.service.create_job(c.owner, png(), SCRIPT, "English")
+            c.service.create_job(c.owner, png(), SCRIPT, "English", CONSENT_VERSION)
         with c.engine.connect() as conn:
             assert conn.execute(text("SELECT count(*) FROM jobs")).scalar_one() == 0
         assert not list(c.service.settings.jobs_dir.glob("*"))
@@ -542,7 +543,7 @@ def test_http_402_on_create_and_approve(settings, sign_up, grant):
         r = client.post(
             "/api/v1/jobs",
             files={"image": ("me.png", png(), "image/png")},
-            data={"script": SCRIPT, "language": "English"},
+            data={**CONSENT_FORM, "script": SCRIPT, "language": "English"},
         )
         assert r.status_code == 402, r.text
         assert r.json() == {
@@ -558,7 +559,7 @@ def test_http_402_on_create_and_approve(settings, sign_up, grant):
         r = client.post(
             "/api/v1/jobs",
             files={"image": ("me.png", png(), "image/png")},
-            data={"script": SCRIPT, "language": "English"},
+            data={**CONSENT_FORM, "script": SCRIPT, "language": "English"},
         )
         assert r.status_code == 201, r.text
         job_id = r.json()["id"]
@@ -728,7 +729,7 @@ def test_each_row_rolls_back_when_its_ledger_step_fails(
 
     async def run():
         c = charging(credits=100, provider=provider, cfg=cfg)
-        job = c.service.create_job(c.owner, png(), SCRIPT, "English")
+        job = c.service.create_job(c.owner, png(), SCRIPT, "English", CONSENT_VERSION)
         job_id = job["id"]
         await c.drain()  # background failures stay in their task; drain does not raise
         if stays != db.AUDIO_GENERATING:
@@ -850,7 +851,7 @@ def test_job_out_reports_price_and_charged_credits(
         r = client.post(
             "/api/v1/jobs",
             files={"image": ("me.png", png(), "image/png")},
-            data={"script": SCRIPT, "language": "English"},
+            data={**CONSENT_FORM, "script": SCRIPT, "language": "English"},
         )
         assert r.status_code == 201, r.text
         assert (r.json()["price_credits"], r.json()["charged_credits"]) == (None, VOICE)
