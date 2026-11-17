@@ -3,7 +3,8 @@
 //
 //   API_TARGET=https://api.example.com
 //
-// Set it in Vercel (Project > Settings > Environment Variables) for Production and Preview, and in
+// Set it in Vercel (Project > Settings > Environment Variables, Type "Config") for Production and
+// Preview, and in
 // frontend/.env for local development (vite.config.ts reads the same name). Change the variable
 // and redeploy; no file needs editing. The browser always calls `/api/...` on the site's own
 // address, and Vercel forwards those requests to API_TARGET, so the login cookie stays same-site.
@@ -16,8 +17,10 @@ if (!/^https:\/\/[^/\s]+$/.test(target)) {
   )
 }
 
-// Shown in the build log, and sent as a response header on every page, so a wrong address is easy
-// to spot (the API address is public anyway: it is in the site's DNS).
+// Shown in the build log, so a wrong address is easy to spot.
+// IMPORTANT: in Vercel, save API_TARGET with Type "Config", not "Secret". Vercel blanks secret
+// values out of this configuration, which leaves the forwarding rule without a host
+// (502 DNS_HOSTNAME_NOT_FOUND). The API address is public anyway: it is in the site's DNS.
 console.log(`[vercel.mjs] API_TARGET = ${target}`)
 
 export const config = {
@@ -25,7 +28,6 @@ export const config = {
   installCommand: 'npm ci',
   buildCommand: 'npm run build',
   outputDirectory: 'dist',
-  headers: [{ source: '/(.*)', headers: [{ key: 'x-api-target', value: target }] }],
   rewrites: [
     { source: '/api/:path*', destination: `${target}/api/:path*` },
     { source: '/(.*)', destination: '/index.html' },

@@ -70,6 +70,9 @@ Import the repository with **Root Directory = `frontend`** and add one environme
 API_TARGET=https://api.example.com
 ```
 
+Save it with **Type = Config**, not Secret: Vercel blanks secret values out of the routing
+configuration, and API calls then fail with 502 `DNS_HOSTNAME_NOT_FOUND`.
+
 `frontend/vercel.mjs` reads it at build time and forwards `/api/*` to it. To change the backend,
 change the variable and redeploy.
 
