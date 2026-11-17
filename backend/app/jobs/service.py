@@ -236,16 +236,17 @@ class JobService:
             )
             return
         except Exception:
-            # Not a provider-reported failure, so whether a paid voice was made is unknown. The
-            # owner's rule for unknown outcomes (Q-19, D-005) applies: the voice charge is kept
-            # and the job is flagged for staff.
+            # Not a provider-reported failure, so whether fal.ai made (and billed) a voice is
+            # unknown. No voice reached the customer, so the owner's voice rule applies (D-048):
+            # the 10 credits are returned. The job is flagged, because the company may have paid.
             log.exception("voice generation failed for %s", job_id)
             self.store.transition(
                 job_id,
                 db.AUDIO_GENERATING,
                 db.FAILED,
+                ledger=_wallet(job_id, _voice_return),
                 needs_review=True,
-                error="Voice generation failed.",
+                error="Voice generation failed. The 10 credits were returned; please try again.",
             )
             return
         audio_file = f"audio.{speech.extension}"
@@ -386,15 +387,15 @@ class JobService:
         are picked up by the poller. Jobs cut off mid-call are failed rather
         than re-run, because re-running could repeat a paid request.
 
-        Both are unknown outcomes of a paid call, so the owner's rule (Q-19, D-005) applies to
-        each: the customer is charged and the job is flagged for staff. For a cut-off voice
-        that means the voice charge is KEPT (no voice_return); for a cut-off video submission
-        the hold is captured."""
+        Both are unknown outcomes of a paid call and are flagged for staff. A cut-off voice
+        delivered nothing to the customer, so its 10 credits are returned (D-048). A cut-off
+        video submission may have started a paid video, so its hold is captured (Q-19, D-005)."""
         steps: tuple[tuple[str, str, _JobLedger | None], ...] = (
             (
                 db.AUDIO_GENERATING,
-                "Voice generation was interrupted by a server restart.",
-                None,  # voice charge kept: the voice call's outcome is unknown
+                "Voice generation was interrupted by a server restart. "
+                "The 10 credits were returned.",
+                _voice_return,  # D-048: no voice reached the customer
             ),
             (
                 db.VIDEO_SUBMITTING,

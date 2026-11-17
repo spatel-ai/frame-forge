@@ -93,9 +93,9 @@ class Settings:
     razorpay_webhook_secret: str = field(
         default_factory=lambda: os.getenv("RAZORPAY_WEBHOOK_SECRET", "").strip(), repr=False
     )
-    # Purchase limits in whole rupees; ₹1 = 1 credit (owner, Q-06; D-007).
-    min_purchase_rupees: int = 500
-    max_purchase_rupees: int = 10_000
+    # Purchase limits in whole credits (owner, Q-06; D-047). ₹1 = 1 credit (D-007).
+    min_purchase_credits: int = 500
+    max_purchase_credits: int = 10_000
 
     def __post_init__(self) -> None:
         if self.voice not in ("minimax", "kokoro"):

@@ -64,16 +64,16 @@
             "title": "Max Image Mb",
             "type": "integer"
           },
-          "max_purchase_rupees": {
-            "title": "Max Purchase Rupees",
+          "max_purchase_credits": {
+            "title": "Max Purchase Credits",
             "type": "integer"
           },
           "max_script_chars": {
             "title": "Max Script Chars",
             "type": "integer"
           },
-          "min_purchase_rupees": {
-            "title": "Min Purchase Rupees",
+          "min_purchase_credits": {
+            "title": "Min Purchase Credits",
             "type": "integer"
           },
           "payments": {
@@ -118,21 +118,21 @@
           "voice_price_credits",
           "payments",
           "razorpay_key_id",
-          "min_purchase_rupees",
-          "max_purchase_rupees"
+          "min_purchase_credits",
+          "max_purchase_credits"
         ],
         "title": "ConfigOut",
         "type": "object"
       },
       "CreateOrderIn": {
         "properties": {
-          "rupees": {
-            "title": "Rupees",
+          "credits": {
+            "title": "Credits",
             "type": "integer"
           }
         },
         "required": [
-          "rupees"
+          "credits"
         ],
         "title": "CreateOrderIn",
         "type": "object"
@@ -493,10 +493,6 @@
             "title": "Order Id",
             "type": "string"
           },
-          "rupees": {
-            "title": "Rupees",
-            "type": "integer"
-          },
           "status": {
             "enum": [
               "created",
@@ -510,7 +506,6 @@
         "required": [
           "order_id",
           "status",
-          "rupees",
           "credits",
           "created_at"
         ],
@@ -1670,7 +1665,7 @@
             "description": "Bad Gateway"
           }
         },
-        "summary": "Start buying credits: create a Razorpay order for whole rupees",
+        "summary": "Start buying credits: create a Razorpay order for a number of credits",
         "tags": [
           "payments"
         ]

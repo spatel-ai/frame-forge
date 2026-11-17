@@ -316,13 +316,12 @@ def test_restart_resumes_submitted_video_without_resubmitting(settings):
 def test_restart_fails_jobs_cut_off_mid_call_instead_of_rerunning_them(settings):
     async def run():
         service = make_service(settings)
-        mid_voice = service.store.create("a" * 32, service.owner_id, "English", "hi", "image.png")[
-            "id"
-        ]
         mid_submit = await ready_job(service)
         # A real approval (status, attempt and hold together, T-304) whose submission is cut off
         # before it reaches the provider, as a crash would.
         service.approve_audio(service.owner_id, mid_submit)
+        # A real job (row and voice charge together, T-304) whose voice call is cut off too.
+        mid_voice = service.create_job(service.owner_id, png(), "hi", "English")["id"]
         for task in list(service._tasks):
             task.cancel()
         await asyncio.gather(*service._tasks, return_exceptions=True)

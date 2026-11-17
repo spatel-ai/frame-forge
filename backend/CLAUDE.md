@@ -130,6 +130,10 @@ Breaking one of these can charge a customer wrongly or pay fal.ai twice.
 2. Passwords are hashed with Argon2id and never logged. Session tokens are stored hashed.
 3. Secrets come from environment variables only. Never commit `.env`. Never return a secret, a
    stack trace or a provider's raw error to the browser.
+   `backend/.env` holds the Razorpay key id and secret and is off-limits to every agent and
+   assistant: never open, print, copy, grep, source or edit it, by any tool or shell command.
+   `.claude/settings.json` denies it to Claude Code's file tools. Read `backend/.env.example` for
+   variable names. If a task seems to need a real value, stop and ask the owner.
 4. Do not log photos, script text, emails, full payment identifiers, or request bodies of auth and
    payment routes.
 5. Uploaded images are re-encoded before storage, as today.

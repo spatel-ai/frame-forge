@@ -46,7 +46,7 @@ def _not_built() -> ApiError:
     response_model=OrderOut,
     status_code=201,
     responses={401: _E, 403: _E, 422: _E, 502: _E},
-    summary="Start buying credits: create a Razorpay order for whole rupees",
+    summary="Start buying credits: create a Razorpay order for a number of credits",
 )
 def create_order(body: CreateOrderIn, user: User) -> OrderOut:
     raise _not_built()

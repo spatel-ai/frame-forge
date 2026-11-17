@@ -28,8 +28,8 @@ class ConfigOut(BaseModel):
     # Payments (M4, D-042). The key id is public; it is null in mock mode. Never a secret.
     payments: Literal["mock", "razorpay"]
     razorpay_key_id: str | None
-    min_purchase_rupees: int
-    max_purchase_rupees: int
+    min_purchase_credits: int
+    max_purchase_credits: int
 
 
 class JobOut(BaseModel):

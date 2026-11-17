@@ -20,7 +20,7 @@ vi.mock('../../api/client', async (importOriginal) => ({
 const config: Config = {
   provider: 'mock', max_audio_seconds: 60, max_script_chars: 100, max_image_mb: 1,
   languages: ['English'], credits_per_second: 20, voice_price_credits: 10,
-  payments: 'mock', razorpay_key_id: null, min_purchase_rupees: 500, max_purchase_rupees: 10000,
+  payments: 'mock', razorpay_key_id: null, min_purchase_credits: 500, max_purchase_credits: 10000,
 }
 const wallet = (available: number): Wallet => ({ available_credits: available, reserved_credits: 0, balance_credits: available })
 const baseJob: Job = {

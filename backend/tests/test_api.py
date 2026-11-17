@@ -237,10 +237,18 @@ def test_openapi_declares_project_error_shape_for_every_error():
 
 
 def test_core_does_not_import_from_feature_packages():
-    """D-012/D-022: `app.core` stays free of `app.jobs` and `app.providers` so features can be
-    built in parallel without editing shared core files."""
+    """D-012/D-022: `app.core` imports no feature package, so features can be built in parallel
+    without editing shared core files. Every package beside `core` under `app/` counts."""
     core = Path(__file__).resolve().parents[1] / "app" / "core"
-    forbidden = ("jobs", "providers")
+    app_dir = core.parent
+    forbidden = tuple(
+        sorted(
+            {p.name for p in app_dir.iterdir() if p.is_dir() and (p / "__init__.py").exists()}
+            - {"core"}
+        )
+        + ["providers"]
+    )
+    assert {"auth", "jobs", "payments", "wallet"} <= set(forbidden)
     for source in sorted(core.glob("*.py")):
         for node in ast.walk(ast.parse(source.read_text(), str(source))):
             names: list[str] = []

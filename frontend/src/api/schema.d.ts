@@ -319,7 +319,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Start buying credits: create a Razorpay order for whole rupees */
+        /** Start buying credits: create a Razorpay order for a number of credits */
         post: operations["create_order_api_v1_payments_orders_post"];
         delete?: never;
         options?: never;
@@ -459,12 +459,12 @@ export interface components {
             max_audio_seconds: number;
             /** Max Image Mb */
             max_image_mb: number;
-            /** Max Purchase Rupees */
-            max_purchase_rupees: number;
+            /** Max Purchase Credits */
+            max_purchase_credits: number;
             /** Max Script Chars */
             max_script_chars: number;
-            /** Min Purchase Rupees */
-            min_purchase_rupees: number;
+            /** Min Purchase Credits */
+            min_purchase_credits: number;
             /**
              * Payments
              * @enum {string}
@@ -482,8 +482,8 @@ export interface components {
         };
         /** CreateOrderIn */
         CreateOrderIn: {
-            /** Rupees */
-            rupees: number;
+            /** Credits */
+            credits: number;
         };
         /** ErrorOut */
         ErrorOut: {
@@ -613,8 +613,6 @@ export interface components {
             credits: number;
             /** Order Id */
             order_id: string;
-            /** Rupees */
-            rupees: number;
             /**
              * Status
              * @enum {string}

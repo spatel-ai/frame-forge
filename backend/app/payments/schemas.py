@@ -1,7 +1,8 @@
 """Request and response shapes for the payment routes: the M4 contract (task T-400).
 
-Money is whole rupees from the customer and paise towards Razorpay, always integers (D-014).
-₹1 = 1 credit (D-007). See docs/M4-PLAN.md and docs/RAZORPAY-FACTS.md."""
+The customer buys whole credits (D-047); ₹1 = 1 credit (D-007), so the rupees paid equal the
+credits. Only `amount_paise`, sent to Razorpay, is money. Always integers (D-014).
+See docs/M4-PLAN.md and docs/RAZORPAY-FACTS.md."""
 
 from typing import Literal
 
@@ -15,9 +16,9 @@ OrderStatus = Literal["created", "paid", "failed"]
 
 
 class CreateOrderIn(BaseModel):
-    # Whole rupees. The limits (₹500 to ₹10,000, Q-06) are checked by the service so the 422
+    # Whole credits. The limits (500 to 10,000, Q-06) are checked by the service so the 422
     # names the field with the customer's message.
-    rupees: int
+    credits: int
 
 
 class OrderOut(BaseModel):
@@ -33,7 +34,6 @@ class OrderOut(BaseModel):
 class OrderStatusOut(BaseModel):
     order_id: str
     status: OrderStatus
-    rupees: int
     credits: int
     created_at: str
 

@@ -1,4 +1,4 @@
-"""SQLAlchemy model for the jobs table. Columns mirror the SQLite schema in db.py."""
+"""SQLAlchemy model for the jobs table (PostgreSQL; built by the Alembic migrations)."""
 
 from datetime import datetime
 

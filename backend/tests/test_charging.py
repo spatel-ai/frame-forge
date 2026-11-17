@@ -238,17 +238,17 @@ def test_row_voice_failure_returns_the_voice_charge(charging, settings):
     asyncio.run(run())
 
 
-def test_row_voice_unknown_outcome_keeps_the_charge_and_flags(charging, settings):
-    """R-10: a voice call that fails without a provider verdict has an unknown outcome → failed,
-    flagged, voice charge kept (the owner's rule, Q-19, applied to the voice)."""
+def test_row_voice_unknown_outcome_returns_the_charge_and_flags(charging, settings):
+    """R-10 (D-048): a voice call that fails without a provider verdict has an unknown outcome →
+    failed, flagged, and the voice charge returned (no voice reached the customer)."""
 
     async def run():
         c = charging(credits=100, provider=VoiceBroken(settings))
         job_id = await c.ready_job()
         job = c.job(job_id)
         assert (job["status"], job["needs_review"]) == (db.FAILED, True)
-        assert without_grants(c.entries()) == [voice_charge(job_id)]
-        assert c.wallet() == (90, 0)
+        assert without_grants(c.entries()) == sorted([voice_charge(job_id), voice_return(job_id)])
+        assert c.wallet() == (100, 0)
         assert c.invariant()
 
     asyncio.run(run())
@@ -468,9 +468,9 @@ def test_row_restart_mid_submission_captures_and_flags(charging):
     asyncio.run(run())
 
 
-def test_row_restart_mid_voice_keeps_the_charge_and_flags(charging):
-    """R-10: a restart finds the job in audio_generating (voice outcome unknown) → failed,
-    needs_review, voice charge KEPT (the owner's unknown-outcome rule applied to the voice)."""
+def test_row_restart_mid_voice_returns_the_charge_and_flags(charging):
+    """R-10 (D-048): a restart finds the job in audio_generating (voice outcome unknown) →
+    failed, needs_review, and the voice charge returned; a second restart changes nothing."""
 
     async def run():
         c = charging(credits=100)
@@ -479,10 +479,13 @@ def test_row_restart_mid_voice_keeps_the_charge_and_flags(charging):
             task.cancel()
         await c.drain()
         c.service.recover_interrupted()
+        c.service.recover_interrupted()  # a second restart changes nothing
         job = c.job(job["id"])
         assert (job["status"], job["needs_review"]) == (db.FAILED, True)
-        assert without_grants(c.entries()) == [voice_charge(job["id"])]
-        assert c.wallet() == (90, 0)
+        assert without_grants(c.entries()) == sorted(
+            [voice_charge(job["id"]), voice_return(job["id"])]
+        )
+        assert c.wallet() == (100, 0)
         assert c.invariant()
 
     asyncio.run(run())

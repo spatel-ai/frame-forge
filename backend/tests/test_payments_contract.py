@@ -43,13 +43,15 @@ def test_payment_routes_match_the_contract():
 
 
 def test_money_fields_are_integers():
-    """R-02: rupees, paise and credits are integers (D-014); no float reaches the contract."""
+    """R-02, D-047: credits and paise are integers (D-014); no float reaches the contract."""
     schemas = _openapi()["components"]["schemas"]
-    assert schemas["CreateOrderIn"]["properties"]["rupees"]["type"] == "integer"
+    assert set(schemas["CreateOrderIn"]["properties"]) == {"credits"}  # D-047: never rupees
+    assert schemas["CreateOrderIn"]["properties"]["credits"]["type"] == "integer"
     order = schemas["OrderOut"]["properties"]
     assert {order[k]["type"] for k in ("amount_paise", "credits")} == {"integer"}
     status = schemas["OrderStatusOut"]["properties"]
-    assert {status[k]["type"] for k in ("rupees", "credits")} == {"integer"}
+    assert status["credits"]["type"] == "integer"
+    assert "rupees" not in status
 
 
 def test_verify_takes_our_order_id_and_no_amount():
@@ -152,11 +154,11 @@ def test_unknown_payments_mode_is_refused():
 def test_config_tells_the_browser_the_payment_mode_and_limits():
     """R-02: config carries the mode, the public key id and the purchase limits (Q-06)."""
     config = _openapi()["components"]["schemas"]["ConfigOut"]["properties"]
-    assert {"payments", "razorpay_key_id", "min_purchase_rupees", "max_purchase_rupees"} <= set(
+    assert {"payments", "razorpay_key_id", "min_purchase_credits", "max_purchase_credits"} <= set(
         config
     )
-    assert Settings().min_purchase_rupees == 500
-    assert Settings().max_purchase_rupees == 10_000
+    assert Settings().min_purchase_credits == 500
+    assert Settings().max_purchase_credits == 10_000
 
 
 def test_config_hides_the_key_id_in_mock_mode(tmp_path, database_url):
@@ -179,5 +181,5 @@ def test_config_hides_the_key_id_in_mock_mode(tmp_path, database_url):
     assert r.status_code == 200
     body = r.json()
     assert (body["payments"], body["razorpay_key_id"]) == ("mock", None)
-    assert (body["min_purchase_rupees"], body["max_purchase_rupees"]) == (500, 10_000)
+    assert (body["min_purchase_credits"], body["max_purchase_credits"]) == (500, 10_000)
     assert "TOP-SECRET" not in r.text
