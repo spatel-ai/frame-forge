@@ -187,7 +187,7 @@ function Sessions({ user }: { user: User }) {
         </div>
       </Card>
       {error && <Banner tone="danger" title={error} onDismiss={() => setError(null)} />}
-      <div>
+      <div className={styles.logout}>
         <Button
           variant="secondary"
           busy={single.isPending}
