@@ -219,6 +219,24 @@ describe('polling', () => {
     expect(screen.queryByText('Connection problem, retrying…')).toBeNull()
   })
 
+  it('R-55: when a job never loads, retries stop and "Try again" loads it by hand', async () => {
+    vi.mocked(getJob).mockRejectedValue(new NetworkError('Network error'))
+    renderAt('/create/job-1')
+    await tick(0)
+    await tick(3000)
+    await tick(3000)
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy()
+    expect(screen.getByText('We could not load your video')).toBeTruthy()
+    expect(getJob).toHaveBeenCalledTimes(3)
+    await tick(10000)
+    expect(getJob).toHaveBeenCalledTimes(3)
+    vi.mocked(getJob).mockResolvedValue(withStatus('audio_ready'))
+    await act(async () => screen.getByRole('button', { name: 'Try again' }).click())
+    await tick(0)
+    expect(screen.getByText('Listen to the voice')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
+  })
+
   it('R-55: a 404 clears the stored id and redirects to /create', async () => {
     localStorage.setItem(KEY, 'job-1')
     vi.mocked(getJob).mockRejectedValue(new ApiError(404, 'Job not found', 'not_found'))
@@ -255,6 +273,16 @@ describe('approve', () => {
     expect(await screen.findByText(/Making your video/)).toBeTruthy()
     expect(approveJob).toHaveBeenCalledTimes(1)
     expect(approveJob).toHaveBeenCalledWith('job-1', 'b1')
+  })
+
+  it('R-80: a dropped connection on approve shows the friendly sentence, not "Network error"', async () => {
+    vi.mocked(getJob).mockResolvedValue(withStatus('audio_ready'))
+    vi.mocked(approveJob).mockRejectedValue(new NetworkError('Network error'))
+    const { user } = renderAt('/create/job-1')
+    await chooseBanner(user)
+    await user.click(await screen.findByRole('button', { name: 'Approve and make video' }))
+    expect(await screen.findByText('We could not reach the server. Check your connection and try again.')).toBeTruthy()
+    expect(screen.queryByText('Network error')).toBeNull()
   })
 
   it('R-08, R-80: approve cannot be submitted twice while the request is in flight', async () => {

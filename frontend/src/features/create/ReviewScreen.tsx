@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import { useOutletContext } from 'react-router'
-import { ApiError, approveJob, bannersKey, meKey } from '../../api/client'
+import { ApiError, approveJob, bannersKey, meKey, NetworkError } from '../../api/client'
 import type { ShellContext } from '../../components/AppShell'
 import type { Job } from '../../api/client'
 import { Banner } from '../../components/feedback'
@@ -12,7 +12,7 @@ import { errMsg } from '../../lib/util'
 import { invalidateWallet, useWallet } from '../../lib/wallet'
 import { BannerPicker } from './BannerPicker'
 import { formatCredits } from './credits'
-import { jobKey } from './jobQueries'
+import { jobKey, NETWORK_MESSAGE } from './jobQueries'
 import { NotEnoughCredits } from './NotEnoughCredits'
 import styles from './screens.module.css'
 
@@ -69,7 +69,11 @@ export function ReviewScreen({ job, onReset }: { job: Job; onReset: () => void }
   const notEnough = !!wallet && price !== null && wallet.available_credits < price
   const creditsError = isInsufficient(approveMutation.error) ? errMsg(approveMutation.error) : null
   const approveError =
-    approveMutation.error && !isNotVerified(approveMutation.error) && !isBannerError(approveMutation.error) && !creditsError ? errMsg(approveMutation.error) : null
+    approveMutation.error && !isNotVerified(approveMutation.error) && !isBannerError(approveMutation.error) && !creditsError
+      ? approveMutation.error instanceof NetworkError
+        ? NETWORK_MESSAGE
+        : errMsg(approveMutation.error)
+      : null
 
   const needsBanner = bannersOn && !bannerId
 

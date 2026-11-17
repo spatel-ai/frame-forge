@@ -2,13 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { ApiError, createJob, getScript, meKey, NetworkError, scriptKey, scriptsKey } from '../../api/client'
-import type { Config, Job, SavedScript } from '../../api/client'
+import type { Config, Job, SavedScript, User } from '../../api/client'
 import { Banner } from '../../components/feedback'
 import { Button, countChars, FileDropZone, Select, SelectableCard, SelectableCardGroup, TextArea } from '../../components/form'
 import { Card } from '../../components/layout'
 import { invalidateWallet, useWallet } from '../../lib/wallet'
 import { ConsentBlock, VoiceCostBox } from './ConsentBlock'
 import { formatCredits } from './credits'
+import { NETWORK_MESSAGE } from './jobQueries'
 import { NotEnoughCredits } from './NotEnoughCredits'
 import { ScriptPickerDialog } from './ScriptPickerDialog'
 import picker from './ScriptPicker.module.css'
@@ -173,7 +174,11 @@ export function JobForm({
         onError: (err) => {
           if (err instanceof ApiError && err.status === 403 && err.code === 'email_not_verified') {
             // Confirmed or unconfirmed elsewhere: reload who we are; the notice follows from that.
+            const me = queryClient.getQueryData<User | null>(meKey)
             void queryClient.invalidateQueries({ queryKey: meKey })
+            // The page already shows the "Confirm your email" notice when it knows the account is
+            // unverified; when it believes the account is verified, say what the server said.
+            if (me?.email_verified) setFormError(err.message)
             return
           }
           if (err instanceof ApiError && err.code === 'insufficient_credits') {
@@ -206,7 +211,7 @@ export function JobForm({
           }
           setFormError(
             err instanceof NetworkError
-              ? 'We could not reach the server. Check your connection and try again.'
+              ? NETWORK_MESSAGE
               : err instanceof Error
                 ? err.message
                 : 'Something went wrong. Try again.',

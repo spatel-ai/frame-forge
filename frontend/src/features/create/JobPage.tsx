@@ -1,10 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { Banner, Skeleton, SkeletonGroup } from '../../components/feedback'
+import { Banner, ErrorState, Skeleton, SkeletonGroup } from '../../components/feedback'
 import { invalidateWallet } from '../../lib/wallet'
 import { CreateLayout } from './CreateLayout'
-import { isNotFound, useJob } from './jobQueries'
+import { isNotFound, LOAD_RETRIES, NETWORK_MESSAGE, useJob } from './jobQueries'
 import { JobView } from './JobView'
 import { stepForJob } from './steps'
 import { storeId } from '../../lib/jobStorage'
@@ -25,7 +25,7 @@ function JobSkeleton() {
 export default function JobPage() {
   const { jobId = '' } = useParams()
   const navigate = useNavigate()
-  const { data: job, error } = useJob(jobId)
+  const { data: job, error, errorUpdateCount, refetch } = useJob(jobId)
 
   const queryClient = useQueryClient()
 
@@ -54,10 +54,24 @@ export default function JobPage() {
     navigate('/create')
   }
 
+  // Retries are used up and the video never loaded: say so and let the customer try again by hand.
+  const gaveUp = !job && !!error && !gone && errorUpdateCount >= LOAD_RETRIES
+
   return (
     <CreateLayout step={job ? stepForJob(job) : undefined}>
-      {error && !gone && <Banner tone="warning" title="Connection problem, retrying…" />}
-      {job ? <JobView job={job} onReset={reset} /> : <JobSkeleton />}
+      {gaveUp ? (
+        <ErrorState
+          title="We could not load your video"
+          message={NETWORK_MESSAGE}
+          onRetry={() => void refetch()}
+          headingLevel={2}
+        />
+      ) : (
+        <>
+          {error && !gone && <Banner tone="warning" title="Connection problem, retrying…" />}
+          {job ? <JobView job={job} onReset={reset} /> : <JobSkeleton />}
+        </>
+      )}
     </CreateLayout>
   )
 }

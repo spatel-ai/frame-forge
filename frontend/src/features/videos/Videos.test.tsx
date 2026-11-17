@@ -207,6 +207,8 @@ describe('Video detail', () => {
     vi.mocked(getJob).mockRejectedValue(new ApiError(404, 'Not found', 'not_found'))
     renderAt('/videos/nope')
     expect(await screen.findByText('Page not found')).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'All videos' }).getAttribute('href')).toBe('/videos')
+    expect(screen.getByRole('link', { name: 'Go to Create' }).getAttribute('href')).toBe('/create')
   })
 
   it('R-13: a load error shows a retry', async () => {
