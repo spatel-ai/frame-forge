@@ -63,6 +63,11 @@
   .actions > * { width: auto; }
 }
 .actions > * { width: 100%; }
+/* Very short screens (sideways phone, keyboard open): the bar is not pinned, it follows the form, as in
+   the shared Dialog footer. */
+@media (max-height: 420px) {
+  .actions { position: static; }
+}
 @media (min-width: 768px) {
   .head { flex-direction: row; align-items: center; justify-content: space-between; gap: var(--space-4); }
   .head > button { width: auto; }

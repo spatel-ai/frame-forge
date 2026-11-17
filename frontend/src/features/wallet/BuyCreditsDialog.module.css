@@ -37,14 +37,14 @@
 
 /* Phone with room (not a keyboard-shortened or sideways screen): the Pay button stays in view at the bottom of
    the scrolling sheet. The pinned bar is the large button (48 px) plus its 12 px cover strip. A focused field
-   keeps that much room below it, so it is never scrolled underneath the bar: locally with scroll-margin on the
-   field, and through the shared Dialog's --dialog-footer-space when the Dialog supports it. */
+   keeps that much room below it, so it is never scrolled underneath the bar: with scroll-margin on the field for
+   the browser's own focus scrolling, and by the shared Dialog, which finds this sticky bar and scrolls a focused
+   field clear of it. */
 @media (max-width: 767.98px) and (min-height: 420.02px) {
   .stack > .pay {
     position: sticky; bottom: 0; z-index: 1; box-shadow: 0 calc(-1 * var(--space-3)) 0 0 var(--color-surface);
   }
   .stack :is(input, button:not(.pay)) { scroll-margin-bottom: calc(var(--space-7) + var(--space-3) + var(--space-2)); }
-  dialog:has(form.stack) { --dialog-footer-space: calc(var(--space-7) + var(--space-3)); }
 }
 
 /* Short screens (phone sideways, keyboard open): tighter spacing so the field, the price and Pay fit together. */
