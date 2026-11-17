@@ -49,7 +49,9 @@ def create_app(
         except DatabaseNotReady:
             store.close()
             raise
-        service = JobService(settings, store, provider or build_provider(settings))
+        service = JobService(
+            settings, store, provider or build_provider(settings), email_sender=sender
+        )
         service.recover_interrupted()
         app.state.service = service
         app.state.auth_service = AuthService(settings, AuthStore(store.engine), sender)

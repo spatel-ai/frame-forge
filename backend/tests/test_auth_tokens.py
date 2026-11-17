@@ -27,7 +27,7 @@ class CapturingSender:
     def __init__(self):
         self.sent: list[tuple[str, str, str]] = []
 
-    def send(self, to: str, subject: str, body: str) -> None:
+    def send(self, to: str, subject: str, body: str, html: str | None = None) -> None:
         self.sent.append((to, subject, body))
 
 

@@ -10,6 +10,7 @@ import asyncio
 import logging
 import math
 import shutil
+import threading
 import uuid
 from collections.abc import Callable
 from datetime import datetime, timezone
@@ -20,6 +21,9 @@ from pathlib import Path
 from PIL import Image
 from sqlalchemy import Connection
 
+from ..auth.email import EmailSender
+from ..auth.store import AuthStore
+from ..core import mail_templates
 from ..core.config import Settings
 from ..providers import Provider, ProviderError
 from ..scripts import service as script_library
@@ -110,10 +114,18 @@ def _wallet(job_id: str, step: _JobLedger) -> db.LedgerStep:
 
 
 class JobService:
-    def __init__(self, settings: Settings, store: JobStore, provider: Provider):
+    def __init__(
+        self,
+        settings: Settings,
+        store: JobStore,
+        provider: Provider,
+        email_sender: EmailSender | None = None,
+    ):
         self.settings = settings
         self.store = store
         self.provider = provider
+        # T-552 (R-13): sends the "your video is ready" email; None sends nothing.
+        self.email_sender = email_sender
         self._tasks: set[asyncio.Task] = set()
 
     # ---- helpers -------------------------------------------------------
@@ -467,13 +479,15 @@ class JobService:
             (self.job_dir(job_id) / "video.mp4").write_bytes(poll.data or b"")
             # Delivered: take the held price. A repeated or concurrent poll finds the job
             # no longer video_generating, so the capture happens once.
-            self.store.transition(
+            completed = self.store.transition(
                 job_id,
                 db.VIDEO_GENERATING,
                 db.COMPLETED,
                 ledger=_wallet(job_id, _capture),
                 video_file="video.mp4",
             )
+            if completed:
+                self._notify_video_ready(job_id)
         elif poll is not None and poll.state == "failed":
             # A clear failure reported by the provider: release the hold.
             self.store.transition(
@@ -498,6 +512,40 @@ class JobService:
                         f"{job['provider_request_id']}."
                     ),
                 )
+
+    def _notify_video_ready(self, job_id: str) -> None:
+        """T-552 (R-13): email the customer once, after the completed transition has committed.
+        Runs in a daemon thread, outside the money transaction and off the poll loop; a failure
+        is logged and changes nothing."""
+        if self.email_sender is None:
+            return
+        threading.Thread(
+            target=self._send_video_ready, args=(job_id,), name="video-ready-email", daemon=True
+        ).start()
+
+    def _send_video_ready(self, job_id: str) -> None:
+        try:
+            job = self.store.get(job_id)
+            user = AuthStore(self.store.engine).get_user(job["user_id"]) if job else None
+            if job is None or user is None or self.email_sender is None:
+                return  # a job with no owner (made before accounts) has nobody to email
+            voice, video = ledger.job_charge_parts(self.store.engine, job_id)
+            subject, text, html = mail_templates.video_ready(
+                name=user["name"],
+                job_id=job_id,
+                script=job["script"],
+                language=job["language"],
+                seconds=job["audio_duration_seconds"],
+                created_at=job["created_at"],
+                voice_credits=voice,
+                video_credits=video,
+                app_base_url=self.settings.app_base_url,
+                support_email=self.settings.support_email,
+                expires_at=job.get("video_expires_at"),  # column arrives with T-553
+            )
+            self.email_sender.send(user["email"], subject, text, html)
+        except Exception as exc:
+            log.warning("video-ready email for %s not sent (%s)", job_id, type(exc).__name__)
 
     async def run_poller(self) -> None:
         while True:
