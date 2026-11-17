@@ -2,8 +2,8 @@ import react from '@vitejs/plugin-react'
 import { loadEnv } from 'vite'
 import { defineConfig } from 'vitest/config'
 
-// Development only. `/api` is forwarded to API_TARGET from frontend/.env (git-ignored), the same
-// variable Vercel uses (vercel.mjs). Empty or missing: a backend on this machine.
+// Development only. `/api` is forwarded to API_TARGET from frontend/.env (git-ignored). Empty or
+// missing: a backend on this machine. (The deployed site's address is in vercel.json.)
 //
 //   API_TARGET=https://api.example.com
 //

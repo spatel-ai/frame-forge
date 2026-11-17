@@ -64,13 +64,13 @@ inside Docker. The bucket needs public access blocked, a lifecycle rule deleting
 ## Frontend (Vercel)
 
 Import the repository with **Root Directory = `frontend`**. No environment variable is needed:
-`frontend/vercel.mjs` forwards `/api/*` to its built-in backend address
-(`DEFAULT_API_TARGET = https://api.sptel.in`).
+`frontend/vercel.json` forwards `/api/*` to the backend, `https://api.sptel.in`. To use another
+backend, change the `destination` in that file, commit and push.
 
-To point the site at another backend, set `API_TARGET=https://api.example.com` in Vercel
-(Project > Settings > Environment Variables) with **Type = Config**, not Secret, and redeploy.
-A Secret value is blanked out of the routing configuration and API calls then fail with 502
-`DNS_HOSTNAME_NOT_FOUND`.
+The address must be written out in `vercel.json`. Vercel reads its configuration without running
+code, so a `vercel.mjs` that builds the address from an environment variable gave an empty
+destination: API calls failed with 502 `DNS_HOSTNAME_NOT_FOUND`, and later Vercel refused the
+deployment outright (`rewrites[0] missing required property destination`).
 
 The backend must list the site's exact address in `AVATAR_ALLOWED_ORIGINS` (and use it as
 `AVATAR_APP_URL`), or every form post returns 403 `origin_refused`.
