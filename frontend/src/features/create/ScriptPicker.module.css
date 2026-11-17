@@ -3,6 +3,8 @@
 .controls { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: flex-end; }
 .controls > * { flex: 1 1 160px; min-width: 0; }
 .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+/* Pagination focuses the list after Previous/Next (tabIndex -1) so screen readers start there; no ring around the whole list (as Scripts). */
+.list:focus { outline: none; }
 /* On a phone the dialog is a full-height sheet that scrolls itself, so the list takes the room it has. */
 @media (min-width: 768px) and (min-height: 501px) {
   .list { max-height: 50vh; max-height: 50dvh; overflow-y: auto; }
