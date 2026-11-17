@@ -24,6 +24,8 @@ from .payments import routes as payment_routes
 from .payments.gateway import build_gateway
 from .payments.service import PaymentService
 from .providers import Provider, build_provider
+from .scripts import routes as script_routes
+from .templates import routes as template_routes
 from .wallet import routes as wallet_routes
 
 configure_logging()
@@ -77,6 +79,8 @@ def create_app(
     app.include_router(auth_routes.router)
     app.include_router(job_routes.router)
     app.include_router(wallet_routes.router)
+    app.include_router(script_routes.router)
+    app.include_router(template_routes.router)
     app.include_router(payment_routes.router)
     app.include_router(payment_routes.webhook_router)
     # D-042: the stand-in for Razorpay Checkout exists only in mock mode during development.

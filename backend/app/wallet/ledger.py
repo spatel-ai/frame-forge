@@ -355,6 +355,32 @@ def job_charged_credits(conn_or_engine: Connection | Engine, job_id: str) -> int
     return _job_charged(conn_or_engine, job_id)
 
 
+def job_charge_parts(conn_or_engine: Connection | Engine, job_id: str) -> tuple[int, int]:
+    """(voice credits, video credits) actually taken for a job: the voice charge less any return,
+    and every captured hold (D-038, D-039). Their sum is job_charged_credits."""
+
+    def read(conn: Connection) -> tuple[int, int]:
+        rows = conn.execute(
+            select(_entries.c.kind, func.coalesce(func.sum(_entries.c.credits), 0))
+            .where(
+                _entries.c.ref_type == JOB,
+                or_(
+                    _entries.c.ref_id == job_id,
+                    _entries.c.ref_id.startswith(f"{job_id}#", autoescape=True),
+                ),
+            )
+            .group_by(_entries.c.kind)
+        ).all()
+        by_kind = {kind: -int(total) for kind, total in rows}
+        voice = by_kind.get("voice_charge", 0) + by_kind.get("voice_return", 0)
+        return voice, by_kind.get("capture", 0)
+
+    if isinstance(conn_or_engine, Engine):
+        with conn_or_engine.connect() as conn:
+            return read(conn)
+    return read(conn_or_engine)
+
+
 def list_entries(
     engine: Engine, user_id: str, page: int = 1, page_size: int = 20
 ) -> tuple[list[Entry], int]:

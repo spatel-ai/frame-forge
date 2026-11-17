@@ -910,9 +910,9 @@
     "starts_after": "T-400",
     "task": "Agree the scripts, templates and job-list API contract before building",
     "acceptance": "Routes, bodies and error codes written into the OpenAPI document",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "docs/M5-PLAN.md contract table; OpenAPI: GET /jobs, GET /voices, scripts and templates routes (501 stubs after the session check), M5 form fields on POST /jobs (501, nothing charged), 429 on approve, JobOut cost split / failure_kind / voice_reusable / needs_review with real values, video_assembling status, config consent and daily limit. tests/test_m5_contract.py + access-matrix rows; backend check 532 passed."
   },
   {
     "id": "T-501",

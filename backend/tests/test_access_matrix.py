@@ -134,6 +134,33 @@ ROWS: list[Row] = [
     ],
     Row("GET", "/api/v1/wallet", "anonymous", 401, "not_authenticated"),
     Row("GET", "/api/v1/wallet/transactions", "anonymous", 401, "not_authenticated"),
+    # M5 contract stubs (T-500): a session is needed, then 501 until built (T-501, T-504,
+    # T-506, T-516). Replace these rows with real owner/other decisions when each is built.
+    *[
+        Row(method, path, actor, 501, "not_implemented")
+        for method, path in (
+            ("GET", "/api/v1/jobs"),
+            ("GET", "/api/v1/voices"),
+            ("GET", "/api/v1/scripts"),
+            ("GET", "/api/v1/scripts/{script_id}"),
+            ("DELETE", "/api/v1/scripts/{script_id}"),
+            ("GET", "/api/v1/templates"),
+            ("GET", "/api/v1/templates/{template_id}/preview"),
+        )
+        for actor in ("owner", "other", "admin")
+    ],
+    *[
+        Row(method, path, "anonymous", 401, "not_authenticated")
+        for method, path in (
+            ("GET", "/api/v1/jobs"),
+            ("GET", "/api/v1/voices"),
+            ("GET", "/api/v1/scripts"),
+            ("GET", "/api/v1/scripts/{script_id}"),
+            ("DELETE", "/api/v1/scripts/{script_id}"),
+            ("GET", "/api/v1/templates"),
+            ("GET", "/api/v1/templates/{template_id}/preview"),
+        )
+    ],
     # M4 payments (T-402 to T-404; R-03). Creating an order needs a confirmed email (D-049); the
     # quote needs only a session. The owner's order ({order_id}, or `order_id` in the body) is
     # 404 order_not_found to everyone else, admin included.
@@ -239,7 +266,7 @@ def post_job(client: TestClient) -> httpx.Response:
 
 
 def send(client: TestClient, method: str, path: str, order_id: str = "") -> httpx.Response:
-    if path == "/api/v1/jobs":
+    if method == "POST" and path == "/api/v1/jobs":
         return post_job(client)
     if path == "/api/v1/auth/password/change":
         return client.post(path, json={})  # an empty body is a 422 for a logged-in owner
@@ -362,6 +389,8 @@ def test_access_matrix(world: World, row: Row) -> None:
         path = row.path.format(job_id=world.jobs[row.job])
     if "{order_id}" in path:
         path = path.format(order_id=world.order)
+    # M5 stubs: the owner's script or template ids arrive with T-504 and T-506.
+    path = path.replace("{script_id}", "s0").replace("{template_id}", "t0")
     r = send(world.clients[row.actor], row.method, path, world.order)
     assert r.status_code == row.status, r.text
     if row.code is not None:

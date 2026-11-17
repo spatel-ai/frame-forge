@@ -111,6 +111,14 @@ class Settings:
     payment_fee_gst_bps: int = field(
         default_factory=lambda: int(os.getenv("AVATAR_PAYMENT_FEE_GST_BPS", "0"))
     )
+    # Consent on Create (D-045). The wording is the owner's (Q-11, 2026-11-17); a legal review
+    # may replace it, and then the version changes so each job records what was agreed to.
+    consent_version: str = "2026-11-17"
+    consent_text: str = "I am the person in this photo, or I have their permission to use it."
+    # Video approvals per customer per day outside production (D-046). Production has no limit.
+    daily_video_limit: int = 50
+    # Keep every voice for reuse, not only failed jobs' voices (D-043). Off by default.
+    save_all_voices: bool = False
     # Shown on failure screens when set (D-055); the owner adds it before launch.
     support_email: str = field(
         default_factory=lambda: os.getenv("AVATAR_SUPPORT_EMAIL", "").strip()
@@ -152,6 +160,11 @@ class Settings:
                     "Refusing a Razorpay key that is not a test key (rzp_test_...) outside "
                     "production. Use test keys until launch."
                 )
+
+    @property
+    def effective_daily_video_limit(self) -> int | None:
+        """The daily video limit in force: none in production (D-046)."""
+        return None if self.environment == "production" else self.daily_video_limit
 
     @property
     def jobs_dir(self) -> Path:

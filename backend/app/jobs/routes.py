@@ -1,15 +1,15 @@
 """Job and config routes, mounted under /api/v1."""
 
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile
 from fastapi.responses import FileResponse
 
 from ..auth.deps import CurrentUser, current_user
 from ..core.config import Settings
 from ..core.errors import ApiError, ErrorOut
 from ..wallet import ledger
-from .schemas import ConfigOut, JobOut
+from .schemas import ConfigOut, FailureKind, JobOut, JobsOut, SavedVoicesOut
 from .service import JobService
 
 router = APIRouter(prefix="/api/v1")
@@ -55,7 +55,33 @@ def _settings(request: Request) -> Settings:
     return request.app.state.settings
 
 
+def _failure_kind(job: dict) -> FailureKind | None:
+    """Which failure screen applies, from what the job stored (HLD §5.2). A voice that never
+    reached the customer has no audio file; a too-long voice has one but was never approved."""
+    if job["status"] != "failed":
+        return None
+    if not job["audio_file"]:
+        return "voice_unknown" if job["needs_review"] else "voice_failed"
+    if not job["approve_attempt"]:
+        return "voice_too_long"
+    return "video_unknown" if job["needs_review"] else "video_failed"
+
+
+def _voice_reusable(settings: Settings, job: dict) -> bool:
+    # D-043: a failed job's voice, if it exists and fits the current length limit (D-056).
+    seconds = job["audio_duration_seconds"]
+    return (
+        job["status"] == "failed"
+        and bool(job["audio_file"])
+        and seconds is not None
+        and seconds <= settings.max_audio_seconds
+    )
+
+
 def _public(request: Request, job: dict) -> JobOut:
+    voice_credits, video_credits = ledger.job_charge_parts(
+        _service(request).store.engine, job["id"]
+    )
     return JobOut(
         id=job["id"],
         status=job["status"],
@@ -64,10 +90,22 @@ def _public(request: Request, job: dict) -> JobOut:
         audio_duration_seconds=job["audio_duration_seconds"],
         # T-303: fixed when the voice was ready (D-006). T-304: what the ledger actually took.
         price_credits=job["price_credits"],
-        charged_credits=ledger.job_charged_credits(_service(request).store.engine, job["id"]),
+        charged_credits=voice_credits + video_credits,
+        voice_credits=voice_credits,
+        video_credits=video_credits,
         audio_url=f"/api/v1/jobs/{job['id']}/audio" if job["audio_file"] else None,
         video_url=f"/api/v1/jobs/{job['id']}/video" if job["video_file"] else None,
         error=job["error"],
+        failure_kind=_failure_kind(job),
+        voice_reusable=_voice_reusable(_settings(request), job),
+        needs_review=bool(job["needs_review"]),
+        # The M5 columns arrive with T-502, T-505, T-509 and T-516; until then none is recorded.
+        consent_at=None,
+        script_id=None,
+        voice_from_job_id=None,
+        start_template=None,
+        end_template=None,
+        banners_applied=None,
         created_at=job["created_at"],
         updated_at=job["updated_at"],
     )
@@ -110,6 +148,9 @@ def get_config(request: Request) -> ConfigOut:
         payment_fee_bps=settings.payment_fee_bps,
         payment_fee_gst_bps=settings.payment_fee_gst_bps,
         support_email=settings.support_email or None,
+        consent_version=settings.consent_version,
+        consent_text=settings.consent_text,
+        daily_video_limit=settings.effective_daily_video_limit,
     )
 
 
@@ -117,7 +158,15 @@ def get_config(request: Request) -> ConfigOut:
     "/jobs",
     status_code=201,
     response_model=JobOut,
-    responses={**_UNAUTHENTICATED, **_CREDITS, **_UNCONFIRMED, **_INVALID},
+    responses={
+        **_UNAUTHENTICATED,
+        **_CREDITS,
+        **_UNCONFIRMED,
+        404: {"model": ErrorOut},  # M5: script_not_found, voice_not_found
+        **_INVALID,
+        429: {"model": ErrorOut},  # M5: daily_limit_reached is checked at approval, not here
+        501: {"model": ErrorOut},
+    },
 )
 async def create_job(
     request: Request,
@@ -125,12 +174,50 @@ async def create_job(
     image: UploadFile = File(...),
     script: str = Form(...),
     language: str = Form(...),
+    # M5 contract (T-500). Each answers 501 until its task is built: consent (T-502), a saved
+    # script (T-505), banners (T-509), a saved voice (T-516). See docs/M5-PLAN.md.
+    consent: Annotated[bool | None, Form()] = None,
+    consent_version: Annotated[str | None, Form()] = None,
+    script_id: Annotated[str | None, Form()] = None,
+    start_template_id: Annotated[str | None, Form()] = None,
+    end_template_id: Annotated[str | None, Form()] = None,
+    voice_from_job_id: Annotated[str | None, Form()] = None,
 ) -> JobOut:
+    m5 = (consent, consent_version, script_id, start_template_id, end_template_id)
+    if any(v is not None for v in m5) or voice_from_job_id is not None:
+        raise ApiError(501, "This is not built yet.", "not_implemented")
     settings = _settings(request)
     limit = settings.max_image_mb * 1024 * 1024
     raw = await image.read(limit + 1)  # never buffer more than the limit
     job = _service(request).create_job(user.id, raw, script, language)
     return _public(request, job)
+
+
+@router.get(
+    "/jobs",
+    response_model=JobsOut,
+    responses={**_UNAUTHENTICATED, **_INVALID, 501: {"model": ErrorOut}},
+    summary="The caller's jobs, newest first (T-501)",
+)
+def list_jobs(
+    request: Request,
+    user: User,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 20,
+    status: Literal["all", "ready", "in_progress", "failed"] = "all",
+    q: Annotated[str | None, Query(max_length=200)] = None,
+) -> JobsOut:
+    raise ApiError(501, "This is not built yet.", "not_implemented")
+
+
+@router.get(
+    "/voices",
+    response_model=SavedVoicesOut,
+    responses={**_UNAUTHENTICATED, 501: {"model": ErrorOut}},
+    summary="Voices from the caller's failed jobs that can start a new job (T-516, D-043)",
+)
+def list_saved_voices(request: Request, user: User) -> SavedVoicesOut:
+    raise ApiError(501, "This is not built yet.", "not_implemented")
 
 
 @router.get("/jobs/{job_id}", response_model=JobOut, responses=_NOT_FOUND)
@@ -141,7 +228,13 @@ def get_job(request: Request, user: User, job_id: str) -> JobOut:
 @router.post(
     "/jobs/{job_id}/approve",
     response_model=JobOut,
-    responses={**_NOT_FOUND, **_CREDITS, **_UNCONFIRMED, 409: {"model": ErrorOut}},
+    responses={
+        **_NOT_FOUND,
+        **_CREDITS,
+        **_UNCONFIRMED,
+        409: {"model": ErrorOut},
+        429: {"model": ErrorOut},  # daily_limit_reached outside production (D-046, T-503)
+    },
 )
 async def approve(request: Request, user: User, job_id: str) -> JobOut:
     _load(request, user, job_id)  # 404 first, so another user's job id is never confirmed

@@ -207,6 +207,7 @@ def test_openapi_lists_every_field_and_the_error_model(settings):
         "audio_ready",
         "video_submitting",
         "video_generating",
+        "video_assembling",  # M5 contract (T-500, D-019)
         "completed",
         "failed",
     }
