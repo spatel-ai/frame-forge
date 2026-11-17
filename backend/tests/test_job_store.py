@@ -183,6 +183,7 @@ def test_timestamps_round_trip_as_now_iso_text(database_url, owner):
             "video_key",
             "banners_applied",
             "assembly_attempts",
+            "banner_id",
         ]
         assert (job["price_credits"], job["approve_attempt"], job["needs_review"]) == (
             None,

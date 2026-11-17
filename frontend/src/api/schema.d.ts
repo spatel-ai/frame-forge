@@ -338,8 +338,10 @@ export interface paths {
         };
         /**
          * Get Video
-         * @description The job's video: our file (mock mode), or a 302 to the provider's link while it lives
-         *     (D-065, R-24, R-74). Ownership is checked first, so another user's job is 404 (R-12).
+         * @description The job's video: a 302 to a short-lived signed S3 link (owner, 2026-11-17), the
+         *     provider's link for older jobs (D-065, R-24, R-74), or our file (mock mode), while it lives.
+         *     Ownership is checked first, so another user's job is 404 (R-12). The signed link is only
+         *     ever sent as this redirect, never in JSON.
          */
         get: operations["get_video_api_v1_jobs__job_id__video_get"];
         put?: never;
@@ -594,6 +596,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * ApproveIn
+         * @description Approving the voice. `banner_id` is one of the caller's banners; required while banners
+         *     are on (D-067): 422 `fields.banner_id` without it, 404 `banner_not_found` if not theirs.
+         */
+        ApproveIn: {
+            /** Banner Id */
+            banner_id?: string | null;
+        };
         /** BannerOut */
         BannerOut: {
             /** Created At */
@@ -1546,15 +1557,6 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorOut"];
                 };
             };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorOut"];
-                };
-            };
         };
     };
     create_banner_api_v1_banners_post: {
@@ -1590,15 +1592,6 @@ export interface operations {
             };
             /** @description Unprocessable Content */
             422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorOut"];
-                };
-            };
-            /** @description Not Implemented */
-            501: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1653,15 +1646,6 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorOut"];
                 };
             };
-            /** @description Not Implemented */
-            501: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorOut"];
-                };
-            };
         };
     };
     get_banner_image_api_v1_banners__banner_id__image_get: {
@@ -1702,15 +1686,6 @@ export interface operations {
             };
             /** @description Unprocessable Content */
             422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorOut"];
-                };
-            };
-            /** @description Not Implemented */
-            501: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1928,7 +1903,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ApproveIn"] | null;
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

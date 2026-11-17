@@ -1,6 +1,24 @@
 {
   "components": {
     "schemas": {
+      "ApproveIn": {
+        "description": "Approving the voice. `banner_id` is one of the caller's banners; required while banners\nare on (D-067): 422 `fields.banner_id` without it, 404 `banner_not_found` if not theirs.",
+        "properties": {
+          "banner_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Banner Id"
+          }
+        },
+        "title": "ApproveIn",
+        "type": "object"
+      },
       "BannerOut": {
         "properties": {
           "created_at": {
@@ -1912,16 +1930,6 @@
               }
             },
             "description": "Unauthorized"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorOut"
-                }
-              }
-            },
-            "description": "Not Implemented"
           }
         },
         "summary": "The caller's banners, newest first",
@@ -1971,16 +1979,6 @@
               }
             },
             "description": "Unprocessable Content"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorOut"
-                }
-              }
-            },
-            "description": "Not Implemented"
           }
         },
         "summary": "Upload a banner image (PNG, JPEG or WebP) with a name",
@@ -2036,16 +2034,6 @@
               }
             },
             "description": "Unprocessable Content"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorOut"
-                }
-              }
-            },
-            "description": "Not Implemented"
           }
         },
         "summary": "Delete one of the caller's banners; videos already made are unchanged",
@@ -2101,16 +2089,6 @@
               }
             },
             "description": "Unprocessable Content"
-          },
-          "501": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorOut"
-                }
-              }
-            },
-            "description": "Not Implemented"
           }
         },
         "summary": "A banner's image, for its owner",
@@ -2402,6 +2380,23 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ApproveIn"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "content": {
@@ -2541,7 +2536,7 @@
     },
     "/api/v1/jobs/{job_id}/video": {
       "get": {
-        "description": "The job's video: our file (mock mode), or a 302 to the provider's link while it lives\n(D-065, R-24, R-74). Ownership is checked first, so another user's job is 404 (R-12).",
+        "description": "The job's video: a 302 to a short-lived signed S3 link (owner, 2026-11-17), the\nprovider's link for older jobs (D-065, R-24, R-74), or our file (mock mode), while it lives.\nOwnership is checked first, so another user's job is 404 (R-12). The signed link is only\never sent as this redirect, never in JSON.",
         "operationId": "get_video_api_v1_jobs__job_id__video_get",
         "parameters": [
           {

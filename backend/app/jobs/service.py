@@ -26,7 +26,8 @@ from ..auth.email import EmailSender
 from ..auth.store import AuthStore
 from ..core import mail_templates
 from ..core.config import Settings
-from ..media import compose
+from ..media import compose, measure
+from ..media.branding import render_brand_clips
 from ..media.storage import VideoStorage, build_video_storage
 from ..providers import VIDEO_LIFETIME_SECONDS, Provider, ProviderError
 from ..scripts import service as script_library
@@ -42,6 +43,10 @@ _IMAGE_FORMATS = {"JPEG": "jpg", "PNG": "png", "WEBP": "webp"}
 # Letters of the alphabets used by the non-English languages. Letters only:
 # Punjabi text shares its full stop (the danda) with the Hindi Unicode block.
 _SCRIPT_RANGES = {"Hindi": ("\u0904", "\u0939"), "Punjabi": ("\u0a05", "\u0a39")}
+
+
+# D-067: the job's own copy of the banner image chosen at approval.
+BANNER_COPY = "banner.png"
 
 
 class ValidationError(Exception):
@@ -374,7 +379,13 @@ class JobService:
 
     # ---- step 2: approval gate, then the paid video submission ----------
 
-    def approve_audio(self, user_id: str, job_id: str) -> dict:
+    def approve_audio(
+        self,
+        user_id: str,
+        job_id: str,
+        banner_id: str | None = None,
+        banner_file: Path | None = None,
+    ) -> dict:
         """Only the first approval of a job wins; any repeat or concurrent
         click finds the job already past `audio_ready` and gets a Conflict.
         The job must belong to `user_id`; otherwise it is reported as not found (R-12).
@@ -382,6 +393,15 @@ class JobService:
         together; with too few credits nothing changes and NotEnoughCredits is raised."""
         if self.store.get_owned(job_id, user_id) is None:
             raise JobNotFound(job_id)
+        chosen: dict = {}
+        if banner_id is not None and banner_file is not None:
+            # D-067: the job keeps its own copy of the chosen banner, so deleting the banner
+            # later never changes this video. Copied before the status change; if the change
+            # does not happen the copy is simply unused.
+            folder = self.job_dir(job_id)
+            folder.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(banner_file, folder / BANNER_COPY)
+            chosen = {"banner_id": banner_id}
         try:
             moved = self.store.transition(
                 job_id,
@@ -390,6 +410,7 @@ class JobService:
                 ledger=_wallet(job_id, _hold),
                 error=None,
                 approve_attempt=db.jobs.c.approve_attempt + 1,
+                **chosen,
             )
         except ledger.InsufficientCredits as exc:
             # Rolled back: the job is still audio_ready and nothing was held.
@@ -702,13 +723,33 @@ class JobService:
             return await asyncio.to_thread(self._join_and_store, job, ai_path, temps)
         finally:
             for path in temps:
-                path.unlink(missing_ok=True)
+                if path.is_dir():
+                    shutil.rmtree(path, ignore_errors=True)
+                else:
+                    path.unlink(missing_ok=True)
 
-    def _banner_assets(self, job: dict) -> tuple[Path, Path, Path]:
-        """The (start clip, end clip, emblem) for this job. Today every job gets the fixed,
-        owner-approved files (D-066); the one place to resolve per-job banners later."""
-        assets = self.settings.banner_dir
-        return assets / "start.mp4", assets / "end.mp4", assets / "overlay.png"
+    def _banner_assets(
+        self, job: dict, ai_path: Path, temps: list[Path]
+    ) -> tuple[Path, Path, Path, str]:
+        """The (start clip, end clip, emblem, pad colour) for this job. A job with a chosen
+        banner (D-067) gets an opening, closing and emblem made from its own copy of the image,
+        at the AI video's measured size and frame rate (R-67); the made files are temporary.
+        A job without one (approved before D-067) gets the fixed files in `banner_dir`."""
+        image = self.job_dir(job["id"]) / BANNER_COPY
+        if not image.is_file():
+            assets = self.settings.banner_dir
+            return (
+                assets / "start.mp4",
+                assets / "end.mp4",
+                assets / "overlay.png",
+                self.settings.banner_pad_color,
+            )
+        info = measure(ai_path)
+        out_dir = self.job_dir(job["id"]) / f".brand-{uuid.uuid4().hex}"
+        out_dir.mkdir(parents=True)
+        temps.append(out_dir)
+        clips = render_brand_clips(image, info.width, info.height, info.frame_rate, out_dir)
+        return clips.start, clips.end, clips.overlay, clips.pad_color
 
     def _join_and_store(self, job: dict, ai_path: Path, temps: list[Path]) -> dict:
         """Blocking part of a try (ffmpeg, S3), run off the event loop."""
@@ -717,8 +758,8 @@ class JobService:
         banners = self.settings.banners_enabled
 
         def join_banners(out: Path) -> None:
-            start, end, overlay = self._banner_assets(job)
-            compose(ai_path, start, end, overlay, out, self.settings.banner_pad_color)
+            start, end, overlay, pad_color = self._banner_assets(job, ai_path, temps)
+            compose(ai_path, start, end, overlay, out, pad_color)
 
         if self.storage is None:
             join_banners(folder / "video.mp4")  # local disk (mock mode, no bucket)

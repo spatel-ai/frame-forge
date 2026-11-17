@@ -108,6 +108,13 @@ class JobOut(BaseModel):
     updated_at: str
 
 
+class ApproveIn(BaseModel):
+    """Approving the voice. `banner_id` is one of the caller's banners; required while banners
+    are on (D-067): 422 `fields.banner_id` without it, 404 `banner_not_found` if not theirs."""
+
+    banner_id: str | None = None
+
+
 class JobSummaryOut(BaseModel):
     """One row of the Videos list and Home (T-501)."""
 

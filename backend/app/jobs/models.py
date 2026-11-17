@@ -6,6 +6,7 @@ from sqlalchemy import Boolean, DateTime, Double, ForeignKey, Index, Integer, Te
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..auth import models as _auth_models  # noqa: F401  (registers `users` for the foreign key)
+from ..banners import models as _banner_models  # noqa: F401  (registers `banners` for the FK)
 from ..core.database import Base
 from ..scripts import models as _script_models  # noqa: F401  (registers `scripts` for the FK)
 
@@ -63,3 +64,5 @@ class Job(Base):
     banners_applied: Mapped[bool | None] = mapped_column(Boolean)
     # Failed tries of the free assembling step; at `assembly_max_attempts` the fallback applies.
     assembly_attempts: Mapped[int] = mapped_column(Integer, server_default="0")
+    # D-067: the customer's banner chosen at approval; the job folder keeps its own copy.
+    banner_id: Mapped[str | None] = mapped_column(Text, ForeignKey("banners.id"))

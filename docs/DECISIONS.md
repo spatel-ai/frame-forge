@@ -1060,3 +1060,51 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 
 **Validation:** Tests: owner gets 302 to the stored URL, another user 404, expired 410, the fal submit carries the lifecycle header (fake transport), mock path unchanged. Live: T-556 records playback, seeking, content type, a fetch after about 24 h, and the expiry.
 
+---
+
+## D-066 — Every video gets an opening banner, a corner emblem and a closing banner
+
+**Status:** Superseded in part by D-067 (owner, 2026-11-17: the banner is the customer's own) · 2026-11-17 · Area: both
+
+**Choice:** After fal.ai returns the AI video, the server adds an opening clip, an emblem fixed top-right while the avatar speaks, and a closing clip, with crossfades (0.4 s in, 0.5 s out), in a job step `video_assembling` (`app/media/joining.py` `compose`). The step is free, runs one at a time, is tried up to 3 times and resumes after a restart; if it still fails the customer gets the AI video without banners, charged as normal and flagged (D-019). `AVATAR_BANNERS=off` skips it. The look was approved by the owner on a sample made from `vdo.mp4`.
+
+**Alternatives:** Customer-chosen company templates behind a switch (D-058); no banners.
+
+**Why:** Owner's request after the first real videos: videos should look like `vdo.mp4`.
+
+**Trade-off:** About 5 to 15 s of server CPU per video; the AI video is re-encoded once.
+
+**Validation:** Tests: part order, emblem only during the AI part, AI sound kept, retry, fallback after 3 failures, restart, one capture in every path; the owner approved the sample.
+
+---
+
+## D-067 — The banner is the customer's own uploaded image, and choosing one is required
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: both
+
+**Choice:** A "Banners" tab lets each customer upload logo or banner images (PNG, JPEG, WebP; up to 5 MB; 200 to 4000 px; 20 per customer; private to the customer). After the voice is made, the customer must choose one of their banners before "Approve and make video"; the server refuses approval without one (422 `fields.banner_id`; 404 `banner_not_found` for another customer's). The job keeps its own copy of the image. The opening (2 s, fade and slow zoom on a background taken from the image's corners), the corner emblem and the closing (3 s) are made from that image with ffmpeg (`app/media/branding.py`) at the AI video's measured size. Text such as a name or a date must be part of the uploaded image.
+
+**Alternatives:** One fixed banner for every video (the first reading of D-066); company templates (D-018, D-058).
+
+**Why:** Owner: "not a single banner for everything. User will upload it... Without banner he cannot generate the video."
+
+**Trade-off:** A new customer must upload a banner before the first video. The animation is simple (fade and zoom); richer motion needs designed clips.
+
+**Validation:** Tests: library limits and privacy; approval refused without a banner or with someone else's; the final video is built from the job's own copy even after the banner is deleted; one capture.
+
+---
+
+## D-068 — Finished videos are stored in the owner's S3 bucket (boto3)
+
+**Status:** Confirmed (owner, 2026-11-17; replaces the storage part of D-065) · 2026-11-17 · Area: backend
+
+**Choice:** With `AVATAR_S3_BUCKET` set, the AI video from fal.ai and the final video with banners are both uploaded to a private S3 bucket (`videos/<job id>/ai.mp4` and `video.mp4`). The job stores the keys; `GET /jobs/{id}/video` checks the owner and redirects to a signed link valid for one hour. On EC2 the instance role gives access; no AWS keys are stored. New dependency: `boto3`. Without a bucket (development) files stay on local disk. If S3 fails three times the customer still gets the video from fal's link (D-065) and the job is flagged. A bucket lifecycle rule deletes videos after 30 days (D-054); the bucket's CORS must allow GET from the site for the in-page download.
+
+**Alternatives:** Keep only fal.ai's link (D-065); upload the joined file to fal storage; the server's disk.
+
+**Why:** Owner: "the video generated should be stored into S3... rendered from the S3".
+
+**Trade-off:** One more service and dependency; signed links from an instance role can expire early when the role's credentials rotate. Not verified against a real bucket: Not verified — requires documentation review, execution, or live integration testing.
+
+**Validation:** Tests with a fake storage and a stubbed boto3 client: both keys stored, redirect for the owner, 404 for others, 410 after expiry, fallback when S3 is down. A real-bucket run happens at deployment.
+

@@ -8,12 +8,21 @@ from fastapi import APIRouter, Depends, File, Form, Query, Request, Response, Up
 from fastapi.responses import FileResponse, RedirectResponse
 
 from ..auth.deps import CurrentUser, current_user
+from ..banners import service as banner_library
 from ..core.config import Settings
 from ..core.errors import ApiError, ErrorOut
 from ..scripts import service as script_library
 from ..wallet import ledger
 from . import db
-from .schemas import ConfigOut, FailureKind, JobOut, JobsOut, JobSummaryOut, SavedVoicesOut
+from .schemas import (
+    ApproveIn,
+    ConfigOut,
+    FailureKind,
+    JobOut,
+    JobsOut,
+    JobSummaryOut,
+    SavedVoicesOut,
+)
 from .service import JobService
 
 router = APIRouter(prefix="/api/v1")
@@ -316,10 +325,29 @@ def get_job(request: Request, user: User, job_id: str) -> JobOut:
         429: {"model": ErrorOut},  # daily_limit_reached outside production (D-046, T-503)
     },
 )
-async def approve(request: Request, user: User, job_id: str) -> JobOut:
+async def approve(
+    request: Request, user: User, job_id: str, body: ApproveIn | None = None
+) -> JobOut:
     _load(request, user, job_id)  # 404 first, so another user's job id is never confirmed
     _require_confirmed_email(user)
-    job = _service(request).approve_audio(user.id, job_id)
+    settings = _settings(request)
+    banner_id = body.banner_id if body else None
+    banner_file = None
+    if settings.banners_enabled:
+        # D-067: a video cannot be made without one of the caller's own banners.
+        if not banner_id:
+            message = "Choose a banner to make this video."
+            raise ApiError(422, message, "validation_error", {"banner_id": message})
+        banner_file = banner_library.get_owned_file(
+            _service(request).store.engine, user.id, banner_id, settings.data_dir
+        )
+        if banner_file is None:
+            raise ApiError(
+                404, "We could not find that banner. Choose another one.", "banner_not_found"
+            )
+    else:
+        banner_id = None
+    job = _service(request).approve_audio(user.id, job_id, banner_id, banner_file)
     return _public(request, job)
 
 

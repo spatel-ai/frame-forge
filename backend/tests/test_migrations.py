@@ -41,6 +41,7 @@ EXPECTED_COLUMNS = {
     "video_key",
     "banners_applied",
     "assembly_attempts",
+    "banner_id",
 }
 
 
@@ -53,7 +54,7 @@ def test_upgrade_and_downgrade_in_throwaway_schema(empty_schema, admin_engine):
     assert insp.has_table("jobs", schema=schema)
     columns = insp.get_columns("jobs", schema=schema)
     assert {c["name"] for c in columns} == EXPECTED_COLUMNS
-    assert len(columns) == 28
+    assert len(columns) == 29
     assert insp.get_pk_constraint("jobs", schema=schema)["constrained_columns"] == ["id"]
     assert any(i["column_names"] == ["status"] for i in insp.get_indexes("jobs", schema=schema))
 
