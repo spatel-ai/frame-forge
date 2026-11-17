@@ -38,3 +38,7 @@ class Job(Base):
     approve_attempt: Mapped[int] = mapped_column(Integer, server_default="0")
     # A paid call's outcome is unknown; staff must review the job (D-005, Q-19).
     needs_review: Mapped[bool] = mapped_column(Boolean, server_default=false())
+    # Migration 0008 (T-502, R-14, D-045): the consent sentence version the customer agreed to and
+    # when. NULL for jobs made before M5.
+    consent_version: Mapped[str | None] = mapped_column(Text)
+    consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

@@ -81,9 +81,12 @@ class JobStore:
         script: str,
         image_file: str,
         ledger: LedgerStep | None = None,
+        consent_version: str | None = None,
     ) -> dict:
-        """Insert the job in `audio_generating`. `ledger`, if given, runs in the same transaction
-        after the insert; if it raises, no job row is written and the exception propagates."""
+        """Insert the job in `audio_generating`, recording the consent version and the time
+        (R-14, D-045). The service always passes it; only fixtures for old jobs omit it.
+        `ledger`, if given, runs in the same transaction after the insert; if it raises, no
+        job row is written and the exception propagates."""
         ts = _to_db("created_at", now_iso())
         with self.engine.begin() as conn:
             conn.execute(
@@ -94,6 +97,8 @@ class JobStore:
                     language=language,
                     script=script,
                     image_file=image_file,
+                    consent_version=consent_version,
+                    consent_at=ts if consent_version is not None else None,
                     created_at=ts,
                     updated_at=ts,
                 )

@@ -15,6 +15,7 @@ from sqlalchemy import text
 from app.core.config import Settings
 from app.jobs.routes import _failure_kind, _voice_reusable
 from app.main import create_app
+from tests.conftest import CONSENT_FORM
 
 HTTPS = "https://testserver"
 
@@ -187,8 +188,6 @@ def test_unbuilt_routes_need_a_session_then_answer_501(client, sign_up, method, 
 @pytest.mark.parametrize(
     "extra",
     [
-        {"consent": "true"},
-        {"consent_version": "2026-11-17"},
         {"script_id": "s1"},
         {"start_template_id": "t1"},
         {"end_template_id": "t2"},
@@ -219,7 +218,7 @@ def test_today_job_fields_have_real_values(client, sign_up, grant):
     r = client.post(
         "/api/v1/jobs",
         files={"image": ("me.png", png(), "image/png")},
-        data={"script": "Hello there.", "language": "English"},
+        data={**CONSENT_FORM, "script": "Hello there.", "language": "English"},
     )
     assert r.status_code == 201, r.text
     job = r.json()
@@ -227,8 +226,8 @@ def test_today_job_fields_have_real_values(client, sign_up, grant):
     assert job["charged_credits"] == job["voice_credits"] + job["video_credits"]
     assert job["failure_kind"] is None and job["voice_reusable"] is False
     assert job["needs_review"] is False
+    assert job["consent_at"] is not None  # T-502: set from the consent given
     for name in (
-        "consent_at",
         "script_id",
         "voice_from_job_id",
         "start_template",

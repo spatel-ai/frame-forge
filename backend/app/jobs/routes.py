@@ -110,7 +110,7 @@ def _public(request: Request, job: dict) -> JobOut:
         voice_reusable=_voice_reusable(_settings(request), job),
         needs_review=bool(job["needs_review"]),
         # The M5 columns arrive with T-502, T-505, T-509 and T-516; until then none is recorded.
-        consent_at=None,
+        consent_at=job["consent_at"],
         script_id=None,
         voice_from_job_id=None,
         start_template=None,
@@ -184,8 +184,8 @@ async def create_job(
     image: UploadFile = File(...),
     script: str = Form(...),
     language: str = Form(...),
-    # M5 contract (T-500). Each answers 501 until its task is built: consent (T-502), a saved
-    # script (T-505), banners (T-509), a saved voice (T-516). See docs/M5-PLAN.md.
+    # M5 contract (T-500). Consent is required (T-502, R-14, D-045). The others answer 501 until
+    # built: a saved script (T-505), banners (T-509), a saved voice (T-516). See docs/M5-PLAN.md.
     consent: Annotated[bool | None, Form()] = None,
     consent_version: Annotated[str | None, Form()] = None,
     script_id: Annotated[str | None, Form()] = None,
@@ -193,13 +193,29 @@ async def create_job(
     end_template_id: Annotated[str | None, Form()] = None,
     voice_from_job_id: Annotated[str | None, Form()] = None,
 ) -> JobOut:
-    m5 = (consent, consent_version, script_id, start_template_id, end_template_id)
+    m5 = (script_id, start_template_id, end_template_id)
     if any(v is not None for v in m5) or voice_from_job_id is not None:
         raise ApiError(501, "This is not built yet.", "not_implemented")
     settings = _settings(request)
+    # R-14, D-045: no consent, no job. Checked after 401/403/402 and before the image is read, so
+    # nothing is charged or stored when it fails.
+    if consent is not True:
+        raise ApiError(
+            422,
+            "Confirm you have permission to use this photo.",
+            "consent_required",
+            {"consent": "Tick the box to confirm you have permission to use this photo."},
+        )
+    if consent_version != settings.consent_version:
+        raise ApiError(
+            422,
+            "The consent wording has changed. Reload the page and try again.",
+            "consent_outdated",
+            {"consent": "The consent wording has changed. Reload the page to see it."},
+        )
     limit = settings.max_image_mb * 1024 * 1024
     raw = await image.read(limit + 1)  # never buffer more than the limit
-    job = _service(request).create_job(user.id, raw, script, language)
+    job = _service(request).create_job(user.id, raw, script, language, consent_version)
     return _public(request, job)
 
 

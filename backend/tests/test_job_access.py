@@ -18,6 +18,7 @@ from app.jobs.db import JobStore
 from app.jobs.service import JobNotFound, JobService
 from app.main import create_app
 from app.providers import MockProvider
+from tests.conftest import CONSENT_FORM, CONSENT_VERSION
 
 CONFIRM_MESSAGE = (
     "Confirm your email to make videos. We sent you a link; you can ask for a new one."
@@ -66,7 +67,7 @@ def post_job(c):
     return c.post(
         "/api/v1/jobs",
         files={"image": ("me.png", png(), "image/png")},
-        data={"script": "Hello.", "language": "English"},
+        data={**CONSENT_FORM, "script": "Hello.", "language": "English"},
     )
 
 
@@ -219,7 +220,7 @@ def test_service_approve_of_another_users_job_changes_nothing(
             a = seed_user(database_url, "a@example.com")
             b = seed_user(database_url, "b@example.com")
             grant(store.engine, a, 1_000)
-            job_id = service.create_job(a, png(), "Hello there.", "English")["id"]
+            job_id = service.create_job(a, png(), "Hello there.", "English", CONSENT_VERSION)["id"]
             while service._tasks:
                 await asyncio.gather(*list(service._tasks))
             with pytest.raises(JobNotFound):
