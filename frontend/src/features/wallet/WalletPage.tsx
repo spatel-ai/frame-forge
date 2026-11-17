@@ -1,12 +1,14 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useOutletContext } from 'react-router'
 import { getTransactions, transactionsKey } from '../../api/client'
+import type { ShellContext } from '../../components/AppShell'
 import type { LedgerEntry } from '../../api/client'
 import { EmptyState, ErrorState, Skeleton, SkeletonGroup } from '../../components/feedback'
 import { Button } from '../../components/form'
 import { Card, Pagination } from '../../components/layout'
 import { errMsg } from '../../lib/util'
+import { BuyCreditsDialog } from './BuyCreditsDialog'
 import { useWallet } from './useWallet'
 import styles from './WalletPage.module.css'
 
@@ -41,11 +43,14 @@ function Change({ entry }: { entry: LedgerEntry }) {
   return <span className={entry.credits > 0 ? styles.plus : undefined}>{signed.format(entry.credits)}</span>
 }
 
-function Balance() {
+function Balance({ onBuy }: { onBuy: () => void }) {
   const { data, isPending, isError, refetch } = useWallet()
   return (
     <Card>
-      <h2 className={styles.heading}>Your credits</h2>
+      <div className={styles.headRow}>
+        <h2 className={styles.heading}>Your credits</h2>
+        <Button variant="secondary" onClick={onBuy}>Buy credits</Button>
+      </div>
       {isPending && (
         <SkeletonGroup label="Loading balance">
           <Skeleton shape="line" width={120} height={40} />
@@ -125,11 +130,15 @@ function Transactions() {
 }
 
 export default function WalletPage() {
+  const { config } = useOutletContext<ShellContext>()
+  // A new key per opening gives the dialog a fresh start; closing keeps it mounted so focus returns to the button.
+  const [buy, setBuy] = useState({ open: false, n: 0 })
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>Wallet</h1>
-      <Balance />
+      <Balance onBuy={() => setBuy((b) => ({ open: true, n: b.n + 1 }))} />
       <Transactions />
+      <BuyCreditsDialog key={buy.n} open={buy.open} onClose={() => setBuy((b) => ({ ...b, open: false }))} config={config} />
     </div>
   )
 }
