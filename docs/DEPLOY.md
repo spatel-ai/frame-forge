@@ -63,18 +63,17 @@ inside Docker. The bucket needs public access blocked, a lifecycle rule deleting
 
 ## Frontend (Vercel)
 
-Import the repository with **Root Directory = `frontend`** and add one environment variable
-(Project > Settings > Environment Variables, Production and Preview):
+Import the repository with **Root Directory = `frontend`**. No environment variable is needed:
+`frontend/vercel.mjs` forwards `/api/*` to its built-in backend address
+(`DEFAULT_API_TARGET = https://api.sptel.in`).
 
-```
-API_TARGET=https://api.example.com
-```
+To point the site at another backend, set `API_TARGET=https://api.example.com` in Vercel
+(Project > Settings > Environment Variables) with **Type = Config**, not Secret, and redeploy.
+A Secret value is blanked out of the routing configuration and API calls then fail with 502
+`DNS_HOSTNAME_NOT_FOUND`.
 
-Save it with **Type = Config**, not Secret: Vercel blanks secret values out of the routing
-configuration, and API calls then fail with 502 `DNS_HOSTNAME_NOT_FOUND`.
-
-`frontend/vercel.mjs` reads it at build time and forwards `/api/*` to it. To change the backend,
-change the variable and redeploy.
+The backend must list the site's exact address in `AVATAR_ALLOWED_ORIGINS` (and use it as
+`AVATAR_APP_URL`), or every form post returns 403 `origin_refused`.
 
 ## Local frontend against the deployed backend
 

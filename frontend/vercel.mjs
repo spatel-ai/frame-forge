@@ -1,26 +1,23 @@
-// Vercel configuration (replaces vercel.json). Vercel runs this file at build time, so the
-// backend address comes from an environment variable instead of being written in the repo:
+// Vercel configuration (replaces vercel.json). Vercel runs this file at build time.
 //
-//   API_TARGET=https://api.example.com
+// The browser always calls `/api/...` on the site's own address, and Vercel forwards those
+// requests to the backend, so the login cookie stays same-site.
 //
-// Set it in Vercel (Project > Settings > Environment Variables, Type "Config") for Production and
-// Preview, and in
-// frontend/.env for local development (vite.config.ts reads the same name). Change the variable
-// and redeploy; no file needs editing. The browser always calls `/api/...` on the site's own
-// address, and Vercel forwards those requests to API_TARGET, so the login cookie stays same-site.
-const target = (process.env.API_TARGET ?? '').trim().replace(/\/+$/, '')
+// Backend address: DEFAULT_API_TARGET below, which needs no setting in Vercel. To use another
+// backend (for example a staging server), set API_TARGET in Vercel (Project > Settings >
+// Environment Variables, Type "Config", not "Secret") and redeploy. The address is public anyway:
+// it is in the domain's DNS. Local development uses frontend/.env (vite.config.ts).
+const DEFAULT_API_TARGET = 'https://api.sptel.in'
+
+const target = (process.env.API_TARGET || DEFAULT_API_TARGET).trim().replace(/\/+$/, '')
 
 if (!/^https:\/\/[^/\s]+$/.test(target)) {
   throw new Error(
-    'API_TARGET is missing or not an https address. Set it in Vercel > Project > Settings > ' +
-      'Environment Variables, for example API_TARGET=https://api.example.com, then redeploy.',
+    `API_TARGET must be an https address such as https://api.example.com (got "${target}").`,
   )
 }
 
 // Shown in the build log, so a wrong address is easy to spot.
-// IMPORTANT: in Vercel, save API_TARGET with Type "Config", not "Secret". Vercel blanks secret
-// values out of this configuration, which leaves the forwarding rule without a host
-// (502 DNS_HOSTNAME_NOT_FOUND). The API address is public anyway: it is in the site's DNS.
 console.log(`[vercel.mjs] API_TARGET = ${target}`)
 
 export const config = {
