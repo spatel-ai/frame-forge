@@ -238,5 +238,27 @@
     "blocks": "M2",
     "status": "Answered",
     "answer": "Yes: implement the forgot-password flow (owner, 2026-11-17). Designed now; built in M2 (T-203, T-210) because it needs customer accounts. HLD section 5.5."
+  },
+  {
+    "id": "Q-23",
+    "question": "Before voice cloning is released: is it acceptable that a cloned voice cannot be verifiably deleted at the provider?",
+    "why_it_matters": "fal.ai keeps a cloned voice permanently once it is used, and no documented way to delete it was found. A voice is biometric data, so 'Delete my voice' could only promise deleting our copy. This needs a legal check.",
+    "default_if_unanswered": "Cloning is not released until this is answered.",
+    "escalation": "Privacy and consent",
+    "handling": "Needs your answer",
+    "blocks": "Voice cloning (R-93)",
+    "status": "Open",
+    "answer": ""
+  },
+  {
+    "id": "Q-24",
+    "question": "Should there be a limit on voice cloning beyond 3 saved voices per account?",
+    "why_it_matters": "Each clone costs the company about $1.50. Voices were declared never limited (D-046) when a voice cost 10 credits.",
+    "default_if_unanswered": "No extra limit: 3 voices per account, 150 credits each.",
+    "escalation": "Cost",
+    "handling": "Default applies unless you object",
+    "blocks": "Voice cloning (R-93)",
+    "status": "Open",
+    "answer": ""
   }
 ]

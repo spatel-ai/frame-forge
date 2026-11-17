@@ -598,5 +598,61 @@
     "requirement": "Every customer screen works on Android phones, iPhones, tablets and desktops. Tested range (assumed, D-069): 320 to 1920 px wide, portrait and landscape, in Chromium and WebKit.",
     "source": "Owner, 2026-11-17 (\"enterprises level responsive ... all the devices should support responsiveness of this website\")",
     "discovery_item": "Business: what output resolutions and devices are required"
+  },
+  {
+    "id": "R-89",
+    "class": "Confirmed",
+    "area": "Create",
+    "requirement": "Before the voice is made, the customer chooses a gender (male or female) and then one of the ready-made voices of that gender.",
+    "source": "Owner request, 2026-11-17 (D-071)",
+    "discovery_item": ""
+  },
+  {
+    "id": "R-90",
+    "class": "Confirmed",
+    "area": "Create",
+    "requirement": "The customer can play a sample of the selected voice before continuing.",
+    "source": "Owner request, 2026-11-17 (D-074)",
+    "discovery_item": ""
+  },
+  {
+    "id": "R-91",
+    "class": "Confirmed",
+    "area": "Create",
+    "requirement": "A Punjabi customer can record themselves reading the script with a microphone; the recording becomes the video's audio and the voice step costs 10 credits.",
+    "source": "Owner request, 2026-11-17 (D-072)",
+    "discovery_item": ""
+  },
+  {
+    "id": "R-92",
+    "class": "Confirmed",
+    "area": "Create",
+    "requirement": "A recorded voice must be the customer's own; a separate consent is required and stored with the job.",
+    "source": "Owner request, 2026-11-17 (D-073)",
+    "discovery_item": ""
+  },
+  {
+    "id": "R-93",
+    "class": "Deferred",
+    "area": "Create",
+    "requirement": "A customer can clone their own voice and save up to 3 voices: 150 credits once per voice, then 10 credits per video; 150 returned on a clear failure, kept until staff review when the outcome is unclear.",
+    "source": "Owner request, 2026-11-17 (D-075)",
+    "discovery_item": ""
+  },
+  {
+    "id": "R-94",
+    "class": "Needs Verification",
+    "area": "Create",
+    "requirement": "A cloned voice id can be used by the speech model, and a cloned voice sounds acceptable in Hindi.",
+    "source": "Provider check, 2026-11-17: no fal.ai page shows it (D-075)",
+    "discovery_item": ""
+  },
+  {
+    "id": "R-95",
+    "class": "Confirmed",
+    "area": "Platform",
+    "requirement": "Engineering never runs a real provider or payment test; the whole platform is built and tested on mock data, and a small real test is run only when the owner is explicitly asked and agrees.",
+    "source": "Owner request, 2026-11-17 (D-076)",
+    "discovery_item": ""
   }
 ]
