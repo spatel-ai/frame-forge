@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { jobListKey, listJobs } from '../../api/client'
 import type { JobListParams, JobSummary } from '../../api/client'
@@ -34,6 +34,7 @@ export default function VideosPage() {
   const [q, setQ] = useState('')
   const [status, setStatus] = useState<Status>('all')
   const [page, setPage] = useState(1)
+  const listRef = useRef<HTMLUListElement>(null)
 
   useEffect(() => {
     if (search === q) return
@@ -95,7 +96,7 @@ export default function VideosPage() {
           </EmptyState>
         ) : (
           <>
-            <ul className={styles.list}>
+            <ul ref={listRef} className={styles.list}>
               {data.items.map((j) => {
                 const pill = statusPill(j)
                 return (
@@ -112,7 +113,7 @@ export default function VideosPage() {
                 )
               })}
             </ul>
-            <Pagination page={data.page} pageSize={data.page_size} total={data.total} onPageChange={setPage} />
+            <Pagination page={data.page} pageSize={data.page_size} total={data.total} onPageChange={setPage} scrollTargetRef={listRef} />
           </>
         )
       )}

@@ -64,6 +64,7 @@ function PickerBody({
   const data = query.data
   const emptyAll = !!data && data.total === 0 && !f.filtered
   const resultsRef = useFitToDialog(data)
+  const listRef = useRef<HTMLUListElement>(null)
 
   let body
   if (query.isPending) {
@@ -99,7 +100,7 @@ function PickerBody({
     body = (
       <>
         <div ref={resultsRef} className={styles.results}>
-        <ul className={styles.list}>
+        <ul ref={listRef} className={styles.list}>
           {data.items.map((s) => (
             <li key={s.id}>
               <button type="button" className={styles.item} onClick={() => onChoose(s)}>
@@ -113,7 +114,7 @@ function PickerBody({
           ))}
         </ul>
         <div className={styles.pager}>
-          <Pagination page={data.page} pageSize={data.page_size} total={data.total} onPageChange={f.setPage} />
+          <Pagination page={data.page} pageSize={data.page_size} total={data.total} onPageChange={f.setPage} scrollTargetRef={listRef} />
         </div>
         </div>
       </>
