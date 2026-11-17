@@ -1,9 +1,10 @@
 """Job and config routes, mounted under /api/v1."""
 
+from datetime import datetime, timezone
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Depends, File, Form, Query, Request, Response, UploadFile
+from fastapi.responses import FileResponse, RedirectResponse
 
 from ..auth.deps import CurrentUser, current_user
 from ..core.config import Settings
@@ -89,6 +90,14 @@ def _voice_reusable(settings: Settings, job: dict) -> bool:
     )
 
 
+def _video_expired(job: dict) -> bool:
+    """D-065 (R-24): the job's video is only the provider's link and its lifetime has passed. A
+    local file (mock mode) never expires."""
+    if job["video_file"] or not job["video_url"] or not job["video_expires_at"]:
+        return False
+    return datetime.fromisoformat(job["video_expires_at"]) <= datetime.now(timezone.utc)
+
+
 def _public(request: Request, job: dict) -> JobOut:
     voice_credits, video_credits = ledger.job_charge_parts(
         _service(request).store.engine, job["id"]
@@ -105,7 +114,10 @@ def _public(request: Request, job: dict) -> JobOut:
         voice_credits=voice_credits,
         video_credits=video_credits,
         audio_url=f"/api/v1/jobs/{job['id']}/audio" if job["audio_file"] else None,
-        video_url=f"/api/v1/jobs/{job['id']}/video" if job["video_file"] else None,
+        video_url=(
+            f"/api/v1/jobs/{job['id']}/video" if job["video_file"] or job["video_url"] else None
+        ),
+        video_expired=_video_expired(job),
         error=job["error"],
         failure_kind=_failure_kind(job),
         voice_reusable=_voice_reusable(_settings(request), job),
@@ -259,6 +271,7 @@ def list_jobs(
                 script_excerpt=j["script"][:120],
                 audio_duration_seconds=j["audio_duration_seconds"],
                 failure_kind=_failure_kind(j),
+                video_expired=_video_expired(j),
                 created_at=j["created_at"],
                 updated_at=j["updated_at"],
             )
@@ -315,6 +328,24 @@ def get_audio(request: Request, user: User, job_id: str) -> FileResponse:
     return _file(request, user, job_id, "audio_file")
 
 
-@router.get("/jobs/{job_id}/video", response_class=FileResponse, responses=_NOT_FOUND)
-def get_video(request: Request, user: User, job_id: str) -> FileResponse:
-    return _file(request, user, job_id, "video_file")
+@router.get(
+    "/jobs/{job_id}/video",
+    response_class=FileResponse,
+    responses={
+        **_NOT_FOUND,
+        302: {"description": "Redirect to the provider's link to the video (D-065)."},
+        410: {"model": ErrorOut},  # video_expired: the provider deleted it after 30 days
+    },
+)
+def get_video(request: Request, user: User, job_id: str) -> Response:
+    """The job's video: our file (mock mode), or a 302 to the provider's link while it lives
+    (D-065, R-24, R-74). Ownership is checked first, so another user's job is 404 (R-12)."""
+    job = _load(request, user, job_id)
+    if job["video_url"] and not job["video_file"]:
+        if _video_expired(job):
+            message = "This video has expired. Videos are kept for 30 days."
+            raise ApiError(410, message, "video_expired")
+        return RedirectResponse(job["video_url"], status_code=302)
+    if not job["video_file"]:
+        raise ApiError(404, "Not available yet.", "not_available_yet")
+    return FileResponse(_service(request).job_dir(job_id) / job["video_file"])

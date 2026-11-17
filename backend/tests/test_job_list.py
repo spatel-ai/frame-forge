@@ -179,6 +179,7 @@ def test_summary_fields(anon, alice):
         "script_excerpt",
         "audio_duration_seconds",
         "failure_kind",
+        "video_expired",  # T-553, D-065
         "created_at",
         "updated_at",
     }

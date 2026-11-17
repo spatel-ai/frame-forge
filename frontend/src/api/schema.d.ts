@@ -284,7 +284,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Video */
+        /**
+         * Get Video
+         * @description The job's video: our file (mock mode), or a 302 to the provider's link while it lives
+         *     (D-065, R-24, R-74). Ownership is checked first, so another user's job is 404 (R-12).
+         */
         get: operations["get_video_api_v1_jobs__job_id__video_get"];
         put?: never;
         post?: never;
@@ -675,6 +679,8 @@ export interface components {
             updated_at: string;
             /** Video Credits */
             video_credits: number;
+            /** Video Expired */
+            video_expired: boolean;
             /** Video Url */
             video_url: string | null;
             /** Voice Credits */
@@ -708,6 +714,8 @@ export interface components {
             status: "audio_generating" | "audio_ready" | "video_submitting" | "video_generating" | "video_assembling" | "completed" | "failed";
             /** Updated At */
             updated_at: string;
+            /** Video Expired */
+            video_expired: boolean;
         };
         /** JobsOut */
         JobsOut: {
@@ -1772,6 +1780,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Redirect to the provider's link to the video (D-065). */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Unauthorized */
             401: {
                 headers: {
@@ -1783,6 +1798,15 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Gone */
+            410: {
                 headers: {
                     [name: string]: unknown;
                 };

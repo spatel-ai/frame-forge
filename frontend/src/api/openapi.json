@@ -479,6 +479,10 @@
             "title": "Video Credits",
             "type": "integer"
           },
+          "video_expired": {
+            "title": "Video Expired",
+            "type": "boolean"
+          },
           "video_url": {
             "anyOf": [
               {
@@ -522,6 +526,7 @@
           "video_credits",
           "audio_url",
           "video_url",
+          "video_expired",
           "error",
           "failure_kind",
           "voice_reusable",
@@ -602,6 +607,10 @@
           "updated_at": {
             "title": "Updated At",
             "type": "string"
+          },
+          "video_expired": {
+            "title": "Video Expired",
+            "type": "boolean"
           }
         },
         "required": [
@@ -611,6 +620,7 @@
           "script_excerpt",
           "audio_duration_seconds",
           "failure_kind",
+          "video_expired",
           "created_at",
           "updated_at"
         ],
@@ -2214,6 +2224,7 @@
     },
     "/api/v1/jobs/{job_id}/video": {
       "get": {
+        "description": "The job's video: our file (mock mode), or a 302 to the provider's link while it lives\n(D-065, R-24, R-74). Ownership is checked first, so another user's job is 404 (R-12).",
         "operationId": "get_video_api_v1_jobs__job_id__video_get",
         "parameters": [
           {
@@ -2229,6 +2240,9 @@
         "responses": {
           "200": {
             "description": "Successful Response"
+          },
+          "302": {
+            "description": "Redirect to the provider's link to the video (D-065)."
           },
           "401": {
             "content": {
@@ -2249,6 +2263,16 @@
               }
             },
             "description": "Not Found"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Gone"
           },
           "422": {
             "content": {

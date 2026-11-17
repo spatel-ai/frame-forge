@@ -33,6 +33,8 @@ EXPECTED_COLUMNS = {
     "price_credits",
     "approve_attempt",
     "needs_review",
+    "video_url",  # 0011 (T-553, D-065)
+    "video_expires_at",
 }
 
 
@@ -45,7 +47,7 @@ def test_upgrade_and_downgrade_in_throwaway_schema(empty_schema, admin_engine):
     assert insp.has_table("jobs", schema=schema)
     columns = insp.get_columns("jobs", schema=schema)
     assert {c["name"] for c in columns} == EXPECTED_COLUMNS
-    assert len(columns) == 20
+    assert len(columns) == 22
     assert insp.get_pk_constraint("jobs", schema=schema)["constrained_columns"] == ["id"]
     assert any(i["column_names"] == ["status"] for i in insp.get_indexes("jobs", schema=schema))
 
@@ -389,5 +391,36 @@ def test_0010_adds_the_nullable_script_id_with_a_plain_foreign_key(empty_schema)
         assert not fks[0].get("options", {}).get("ondelete")
         command.downgrade(cfg, "0009")
         assert "script_id" not in {c["name"] for c in inspect(engine).get_columns("jobs")}
+    finally:
+        engine.dispose()
+
+
+def test_0011_adds_the_nullable_video_link_columns(empty_schema):
+    """T-553 (R-24, R-74, D-065): 0011 adds jobs.video_url (text) and jobs.video_expires_at
+    (timestamptz), both NULL for existing rows; downgrade to 0010 removes them."""
+    cfg = empty_schema.alembic_config()
+    command.upgrade(cfg, "0010")
+    engine = create_engine(empty_schema.url, poolclass=NullPool)
+    try:
+        with engine.begin() as conn:
+            conn.execute(
+                text(
+                    "INSERT INTO jobs (id, status, language, script, image_file, video_file, "
+                    "created_at, updated_at) VALUES ('old', 'completed', 'English', 'hi', "
+                    "'image.png', 'video.mp4', now(), now())"
+                )
+            )
+        command.upgrade(cfg, "0011")
+        with engine.begin() as conn:
+            row = conn.execute(text("SELECT video_url, video_expires_at, video_file FROM jobs"))
+            assert tuple(row.one()) == (None, None, "video.mp4")
+        cols = {c["name"]: c for c in inspect(engine).get_columns("jobs")}
+        assert str(cols["video_url"]["type"]) == "TEXT" and cols["video_url"]["nullable"]
+        expires = cols["video_expires_at"]
+        assert "TIMESTAMP" in str(expires["type"]) and expires["type"].timezone
+        assert expires["nullable"]
+        command.downgrade(cfg, "0010")
+        names = {c["name"] for c in inspect(engine).get_columns("jobs")}
+        assert not names & {"video_url", "video_expires_at"}
     finally:
         engine.dispose()

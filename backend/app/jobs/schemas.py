@@ -77,7 +77,11 @@ class JobOut(BaseModel):
     voice_credits: int
     video_credits: int
     audio_url: str | None
+    # Always our route (/api/v1/jobs/{id}/video), never the provider's link (D-065).
     video_url: str | None
+    # True when the provider has deleted the video (kept 30 days, D-065, R-24): the route
+    # answers 410 and screens say the video has expired.
+    video_expired: bool
     error: str | None
     # M5 (T-500). Null unless status is "failed".
     failure_kind: FailureKind | None
@@ -112,6 +116,8 @@ class JobSummaryOut(BaseModel):
     script_excerpt: str
     audio_duration_seconds: float | None
     failure_kind: FailureKind | None
+    # As JobOut.video_expired (D-065).
+    video_expired: bool
     created_at: str
     updated_at: str
 

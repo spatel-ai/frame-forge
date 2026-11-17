@@ -6,6 +6,8 @@ import { Card } from '../../components/layout'
 import { formatCredits } from './credits'
 import styles from './screens.module.css'
 
+const VIDEO_EXPIRED = 'This video has expired. Videos are kept for 30 days.'
+
 export function ResultScreen({ job, onReset }: { job: Job; onReset: () => void }) {
   if (!job.video_url) {
     return (
@@ -19,10 +21,17 @@ export function ResultScreen({ job, onReset }: { job: Job; onReset: () => void }
   return (
     <div className={styles.grid}>
       <section className={`${styles.panel} ${styles.wide}`} aria-label="Your video">
-        <video className={`${styles.media} ${styles.video}`} controls src={job.video_url} />
-        <div>
-          <Pill icon tone="info">AI-generated</Pill>
-        </div>
+        {job.video_expired ? (
+          // D-065: the provider keeps the video 30 days; the route answers 410 after that.
+          <ErrorState title="This video has expired" message={VIDEO_EXPIRED} />
+        ) : (
+          <>
+            <video className={`${styles.media} ${styles.video}`} controls src={job.video_url} />
+            <div>
+              <Pill icon tone="info">AI-generated</Pill>
+            </div>
+          </>
+        )}
       </section>
       <div className={styles.panel}>
         <Card padding="lg">
@@ -42,10 +51,12 @@ export function ResultScreen({ job, onReset }: { job: Job; onReset: () => void }
             </dl>
             <p className={styles.note}>Charged: {formatCredits(job.charged_credits)} credits</p>
             <div className={styles.actions}>
-              <a className={styles.linkButton} href={job.video_url} download>
-                <DownloadIcon size={18} />
-                Download video
-              </a>
+              {!job.video_expired && (
+                <a className={styles.linkButton} href={job.video_url} download>
+                  <DownloadIcon size={18} />
+                  Download video
+                </a>
+              )}
               <Button variant="secondary" size="large" onClick={onReset}>Create another</Button>
             </div>
           </section>

@@ -26,7 +26,7 @@ const config: Config = {
 const job: Job = {
   id: 'job-1', status: 'completed', language: 'English', script: 'Welcome <b>to</b> our offer',
   audio_duration_seconds: 12, price_credits: 240, charged_credits: 250, voice_credits: 10, video_credits: 240,
-  failure_kind: null, voice_reusable: false, needs_review: false, consent_at: null, script_id: null,
+  failure_kind: null, voice_reusable: false, video_expired: false, needs_review: false, consent_at: null, script_id: null,
   voice_from_job_id: null, start_template: null, end_template: null, banners_applied: null,
   audio_url: null, video_url: 'https://example.test/v.mp4', error: null,
   created_at: '2026-11-17T10:12:00Z', updated_at: '2026-11-17T10:15:00Z',
@@ -34,7 +34,7 @@ const job: Job = {
 
 const row = (i: number, extra: Partial<JobSummary> = {}): JobSummary => ({
   id: `j${i}`, status: 'completed', language: 'English', script_excerpt: `Script number ${i}`,
-  audio_duration_seconds: 17, failure_kind: null, created_at: '2026-11-17T10:12:00Z', updated_at: '2026-11-17T10:12:00Z', ...extra,
+  audio_duration_seconds: 17, failure_kind: null, video_expired: false, created_at: '2026-11-17T10:12:00Z', updated_at: '2026-11-17T10:12:00Z', ...extra,
 })
 const page = (items: JobSummary[], total = items.length, p = 1): JobsPage => ({ items, total, page: p, page_size: 10 })
 
@@ -160,6 +160,15 @@ describe('Video detail', () => {
     expect(screen.getByText('Banners')).toBeTruthy()
     expect(screen.getByText('Free')).toBeTruthy()
     expect(screen.queryByText('End banner')).toBeNull()
+  })
+
+  it('R-24, D-065: an expired video shows the expiry message instead of the player and no download', async () => {
+    vi.mocked(getJob).mockResolvedValue({ ...job, video_expired: true })
+    renderAt('/videos/job-1')
+    expect(await screen.findByText('This video has expired. Videos are kept for 30 days.')).toBeTruthy()
+    expect(document.querySelector('video')).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Download video' })).toBeNull()
+    expect(screen.getByText('What it cost')).toBeTruthy()
   })
 
   it('R-13: an in-progress video links to its create page', async () => {

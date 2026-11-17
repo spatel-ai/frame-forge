@@ -41,7 +41,7 @@ const job = (extra: Partial<Job> = {}): Job => ({
   script: 'Hello',
   audio_duration_seconds: null,
   price_credits: null, charged_credits: 0,
-  voice_credits: 0, video_credits: 0, failure_kind: null, voice_reusable: false, needs_review: false,
+  voice_credits: 0, video_credits: 0, failure_kind: null, voice_reusable: false, video_expired: false, needs_review: false,
   consent_at: null, script_id: null, voice_from_job_id: null, start_template: null, end_template: null, banners_applied: null,
   audio_url: null,
   video_url: null,

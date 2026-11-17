@@ -47,3 +47,7 @@ class Job(Base):
     # before M5. No cascade: deleting a script (soft delete) never changes a job, which keeps its
     # own copy of the text.
     script_id: Mapped[str | None] = mapped_column(Text, ForeignKey("scripts.id"))
+    # Migration 0011 (T-553, D-065, R-24, R-74): the provider's link to the finished video and
+    # when the provider deletes it. NULL for mock jobs (they keep `video_file`) and older jobs.
+    video_url: Mapped[str | None] = mapped_column(Text)
+    video_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
