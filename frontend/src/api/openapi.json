@@ -123,6 +123,10 @@
       },
       "ConfigOut": {
         "properties": {
+          "banners_enabled": {
+            "title": "Banners Enabled",
+            "type": "boolean"
+          },
           "consent_text": {
             "title": "Consent Text",
             "type": "string"
@@ -241,7 +245,8 @@
           "support_email",
           "consent_version",
           "consent_text",
-          "daily_video_limit"
+          "daily_video_limit",
+          "banners_enabled"
         ],
         "title": "ConfigOut",
         "type": "object"

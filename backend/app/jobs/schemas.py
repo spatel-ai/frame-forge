@@ -43,6 +43,8 @@ class ConfigOut(BaseModel):
     consent_text: str
     # Video approvals allowed per customer per day; null means no limit (production, D-046).
     daily_video_limit: int | None
+    # D-066: when true every video gets the banners, so progress shows "Adding your banners".
+    banners_enabled: bool
 
 
 # Why a failed job failed, for the failure screens (M5 boards "Voice failures" and "Video

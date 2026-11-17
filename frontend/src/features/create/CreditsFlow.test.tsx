@@ -22,7 +22,7 @@ const config: Config = {
   languages: ['English'], credits_per_second: 20, voice_price_credits: 10,
   payments: 'mock', razorpay_key_id: null, min_purchase_credits: 1000, max_purchase_credits: 10000,
   payment_fee_bps: 200, payment_fee_gst_bps: 0, support_email: null,
-  consent_version: '2026-11-17', consent_text: 'I have permission.', daily_video_limit: 50,
+  consent_version: '2026-11-17', consent_text: 'I have permission.', daily_video_limit: 50, banners_enabled: true,
 }
 const wallet = (available: number): Wallet => ({ available_credits: available, reserved_credits: 0, balance_credits: available })
 const baseJob: Job = {

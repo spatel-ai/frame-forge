@@ -572,6 +572,8 @@ export interface components {
         };
         /** ConfigOut */
         ConfigOut: {
+            /** Banners Enabled */
+            banners_enabled: boolean;
             /** Consent Text */
             consent_text: string;
             /** Consent Version */

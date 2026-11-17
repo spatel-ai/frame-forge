@@ -124,6 +124,12 @@ class Settings:
     consent_text: str = "I am the person in this photo, or I have their permission to use it."
     # Video approvals per customer per day outside production (D-046). Production has no limit.
     daily_video_limit: int = 50
+    # D-066 (owner, 2026-11-17): every video gets the same opening banner, a top-right emblem
+    # while the avatar speaks, and a closing banner, from backend/assets/banners/.
+    # AVATAR_BANNERS=off delivers the AI video as it is.
+    banners_enabled: bool = field(
+        default_factory=lambda: os.getenv("AVATAR_BANNERS", "on").strip().lower() != "off"
+    )
     # Keep every voice for reuse, not only failed jobs' voices (D-043). Off by default.
     save_all_voices: bool = False
     # Shown on failure screens when set (D-055); the owner adds it before launch.

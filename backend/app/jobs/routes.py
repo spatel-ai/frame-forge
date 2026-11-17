@@ -174,6 +174,7 @@ def get_config(request: Request) -> ConfigOut:
         consent_version=settings.consent_version,
         consent_text=settings.consent_text,
         daily_video_limit=settings.effective_daily_video_limit,
+        banners_enabled=settings.banners_enabled,
     )
 
 
