@@ -51,3 +51,15 @@ class Job(Base):
     # when the provider deletes it. NULL for mock jobs (they keep `video_file`) and older jobs.
     video_url: Mapped[str | None] = mapped_column(Text)
     video_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Migration 0012 (D-066, D-019; S3 storage, owner 2026-11-17). While banners are added, the
+    # AI video is fal's link (`ai_video_url`) or a local file (`ai_video_file`, mock mode); once
+    # copied to S3 its key is `ai_video_key`. The delivered video's S3 key is `video_key`.
+    ai_video_url: Mapped[str | None] = mapped_column(Text)
+    ai_video_key: Mapped[str | None] = mapped_column(Text)
+    ai_video_file: Mapped[str | None] = mapped_column(Text)
+    video_key: Mapped[str | None] = mapped_column(Text)
+    # True: banners added. False: delivered without them after the free step kept failing
+    # (D-019). NULL: banners were not in use for this job.
+    banners_applied: Mapped[bool | None] = mapped_column(Boolean)
+    # Failed tries of the free assembling step; at `assembly_max_attempts` the fallback applies.
+    assembly_attempts: Mapped[int] = mapped_column(Integer, server_default="0")

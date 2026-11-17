@@ -49,6 +49,19 @@ def _no_real_email(monkeypatch):
     monkeypatch.delenv("USER_EMAIL_PASSWORD", raising=False)
 
 
+@pytest.fixture(autouse=True)
+def _banners_off_and_no_s3(monkeypatch):
+    """D-066: every `Settings()` built in a test has banners OFF unless the test opts in with
+    `replace(settings, banners_enabled=True)`. Most tests drive a job to `completed` through the
+    mock provider and check money and status, not the picture; running ffmpeg for each would
+    only slow them. The app default stays on (test_banners.py checks it).
+
+    No test ever reaches AWS: a bucket exported in the shell is removed, so `Settings()` has no
+    S3 storage; tests of S3 inject a fake storage or a stubbed client."""
+    monkeypatch.setenv("AVATAR_BANNERS", "off")
+    monkeypatch.delenv("AVATAR_S3_BUCKET", raising=False)
+
+
 @pytest.fixture(scope="session")
 def admin_engine():
     # NullPool: no connection is held between schema create and drop.

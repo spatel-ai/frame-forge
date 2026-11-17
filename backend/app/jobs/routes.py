@@ -1,5 +1,6 @@
 """Job and config routes, mounted under /api/v1."""
 
+import logging
 from datetime import datetime, timezone
 from typing import Annotated, Any, Literal
 
@@ -16,6 +17,7 @@ from .schemas import ConfigOut, FailureKind, JobOut, JobsOut, JobSummaryOut, Sav
 from .service import JobService
 
 router = APIRouter(prefix="/api/v1")
+log = logging.getLogger("avatar")
 
 _INVALID: dict[int | str, dict[str, Any]] = {422: {"model": ErrorOut}}
 _UNAUTHENTICATED: dict[int | str, dict[str, Any]] = {401: {"model": ErrorOut}}
@@ -91,9 +93,11 @@ def _voice_reusable(settings: Settings, job: dict) -> bool:
 
 
 def _video_expired(job: dict) -> bool:
-    """D-065 (R-24): the job's video is only the provider's link and its lifetime has passed. A
-    local file (mock mode) never expires."""
-    if job["video_file"] or not job["video_url"] or not job["video_expires_at"]:
+    """D-065 (R-24): the job's video is stored in S3 or is the provider's link, and its 30 days
+    have passed. A local file (mock mode) never expires."""
+    if job["video_file"] or not (job["video_key"] or job["video_url"]):
+        return False
+    if not job["video_expires_at"]:
         return False
     return datetime.fromisoformat(job["video_expires_at"]) <= datetime.now(timezone.utc)
 
@@ -115,7 +119,9 @@ def _public(request: Request, job: dict) -> JobOut:
         video_credits=video_credits,
         audio_url=f"/api/v1/jobs/{job['id']}/audio" if job["audio_file"] else None,
         video_url=(
-            f"/api/v1/jobs/{job['id']}/video" if job["video_file"] or job["video_url"] else None
+            f"/api/v1/jobs/{job['id']}/video"
+            if job["video_file"] or job["video_key"] or job["video_url"]
+            else None
         ),
         video_expired=_video_expired(job),
         error=job["error"],
@@ -128,7 +134,7 @@ def _public(request: Request, job: dict) -> JobOut:
         voice_from_job_id=None,
         start_template=None,
         end_template=None,
-        banners_applied=None,
+        banners_applied=job["banners_applied"],  # D-019, D-066
         created_at=job["created_at"],
         updated_at=job["updated_at"],
     )
@@ -339,9 +345,22 @@ def get_audio(request: Request, user: User, job_id: str) -> FileResponse:
     },
 )
 def get_video(request: Request, user: User, job_id: str) -> Response:
-    """The job's video: our file (mock mode), or a 302 to the provider's link while it lives
-    (D-065, R-24, R-74). Ownership is checked first, so another user's job is 404 (R-12)."""
+    """The job's video: a 302 to a short-lived signed S3 link (owner, 2026-11-17), the
+    provider's link for older jobs (D-065, R-24, R-74), or our file (mock mode), while it lives.
+    Ownership is checked first, so another user's job is 404 (R-12). The signed link is only
+    ever sent as this redirect, never in JSON."""
     job = _load(request, user, job_id)
+    if job["video_key"] and not job["video_file"]:
+        if _video_expired(job):
+            message = "This video has expired. Videos are kept for 30 days."
+            raise ApiError(410, message, "video_expired")
+        storage = _service(request).storage
+        if storage is None:
+            # Stored in S3 but this server has no bucket configured: a deployment mistake.
+            log.error("job %s has a stored video but no video storage is configured", job_id)
+            raise ApiError(404, "Not available yet.", "not_available_yet")
+        link = storage.url(job["video_key"], filename=f"frameforge-video-{job_id}.mp4")
+        return RedirectResponse(link, status_code=302)
     if job["video_url"] and not job["video_file"]:
         if _video_expired(job):
             message = "This video has expired. Videos are kept for 30 days."
