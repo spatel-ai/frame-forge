@@ -203,6 +203,102 @@
       "h": 960,
       "title": "Confirmation link expired or used",
       "expand": "fill"
+    },
+    "Payment-States.dc.html": {
+      "x": 0,
+      "y": 8400,
+      "w": 1440,
+      "h": 960,
+      "title": "After payment: confirmed, confirming, failed, cancelled",
+      "expand": "fill"
+    },
+    "Create-1b-Script-Picker.dc.html": {
+      "x": 0,
+      "y": 9800,
+      "w": 1440,
+      "h": 960,
+      "title": "Create 1: choose from my scripts",
+      "expand": "fill"
+    },
+    "Script-Picker-States.dc.html": {
+      "x": 1520,
+      "y": 9800,
+      "w": 1440,
+      "h": 1100,
+      "title": "Script picker: empty, no match, chosen, edited",
+      "expand": "fill"
+    },
+    "Voice-Choice-States.dc.html": {
+      "x": 3040,
+      "y": 9800,
+      "w": 1440,
+      "h": 960,
+      "title": "Create 1: choosing a saved voice",
+      "expand": "fill"
+    },
+    "Create-2b-Consent.dc.html": {
+      "x": 4560,
+      "y": 9800,
+      "w": 1440,
+      "h": 960,
+      "title": "Create 2: permission, then make my voice",
+      "expand": "fill"
+    },
+    "Progress-States.dc.html": {
+      "x": 6080,
+      "y": 9800,
+      "w": 1440,
+      "h": 1100,
+      "title": "Progress: voice, adding banners, no banners",
+      "expand": "fill"
+    },
+    "Create-5b-Result-No-Banners.dc.html": {
+      "x": 7600,
+      "y": 9800,
+      "w": 1440,
+      "h": 960,
+      "title": "Create 5: result without banners",
+      "expand": "fill"
+    },
+    "Failure-Results-Voice.dc.html": {
+      "x": 0,
+      "y": 11600,
+      "w": 1440,
+      "h": 960,
+      "title": "Voice failures: three endings",
+      "expand": "fill"
+    },
+    "Failure-Results-Video.dc.html": {
+      "x": 1520,
+      "y": 11600,
+      "w": 1440,
+      "h": 1100,
+      "title": "Video failures and the testing limit",
+      "expand": "fill"
+    },
+    "Video-Detail.dc.html": {
+      "x": 0,
+      "y": 13400,
+      "w": 1440,
+      "h": 960,
+      "title": "Video detail",
+      "expand": "fill"
+    },
+    "Scripts-Delete-Dialog.dc.html": {
+      "x": 1520,
+      "y": 13400,
+      "w": 1440,
+      "h": 960,
+      "title": "Delete a script",
+      "expand": "fill"
+    },
+    "Empty-States.dc.html": {
+      "x": 3040,
+      "y": 13400,
+      "w": 1440,
+      "h": 960,
+      "title": "Empty states: Home, Videos, My scripts",
+      "expand": "fill"
     }
   },
   "createdOnFiles": {
@@ -222,7 +318,15 @@
     "n-brand",
     "t-reset",
     "t-confirm",
-    "n-confirm"
+    "n-confirm",
+    "t-payment",
+    "n-payment",
+    "t-m5create",
+    "n-m5create",
+    "t-m5fail",
+    "n-m5fail",
+    "t-m5lib",
+    "n-m5lib"
   ],
   "notes": {
     "n-brand": {
@@ -293,6 +397,66 @@
       "w": 420,
       "x": 4560,
       "y": 7000
+    },
+    "t-payment": {
+      "kind": "title1",
+      "text": "Buying credits (M4)",
+      "x": 0,
+      "y": 8100,
+      "maxW": 3000,
+      "w": 240
+    },
+    "n-payment": {
+      "fill": "green",
+      "text": "New in M4, approved by the owner on 2026-11-17. Customers buy 500 to 10,000 credits (₹1 = 1 credit; D-047), with quick picks of 500, 1,000, 2,500 and 5,000. This board shows the four endings after Razorpay closes. Credits are added only when our server confirms the payment. Desktop only (D-033).",
+      "w": 420,
+      "x": 1520,
+      "y": 8400
+    },
+    "t-m5create": {
+      "kind": "title1",
+      "text": "M5: create flow additions",
+      "x": 0,
+      "y": 9500,
+      "maxW": 9560,
+      "w": 240
+    },
+    "n-m5create": {
+      "fill": "orange",
+      "text": "Awaiting the owner's approval. Consent (wording is a placeholder, Q-11) now comes before the voice is made (D-045). A saved voice from a video that did not finish can start a new video with no voice charge (D-043). Banners that could not be added are stated plainly (Q-17 default: still charged). Existing boards Create 1, 2 and 3 were updated to match.",
+      "w": 420,
+      "x": 9120,
+      "y": 9800
+    },
+    "t-m5fail": {
+      "kind": "title1",
+      "text": "M5: failures and limits",
+      "x": 0,
+      "y": 11300,
+      "maxW": 3480,
+      "w": 240
+    },
+    "n-m5fail": {
+      "fill": "orange",
+      "text": "Awaiting the owner's approval. Every failure says what happened, what was charged and what to do next. Voice failed or unknown: 10 credits returned. Voice made but too long, or the video failed: 10 credits for the voice stay and the voice is saved. Video failed: the 240 held credits return. Unknown video outcome: charged and flagged. The 50-videos-a-day limit exists in development and testing only (D-046). Contact and refund route for unknown outcomes needs your decision.",
+      "w": 420,
+      "x": 3040,
+      "y": 11600
+    },
+    "t-m5lib": {
+      "kind": "title1",
+      "text": "M5: library",
+      "x": 0,
+      "y": 13100,
+      "maxW": 5000,
+      "w": 240
+    },
+    "n-m5lib": {
+      "fill": "orange",
+      "text": "Awaiting the owner's approval. Video detail, delete-script confirmation and empty states for a new customer. The video detail page shows what the video cost from the server: voice 10 credits plus video 240 credits in the example.",
+      "w": 420,
+      "x": 4560,
+      "y": 13400
     }
   },
   "order": [
@@ -321,7 +485,19 @@
     "Reset-Link-Expired.dc.html",
     "Email-Confirm-Notice.dc.html",
     "Email-Confirmed.dc.html",
-    "Email-Link-Expired.dc.html"
+    "Email-Link-Expired.dc.html",
+    "Payment-States.dc.html",
+    "Create-1b-Script-Picker.dc.html",
+    "Script-Picker-States.dc.html",
+    "Voice-Choice-States.dc.html",
+    "Create-2b-Consent.dc.html",
+    "Progress-States.dc.html",
+    "Create-5b-Result-No-Banners.dc.html",
+    "Failure-Results-Voice.dc.html",
+    "Failure-Results-Video.dc.html",
+    "Video-Detail.dc.html",
+    "Scripts-Delete-Dialog.dc.html",
+    "Empty-States.dc.html"
   ],
   "pages": [
     {
