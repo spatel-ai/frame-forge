@@ -307,11 +307,10 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
       if (run.current !== id) return
       if (outcome === 'failed') setStage({ kind: 'failed' })
       else await verify(order, proof)
-    } catch (e) {
+    } catch {
       if (run.current !== id) return
-      // A refused request (4xx) took no payment. Anything else leaves the outcome unknown: never say "no credits".
-      const refused = e instanceof ApiError && e.status >= 400 && e.status < 500
-      if (outcome === 'captured' && !refused) {
+      // The completion call failed, so whether the payment was taken is unknown: never say "no credits were added".
+      if (outcome === 'captured') {
         void invalidateWallet(queryClient)
         setStage({ kind: 'failed', unknown: true })
       } else setStage({ kind: 'failed' })
@@ -414,17 +413,21 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
           </dl>
           <p className={styles.fine}>The payment fee covers the card or UPI charge.</p>
           {returnTo && <p className={styles.fine}>After paying you'll come back to this video.</p>}
-          {quoteOtherError && <p role="alert" className={styles.problem}>{quoteOtherError} Nothing was charged.</p>}
-          {notVerified && (
-            <Banner
-              tone="warning"
-              title="Confirm your email first"
-              action={<Link to="/account" onClick={close}>Go to your account to confirm your email</Link>}
-            >
-              {notVerified} Nothing was charged.
-            </Banner>
+          {(quoteOtherError || notVerified || otherError) && (
+            <div className={styles.messages}>
+              {quoteOtherError && <p role="alert" className={styles.problem}>{quoteOtherError} Nothing was charged.</p>}
+              {notVerified && (
+                <Banner
+                  tone="warning"
+                  title="Confirm your email first"
+                  action={<Link to="/account" onClick={close}>Go to your account to confirm your email</Link>}
+                >
+                  {notVerified} Nothing was charged.
+                </Banner>
+              )}
+              {otherError && <p role="alert" className={styles.problem}>{otherError}</p>}
+            </div>
           )}
-          {otherError && <p role="alert" className={styles.problem}>{otherError}</p>}
           <Button
             type="submit"
             size="large"

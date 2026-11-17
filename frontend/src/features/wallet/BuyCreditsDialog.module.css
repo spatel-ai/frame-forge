@@ -4,8 +4,8 @@
 .pick { font-variant-numeric: tabular-nums; min-width: 0; }
 .pick[aria-pressed='true'] { border: 2px solid var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-strong); }
 .amountField { min-width: 0; }
-/* Groups the amount choice for the two-column short layout; elsewhere it adds no box of its own. */
-.choose { display: contents; }
+/* Group the amount choice and the messages for the two-column short layout; elsewhere they add no box. */
+.choose, .messages { display: contents; }
 .summary {
   margin: 0; padding: var(--space-4); border-radius: var(--radius-card); background: var(--color-page);
   display: flex; flex-direction: column; gap: var(--space-2); font-variant-numeric: tabular-nums; width: 100%; box-sizing: border-box;
@@ -63,9 +63,11 @@
     column-gap: var(--space-4); row-gap: var(--space-2); align-items: start;
   }
   .stack > * { grid-column: 1 / -1; }
-  .stack > .choose { grid-column: 1; grid-row: 1 / span 2; display: flex; flex-direction: column; gap: var(--space-2); }
+  .stack > .choose { grid-column: 1; grid-row: 1 / span 3; display: flex; flex-direction: column; gap: var(--space-2); }
   .stack > .summary { grid-column: 2; grid-row: 1; }
-  .stack > .pay { grid-column: 2; grid-row: 2; }
+  /* Messages from pressing Pay (or a failed quote) sit right above it, as in the one-column layout. */
+  .stack > .messages { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: var(--space-2); }
+  .stack > .pay { grid-column: 2; grid-row: 3; }
   .pick { padding-inline: var(--space-2); }
 }
 
