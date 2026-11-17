@@ -24,6 +24,18 @@ closed: the API is reached through 443, so logins and cookies are always encrypt
 
 ## 3. On the server
 
+**Quickest: one script.** Upload `deploy/server-setup.sh` to the server and run:
+
+```bash
+bash server-setup.sh api.yourdomain.com https://github.com/<you>/<repo>.git development
+```
+
+It installs Docker, clones the code into `~/frameforge`, generates the database password, and the
+first time stops after creating a `backend/.env` template for you to fill in
+(`nano ~/frameforge/backend/.env`). Run the same command again and it builds, starts everything and
+checks the API. Run it again any time to update. The manual steps below do the same by hand.
+
+
 ```bash
 # Docker (skip if `docker compose version` already works)
 sudo dnf install -y docker git || sudo apt-get install -y docker.io git
