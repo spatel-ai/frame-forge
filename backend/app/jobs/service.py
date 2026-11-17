@@ -1,17 +1,28 @@
 """Job lifecycle: voice generation, the approval gate, video submission, and
-the poller that collects finished videos and recovers after a restart."""
+the poller that collects finished videos and recovers after a restart.
+
+Charging (T-303, T-304; HLD §5.2): every status change that moves money passes its ledger step to
+`JobStore.transition` (or `create`), which runs it in the same transaction as the compare-and-set
+UPDATE, so a job's status and its ledger entries commit together or not at all (backend rule 3).
+Only `app.wallet.ledger` writes the wallet tables (rule 1)."""
 
 import asyncio
 import logging
+import math
+import shutil
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timezone
+from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
 
 from PIL import Image
+from sqlalchemy import Connection
 
 from ..core.config import Settings
 from ..providers import Provider, ProviderError
+from ..wallet import ledger
 from . import db
 from .db import JobStore
 
@@ -22,7 +33,7 @@ _IMAGE_FORMATS = {"JPEG": "jpg", "PNG": "png", "WEBP": "webp"}
 
 # Letters of the alphabets used by the non-English languages. Letters only:
 # Punjabi text shares its full stop (the danda) with the Hindi Unicode block.
-_SCRIPT_RANGES = {"Hindi": ("\u0904", "\u0939"), "Punjabi": ("\u0a05", "\u0a39")}
+_SCRIPT_RANGES = {"Hindi": ("ऄ", "ह"), "Punjabi": ("ਅ", "ਹ")}
 
 
 class ValidationError(Exception):
@@ -42,6 +53,61 @@ class JobNotFound(Exception):
     """No such job for this user: it does not exist, is someone else's, or has no owner."""
 
 
+class NotEnoughCredits(Exception):
+    """The customer has fewer available credits than the step costs. Nothing was written. The
+    message states both amounts, so the browser never computes money (HTTP 402)."""
+
+
+def video_price(duration_seconds: float, credits_per_second: int) -> int:
+    """`ceil(seconds × rate)` in whole credits (D-006, D-014). The measured duration is a float;
+    it is read through its shortest decimal form so float error cannot add a credit
+    (0.15 × 20 is 3.0000000000000004 in floating point, which would round up to 4)."""
+    return math.ceil(Decimal(repr(duration_seconds)) * credits_per_second)
+
+
+def _voice_shortfall(required: int, available: int) -> str:
+    return f"Generating a voice costs {required} credits. You have {available}."
+
+
+# A wallet step, given the job's row as read inside the status-change transaction.
+_JobLedger = Callable[[Connection, dict], object]
+
+
+def _voice_return(conn: Connection, job: dict) -> None:
+    ledger.voice_return(conn, job["user_id"], job["id"])
+
+
+def _hold(conn: Connection, job: dict) -> None:
+    # The attempt was just increased by the same UPDATE; each approval has its own hold
+    # reference (D-039). The amount is the price stored when the voice was ready (D-006).
+    ledger.hold(
+        conn, job["user_id"], job["id"], job["price_credits"], attempt=job["approve_attempt"]
+    )
+
+
+def _capture(conn: Connection, job: dict) -> None:
+    ledger.capture(conn, job["user_id"], job["id"], attempt=job["approve_attempt"])
+
+
+def _release(conn: Connection, job: dict) -> None:
+    ledger.release(conn, job["user_id"], job["id"], attempt=job["approve_attempt"])
+
+
+def _wallet(job_id: str, step: _JobLedger) -> db.LedgerStep:
+    """The ledger step for one status change. It reads the job's row on the transaction's own
+    connection, after the compare-and-set UPDATE, so the user, price and approval attempt are
+    the values this transaction commits, never a stale earlier read. A job with no owner (made
+    before accounts, T-204) is never charged: the step does nothing."""
+
+    def run(conn: Connection) -> None:
+        job = db.read_job(conn, job_id)
+        if job["user_id"] is None:
+            return
+        step(conn, job)
+
+    return run
+
+
 class JobService:
     def __init__(self, settings: Settings, store: JobStore, provider: Provider):
         self.settings = settings
@@ -58,6 +124,15 @@ class JobService:
         task = asyncio.create_task(coro)
         self._tasks.add(task)
         task.add_done_callback(self._tasks.discard)
+
+    def check_can_afford_voice(self, user_id: str) -> None:
+        """Read-only check that the customer can pay for a voice, so a customer without credits
+        gets 402 before any input error (route order: 401, 403, 402, 422). The charge inside
+        the job's creation transaction stays the real check."""
+        price = self.settings.voice_price_credits
+        available = ledger.get_wallet(self.store.engine, user_id).available_credits
+        if available < price:
+            raise NotEnoughCredits(_voice_shortfall(price, available))
 
     def _clean_image(self, raw: bytes) -> tuple[bytes, str]:
         """Validate an upload and re-encode it, so only pixels we decoded
@@ -123,25 +198,62 @@ class JobService:
         clean, extension = self._clean_image(image_bytes)
 
         job_id = uuid.uuid4().hex
-        self.job_dir(job_id).mkdir(parents=True)
+        folder = self.job_dir(job_id)
         image_file = f"image.{extension}"
-        (self.job_dir(job_id) / image_file).write_bytes(clean)
-        job = self.store.create(job_id, user_id, language, script, image_file)
+        price = self.settings.voice_price_credits
+
+        def charge_voice(conn: Connection) -> None:
+            # HLD §5.2, first row (D-038): the job row and its voice charge commit together.
+            ledger.voice_charge(conn, user_id, job_id, price)
+
+        folder.mkdir(parents=True)
+        try:
+            (folder / image_file).write_bytes(clean)
+            job = self.store.create(
+                job_id, user_id, language, script, image_file, ledger=charge_voice
+            )
+        except BaseException as exc:
+            # Nothing was committed, so leave nothing on disk either.
+            shutil.rmtree(folder, ignore_errors=True)
+            if isinstance(exc, ledger.InsufficientCredits):
+                raise NotEnoughCredits(_voice_shortfall(exc.required, exc.available)) from None
+            raise
         self._spawn(self._generate_audio(job_id, script, language))
         return job
 
     async def _generate_audio(self, job_id: str, script: str, language: str) -> None:
         try:
             speech = await self.provider.synthesize_speech(script, language)
-        except Exception as exc:
+        except ProviderError as exc:
+            # A clear failure, no voice delivered: return the voice charge (HLD §5.2, D-038).
             log.exception("voice generation failed for %s", job_id)
-            message = str(exc) if isinstance(exc, ProviderError) else "Voice generation failed."
-            self.store.transition(job_id, db.AUDIO_GENERATING, db.FAILED, error=message)
+            self.store.transition(
+                job_id,
+                db.AUDIO_GENERATING,
+                db.FAILED,
+                ledger=_wallet(job_id, _voice_return),
+                error=str(exc),
+            )
+            return
+        except Exception:
+            # Not a provider-reported failure, so whether a paid voice was made is unknown. The
+            # owner's rule for unknown outcomes (Q-19, D-005) applies: the voice charge is kept
+            # and the job is flagged for staff.
+            log.exception("voice generation failed for %s", job_id)
+            self.store.transition(
+                job_id,
+                db.AUDIO_GENERATING,
+                db.FAILED,
+                needs_review=True,
+                error="Voice generation failed.",
+            )
             return
         audio_file = f"audio.{speech.extension}"
         (self.job_dir(job_id) / audio_file).write_bytes(speech.data)
         limit = self.settings.max_audio_seconds
         if speech.duration_seconds > limit:
+            # Owner decision D-040 (amends D-038): a voice longer than the limit was delivered,
+            # so its charge is KEPT (no voice_return), and its audio file stays on the job.
             self.store.transition(
                 job_id,
                 db.AUDIO_GENERATING,
@@ -149,17 +261,19 @@ class JobService:
                 audio_file=audio_file,
                 audio_duration_seconds=speech.duration_seconds,
                 error=(
-                    f"The voice came out at {speech.duration_seconds:.1f} seconds; the limit is "
-                    f"{limit:.0f} seconds. Shorten the script and start over."
+                    f"The voice came out at {speech.duration_seconds:.1f} seconds, longer than "
+                    f"the allowed {limit:.0f} seconds. Shorten the script and start over."
                 ),
             )
             return
+        # T-303: the video price is fixed now and stored on the job; approval holds this amount.
         self.store.transition(
             job_id,
             db.AUDIO_GENERATING,
             db.AUDIO_READY,
             audio_file=audio_file,
             audio_duration_seconds=speech.duration_seconds,
+            price_credits=video_price(speech.duration_seconds, self.settings.credits_per_second),
         )
 
     # ---- step 2: approval gate, then the paid video submission ----------
@@ -167,10 +281,26 @@ class JobService:
     def approve_audio(self, user_id: str, job_id: str) -> dict:
         """Only the first approval of a job wins; any repeat or concurrent
         click finds the job already past `audio_ready` and gets a Conflict.
-        The job must belong to `user_id`; otherwise it is reported as not found (R-12)."""
+        The job must belong to `user_id`; otherwise it is reported as not found (R-12).
+        The status change, the next approval attempt and the hold of the stored price commit
+        together; with too few credits nothing changes and NotEnoughCredits is raised."""
         if self.store.get_owned(job_id, user_id) is None:
             raise JobNotFound(job_id)
-        if not self.store.transition(job_id, db.AUDIO_READY, db.VIDEO_SUBMITTING, error=None):
+        try:
+            moved = self.store.transition(
+                job_id,
+                db.AUDIO_READY,
+                db.VIDEO_SUBMITTING,
+                ledger=_wallet(job_id, _hold),
+                error=None,
+                approve_attempt=db.jobs.c.approve_attempt + 1,
+            )
+        except ledger.InsufficientCredits as exc:
+            # Rolled back: the job is still audio_ready and nothing was held.
+            raise NotEnoughCredits(
+                f"This video costs {exc.required} credits. You have {exc.available}."
+            ) from None
+        if not moved:
             raise Conflict("This job is not waiting for audio approval.")
         self._spawn(self._submit_video(job_id))
         return self.store.get(job_id)  # type: ignore[return-value]
@@ -184,13 +314,15 @@ class JobService:
                 folder / job["image_file"], folder / job["audio_file"]
             )
         except Exception as exc:
-            # Nothing has been billed yet, so the user may simply approve again.
+            # Nothing has been billed yet, so the hold is released and the user may simply
+            # approve again (a new attempt, D-039).
             log.exception("input upload failed for %s", job_id)
             message = str(exc) if isinstance(exc, ProviderError) else "Uploading inputs failed."
             self.store.transition(
                 job_id,
                 db.VIDEO_SUBMITTING,
                 db.AUDIO_READY,
+                ledger=_wallet(job_id, _release),
                 error=f"{message} Nothing was charged; you can approve again.",
             )
             return
@@ -198,24 +330,35 @@ class JobService:
             request_id = await self.provider.submit_video(image_ref, audio_ref)
         except ProviderError as exc:
             # A definite refusal (for example an exhausted balance): nothing was
-            # started, so keep the paid-for audio and let the user approve again.
+            # started, so release the hold, keep the paid-for audio and let the user
+            # approve again.
             log.warning("video submission refused for %s: %s", job_id, exc)
-            self.store.transition(job_id, db.VIDEO_SUBMITTING, db.AUDIO_READY, error=str(exc))
+            self.store.transition(
+                job_id,
+                db.VIDEO_SUBMITTING,
+                db.AUDIO_READY,
+                ledger=_wallet(job_id, _release),
+                error=str(exc),
+            )
             return
         except Exception:
             # The submission may or may not have reached the provider, so it is
-            # never retried automatically: a retry could be charged twice.
+            # never retried automatically: a retry could be charged twice. Unknown
+            # outcome: the hold is captured and the job flagged (Q-19, D-005; rule 5).
             log.exception("video submission failed for %s", job_id)
             self.store.transition(
                 job_id,
                 db.VIDEO_SUBMITTING,
                 db.FAILED,
+                ledger=_wallet(job_id, _capture),
+                needs_review=True,
                 error=(
                     "Submitting the video failed and it is unknown whether the provider "
                     "accepted it. It was not retried, to avoid a double charge."
                 ),
             )
             return
+        # Accepted: the hold stays until the video is delivered or clearly fails.
         self.store.transition(
             job_id,
             db.VIDEO_SUBMITTING,
@@ -229,17 +372,35 @@ class JobService:
     def recover_interrupted(self) -> None:
         """Run once at startup. Jobs already submitted keep their request id and
         are picked up by the poller. Jobs cut off mid-call are failed rather
-        than re-run, because re-running could repeat a paid request."""
-        for status, message in (
-            (db.AUDIO_GENERATING, "Voice generation was interrupted by a server restart."),
+        than re-run, because re-running could repeat a paid request.
+
+        Both are unknown outcomes of a paid call, so the owner's rule (Q-19, D-005) applies to
+        each: the customer is charged and the job is flagged for staff. For a cut-off voice
+        that means the voice charge is KEPT (no voice_return); for a cut-off video submission
+        the hold is captured."""
+        steps: tuple[tuple[str, str, _JobLedger | None], ...] = (
+            (
+                db.AUDIO_GENERATING,
+                "Voice generation was interrupted by a server restart.",
+                None,  # voice charge kept: the voice call's outcome is unknown
+            ),
             (
                 db.VIDEO_SUBMITTING,
                 "Video submission was interrupted by a server restart and it is unknown whether "
                 "the provider accepted it. It was not retried, to avoid a double charge.",
+                _capture,
             ),
-        ):
+        )
+        for status, message, step in steps:
             for job in self.store.list_by_status(status):
-                self.store.transition(job["id"], status, db.FAILED, error=message)
+                self.store.transition(
+                    job["id"],
+                    status,
+                    db.FAILED,
+                    ledger=_wallet(job["id"], step) if step else None,
+                    needs_review=True,
+                    error=message,
+                )
 
     async def poll_once(self) -> None:
         for job in self.store.list_by_status(db.VIDEO_GENERATING):
@@ -251,19 +412,34 @@ class JobService:
                 poll = None
             if poll is not None and poll.state == "done":
                 (self.job_dir(job_id) / "video.mp4").write_bytes(poll.data or b"")
+                # Delivered: take the held price. A repeated or concurrent poll finds the job
+                # no longer video_generating, so the capture happens once.
                 self.store.transition(
-                    job_id, db.VIDEO_GENERATING, db.COMPLETED, video_file="video.mp4"
+                    job_id,
+                    db.VIDEO_GENERATING,
+                    db.COMPLETED,
+                    ledger=_wallet(job_id, _capture),
+                    video_file="video.mp4",
                 )
             elif poll is not None and poll.state == "failed":
-                self.store.transition(job_id, db.VIDEO_GENERATING, db.FAILED, error=poll.error)
+                # A clear failure reported by the provider: release the hold.
+                self.store.transition(
+                    job_id,
+                    db.VIDEO_GENERATING,
+                    db.FAILED,
+                    ledger=_wallet(job_id, _release),
+                    error=poll.error,
+                )
             else:
                 started = datetime.fromisoformat(job["video_started_at"])
                 waited = (datetime.now(timezone.utc) - started).total_seconds()
                 if waited > self.settings.video_timeout_seconds:
+                    # A timeout is a clear failure (HLD §5.2): release the hold.
                     self.store.transition(
                         job_id,
                         db.VIDEO_GENERATING,
                         db.FAILED,
+                        ledger=_wallet(job_id, _release),
                         error=(
                             f"No video after {waited / 60:.0f} minutes. Provider request id: "
                             f"{job['provider_request_id']}."

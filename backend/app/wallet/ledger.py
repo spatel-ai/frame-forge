@@ -21,7 +21,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from sqlalchemy import Connection, Engine, Row, Table, func, insert, select, update
+from sqlalchemy import Connection, Engine, Row, Table, func, insert, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from .models import LedgerEntry, Wallet
@@ -64,7 +64,9 @@ class Entry:
 
     @property
     def job_id(self) -> str | None:
-        return self.ref_id if self.ref_type == JOB else None
+        """The bare job id: a hold, capture or release reference `<job_id>#<attempt>` (D-039) is
+        cut at `#`."""
+        return self.ref_id.split("#", 1)[0] if self.ref_type == JOB else None
 
 
 @dataclass(frozen=True)
@@ -84,6 +86,18 @@ def _amount(credits: object) -> int:
     if credits <= 0:
         raise ValueError("credits must be greater than 0")
     return credits
+
+
+def _attempt_ref(job_id: str, attempt: object) -> str:
+    """The reference of one approval attempt of a job: `<job_id>#<attempt>` (D-039). The voice
+    charge and return keep the bare job id, because a job has one voice."""
+    if isinstance(attempt, bool) or not isinstance(attempt, int):
+        raise TypeError(f"attempt must be an int, not {type(attempt).__name__}")
+    if attempt < 1:
+        raise ValueError("attempt must be at least 1")
+    if "#" in job_id:
+        raise ValueError("a job id cannot contain '#'")
+    return f"{job_id}#{attempt}"
 
 
 def _require_transaction(conn: Connection) -> None:
@@ -230,50 +244,56 @@ def voice_return(conn: Connection, user_id: str, job_id: str) -> Entry:
     return _write(conn, user_id, "voice_return", JOB, job_id, -charge.credits, 0)
 
 
-def hold(conn: Connection, user_id: str, job_id: str, credits: int) -> Entry:
-    """Reserve `credits` for a job's video (D-005). Raises InsufficientCredits if fewer are
-    available. Raises LedgerConflict if this job's hold was already captured or released: a
-    second hold for the same job cannot be written (UNIQUE (kind, ref_type, ref_id)), and
-    returning the old one would pretend credits are reserved when they are not."""
+def hold(conn: Connection, user_id: str, job_id: str, credits: int, attempt: int) -> Entry:
+    """Reserve `credits` for approval `attempt` (1, 2, ...) of a job's video (D-005, D-039),
+    under the reference `<job_id>#<attempt>`. Raises InsufficientCredits if fewer are available.
+    Raises LedgerConflict if this attempt's hold was already captured or released: a second hold
+    for the same attempt cannot be written (UNIQUE (kind, ref_type, ref_id)), and returning the
+    old one would pretend credits are reserved when they are not. A new approval uses a new
+    attempt."""
     credits = _amount(credits)
+    ref = _attempt_ref(job_id, attempt)
     _require_transaction(conn)
     current = _lock(conn, user_id)
-    existing = _find(conn, user_id, "hold", JOB, job_id)
+    existing = _find(conn, user_id, "hold", JOB, ref)
     if existing:
         for settled in ("capture", "release"):
-            if _find(conn, user_id, settled, JOB, job_id):
-                raise LedgerConflict(f"the hold for job {job_id} was already {settled}d")
+            if _find(conn, user_id, settled, JOB, ref):
+                raise LedgerConflict(f"the hold for job {ref} was already {settled}d")
         return _same_or_conflict(existing, 0, credits)
     _ensure_available(current, credits)
-    return _write(conn, user_id, "hold", JOB, job_id, 0, credits)
+    return _write(conn, user_id, "hold", JOB, ref, 0, credits)
 
 
-def _settle(conn: Connection, user_id: str, job_id: str, kind: str, other: str) -> Entry:
+def _settle(
+    conn: Connection, user_id: str, job_id: str, attempt: int, kind: str, other: str
+) -> Entry:
+    ref = _attempt_ref(job_id, attempt)
     _require_transaction(conn)
     _lock(conn, user_id)
-    existing = _find(conn, user_id, kind, JOB, job_id)
+    existing = _find(conn, user_id, kind, JOB, ref)
     if existing:
         return existing
-    if _find(conn, user_id, other, JOB, job_id):
-        raise LedgerConflict(f"the hold for job {job_id} was already {other}d")
-    held = _find(conn, user_id, "hold", JOB, job_id)
+    if _find(conn, user_id, other, JOB, ref):
+        raise LedgerConflict(f"the hold for job {ref} was already {other}d")
+    held = _find(conn, user_id, "hold", JOB, ref)
     if held is None:
-        raise LedgerConflict(f"no hold to {kind} for job {job_id}")
+        raise LedgerConflict(f"no hold to {kind} for job {ref}")
     amount = held.reserved_delta
     credits = -amount if kind == "capture" else 0
-    return _write(conn, user_id, kind, JOB, job_id, credits, -amount)
+    return _write(conn, user_id, kind, JOB, ref, credits, -amount)
 
 
-def capture(conn: Connection, user_id: str, job_id: str) -> Entry:
-    """Take the held amount (as recorded on the hold) from balance and reserved. Raises
-    LedgerConflict if there is no hold or it was released."""
-    return _settle(conn, user_id, job_id, "capture", "release")
+def capture(conn: Connection, user_id: str, job_id: str, attempt: int) -> Entry:
+    """Take the amount held for this attempt (as recorded on the hold) from balance and
+    reserved. Raises LedgerConflict if the attempt has no hold or it was released."""
+    return _settle(conn, user_id, job_id, attempt, "capture", "release")
 
 
-def release(conn: Connection, user_id: str, job_id: str) -> Entry:
-    """Return the held amount (as recorded on the hold) to available credits. Raises
-    LedgerConflict if there is no hold or it was captured."""
-    return _settle(conn, user_id, job_id, "release", "capture")
+def release(conn: Connection, user_id: str, job_id: str, attempt: int) -> Entry:
+    """Return the amount held for this attempt (as recorded on the hold) to available credits.
+    Raises LedgerConflict if the attempt has no hold or it was captured."""
+    return _settle(conn, user_id, job_id, attempt, "release", "capture")
 
 
 # ---- reads -------------------------------------------------------------------------------
@@ -295,6 +315,29 @@ def get_wallet(conn_or_engine: Connection | Engine, user_id: str) -> WalletBalan
         with conn_or_engine.connect() as conn:
             return _read_wallet(conn, user_id)
     return _read_wallet(conn_or_engine, user_id)
+
+
+def _job_charged(conn: Connection, job_id: str) -> int:
+    taken = conn.execute(
+        select(func.coalesce(func.sum(_entries.c.credits), 0)).where(
+            _entries.c.ref_type == JOB,
+            or_(
+                _entries.c.ref_id == job_id,
+                _entries.c.ref_id.startswith(f"{job_id}#", autoescape=True),
+            ),
+        )
+    ).scalar_one()
+    return -int(taken)
+
+
+def job_charged_credits(conn_or_engine: Connection | Engine, job_id: str) -> int:
+    """Credits actually taken from the wallet for a job: the voice charge (less any return)
+    plus every captured hold of every approval attempt (D-038, D-039). Holds and releases move
+    only reserved credits, so they add nothing. 0 for a job with no entries."""
+    if isinstance(conn_or_engine, Engine):
+        with conn_or_engine.connect() as conn:
+            return _job_charged(conn, job_id)
+    return _job_charged(conn_or_engine, job_id)
 
 
 def list_entries(
@@ -352,17 +395,20 @@ class WalletStore:
         with self.engine.begin() as conn:
             return voice_return(conn, user_id, job_id)
 
-    def hold(self, user_id: str, job_id: str, credits: int) -> Entry:
+    def hold(self, user_id: str, job_id: str, credits: int, attempt: int) -> Entry:
         with self.engine.begin() as conn:
-            return hold(conn, user_id, job_id, credits)
+            return hold(conn, user_id, job_id, credits, attempt)
 
-    def capture(self, user_id: str, job_id: str) -> Entry:
+    def capture(self, user_id: str, job_id: str, attempt: int) -> Entry:
         with self.engine.begin() as conn:
-            return capture(conn, user_id, job_id)
+            return capture(conn, user_id, job_id, attempt)
 
-    def release(self, user_id: str, job_id: str) -> Entry:
+    def release(self, user_id: str, job_id: str, attempt: int) -> Entry:
         with self.engine.begin() as conn:
-            return release(conn, user_id, job_id)
+            return release(conn, user_id, job_id, attempt)
+
+    def job_charged_credits(self, job_id: str) -> int:
+        return job_charged_credits(self.engine, job_id)
 
     def get_wallet(self, user_id: str) -> WalletBalance:
         return get_wallet(self.engine, user_id)

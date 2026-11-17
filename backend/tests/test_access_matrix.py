@@ -248,13 +248,16 @@ def settings(tmp_path, database_url) -> Settings:
 
 
 @pytest.fixture
-def world(settings, make_user) -> Iterator[World]:
-    """Four users and two jobs in one fresh app. `start_poller=False` keeps jobs where they are."""
+def world(settings, make_user, grant) -> Iterator[World]:
+    """Four users and two jobs in one fresh app. `start_poller=False` keeps jobs where they are.
+    Every user has credits (T-304), so a refusal in the matrix is about access, never money."""
     with TestClient(create_app(settings, start_poller=False), base_url=HTTPS) as anon:
         owner = make_user(anon, EMAILS["owner"])
         other = make_user(anon, EMAILS["other"])
         admin = make_user(anon, EMAILS["admin"])
         unconfirmed = make_user(anon, EMAILS["unconfirmed"])
+        for user in (owner, other, admin, unconfirmed):
+            grant(anon, user.user_id, 1_000)
         run_sql(anon, "UPDATE users SET role = 'admin' WHERE email = :e", e=EMAILS["admin"])
         owner_job = create_job(owner)  # mock voice is synchronous: audio_ready
         # An unconfirmed user cannot create a job, so the job is made first and the email is then

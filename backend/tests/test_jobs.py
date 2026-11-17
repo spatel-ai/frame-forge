@@ -35,13 +35,18 @@ def settings(tmp_path, database_url):
     )
 
 
-# The `seed_user` fixture (tests/conftest.py), made reachable from make_service.
+# The `seed_user` and `grant` fixtures (tests/conftest.py), made reachable from make_service.
 _seed_user: list = []
+_grant: list = []
+
+# Enough for every job a test here makes (T-304: a voice costs 10, a video 20 a second).
+OWNER_CREDITS = 100_000
 
 
 @pytest.fixture(autouse=True)
-def _seeder(seed_user):
+def _seeder(seed_user, grant):
     _seed_user[:] = [seed_user]
+    _grant[:] = [grant]
 
 
 # Stores opened by make_service; closed after each test so no connection outlives it.
@@ -67,6 +72,8 @@ def make_service(settings, provider=None) -> OwnedService:
     _open_stores.append(store)
     service = OwnedService(settings, store, provider or MockProvider(settings))
     service.owner_id = _seed_user[0](settings.database_url)
+    # A fixed reference: a second service on the same database (the restart tests) adds nothing.
+    _grant[0](store.engine, service.owner_id, OWNER_CREDITS)
     return service
 
 
@@ -313,7 +320,12 @@ def test_restart_fails_jobs_cut_off_mid_call_instead_of_rerunning_them(settings)
             "id"
         ]
         mid_submit = await ready_job(service)
-        service.store.transition(mid_submit, db.AUDIO_READY, db.VIDEO_SUBMITTING)
+        # A real approval (status, attempt and hold together, T-304) whose submission is cut off
+        # before it reaches the provider, as a crash would.
+        service.approve_audio(service.owner_id, mid_submit)
+        for task in list(service._tasks):
+            task.cancel()
+        await asyncio.gather(*service._tasks, return_exceptions=True)
         service.recover_interrupted()
         await drain(service)
         assert service.store.get(mid_voice)["status"] == db.FAILED
@@ -379,9 +391,9 @@ def wait_for(client, job_id, status, timeout=10.0):
     raise AssertionError(f"job stayed {job['status']}, expected {status}: {job}")
 
 
-def test_http_flow_end_to_end(settings, sign_up):
+def test_http_flow_end_to_end(settings, sign_up, grant):
     with TestClient(create_app(settings), base_url="https://testserver") as client:
-        sign_up(client)
+        grant(client, sign_up(client), OWNER_CREDITS)
         assert client.get("/api/v1/config").json()["provider"] == "mock"
 
         created = client.post(
@@ -393,8 +405,9 @@ def test_http_flow_end_to_end(settings, sign_up):
         job_id = created.json()["id"]
 
         job = wait_for(client, job_id, "audio_ready")
-        # T-300: the company's fal.ai cost is never sent; the credit price arrives with T-303.
+        # T-300: the company's fal.ai cost is never sent. T-303: the credit price is.
         assert "estimated_video_cost_usd" not in job
+        assert isinstance(job["price_credits"], int) and job["price_credits"] > 0
         assert client.get(job["audio_url"]).status_code == 200
         assert client.get(f"/api/v1/jobs/{job_id}/video").status_code == 404
 
@@ -406,9 +419,9 @@ def test_http_flow_end_to_end(settings, sign_up):
         assert video.status_code == 200 and len(video.content) > 0
 
 
-def test_http_errors(settings, sign_up):
+def test_http_errors(settings, sign_up, grant):
     with TestClient(create_app(settings), base_url="https://testserver") as client:
-        sign_up(client)
+        grant(client, sign_up(client), OWNER_CREDITS)
         assert client.get("/api/v1/jobs/nope").status_code == 404
         assert client.post("/api/v1/jobs/nope/approve").status_code == 404
         bad = client.post(
