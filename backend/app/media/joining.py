@@ -281,3 +281,137 @@ def join(
     finally:
         tmp.unlink(missing_ok=True)
     return True
+
+
+# ---- D-066: the owner-approved look (opening banner, emblem, closing banner) ----------------
+
+# The shortest AI video the approved crossfades fit around (0.4 s in, 0.5 s out, a visible middle).
+MIN_COMPOSE_AI_S = 1.5
+FADE_IN_S = 0.4
+FADE_OUT_S = 0.5
+EMBLEM_WIDTH = 0.20  # of the AI video's width
+EMBLEM_MARGIN = 0.033  # of the AI video's width, from the top and the right edge
+
+
+def _even(value: float) -> int:
+    n = max(2, round(value))
+    return n if n % 2 == 0 else n + 1
+
+
+def _encode(cmd: list[str], out: Path, failure: str) -> None:
+    """Run `cmd` (which ends with the output path placeholder) into a temp file next to `out`,
+    then rename it into place. On any failure no file is left at `out` or beside it."""
+    try:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        fd, tmp_name = tempfile.mkstemp(prefix=f".{out.name}.", suffix=".part", dir=out.parent)
+        os.close(fd)
+    except OSError as exc:
+        raise MediaError(failure, str(exc)) from exc
+    tmp = Path(tmp_name)
+    try:
+        _run([*cmd, str(tmp)], JOIN_TIMEOUT_S, failure)
+        try:
+            os.chmod(tmp, 0o644)  # mkstemp makes 0600; give the usual file mode
+            os.replace(tmp, out)
+        except OSError as exc:
+            raise MediaError(failure, str(exc)) from exc
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+def compose(
+    ai_video: str | os.PathLike[str],
+    start_clip: str | os.PathLike[str],
+    end_clip: str | os.PathLike[str],
+    overlay_png: str | os.PathLike[str],
+    out_path: str | os.PathLike[str],
+    pad_color: str,
+) -> None:
+    """D-066: opening banner, the AI video with the emblem fixed top-right, closing banner, with
+    the approved crossfades (0.4 s in, 0.5 s out). The output has the AI video's measured size
+    and frame rate (R-67), H.264 yuv420p CRF 18 + AAC 192k, faststart.
+
+    Sound is the AI video's own, delayed to where its picture starts and padded with silence to
+    the end (the banners' own sound is not used); an AI video without sound gives a silent track.
+    Raises MediaError on any failure (including an AI video shorter than 1.5 s), leaving no file
+    at `out_path`. No input is ever changed."""
+    ai, start, end, overlay = (Path(p) for p in (ai_video, start_clip, end_clip, overlay_png))
+    out = Path(out_path)
+    out_resolved = out.resolve()
+    if any(p.resolve() == out_resolved for p in (ai, start, end, overlay)):
+        raise MediaError("The joined video cannot replace one of its own parts.")
+    if not overlay.is_file():
+        raise MediaError(f"The emblem image {overlay.name} was not found.")
+
+    ffmpeg = _tool("ffmpeg")
+    target = measure(ai)
+    s_info, e_info = measure(start), measure(end)
+    d, s, e = target.duration, s_info.duration, e_info.duration
+    if d < MIN_COMPOSE_AI_S:
+        raise MediaError(f"The AI video is shorter than {MIN_COMPOSE_AI_S} seconds.")
+    if s <= FADE_IN_S or e <= FADE_OUT_S:
+        raise MediaError("A banner clip is too short for its crossfade.")
+
+    w, h = target.width, target.height
+    fps = f"{target.frame_rate.numerator}/{target.frame_rate.denominator}"
+    total = s + d + e - FADE_IN_S - FADE_OUT_S
+    emblem_w = _even(EMBLEM_WIDTH * w)
+    margin = round(EMBLEM_MARGIN * w)
+    banner = (
+        f"scale={w}:{h}:force_original_aspect_ratio=decrease,"
+        f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color={pad_color},setsar=1,fps={fps},format=yuv420p"
+    )
+    graph = [
+        f"[0:v]{banner}[s]",
+        f"[2:v]{banner}[e]",
+        f"[3:v]scale={emblem_w}:-1,format=rgba,fade=in:st=0.2:d=0.5:alpha=1[lg]",
+        # Same picture format as the banners, which xfade requires.
+        f"[1:v]setsar=1,fps={fps},format=yuv420p[a0]",
+        f"[a0][lg]overlay=W-w-{margin}:{margin}:shortest=1,format=yuv420p[ai]",
+        f"[s][ai]xfade=transition=fade:duration={FADE_IN_S}:offset={s - FADE_IN_S:.6f}[x1]",
+        f"[x1][e]xfade=transition=fade:duration={FADE_OUT_S}:"
+        f"offset={s - FADE_IN_S + d - FADE_OUT_S:.6f}[vout]",
+    ]
+    if target.has_audio:
+        delay_ms = round((s - FADE_IN_S) * 1000)
+        graph.append(f"[1:a:0]adelay={delay_ms}:all=1,apad=whole_dur={total:.6f}[aout]")
+        rate = target.sample_rate or DEFAULT_SAMPLE_RATE
+    else:
+        rate = DEFAULT_SAMPLE_RATE
+        layout = _LAYOUT_BY_CHANNELS[DEFAULT_CHANNELS]
+        graph.append(f"anullsrc=r={rate}:cl={layout},atrim=duration={total:.6f}[aout]")
+
+    cmd = [ffmpeg, "-hide_banner", "-nostdin", "-loglevel", "error", "-y"]
+    cmd += ["-i", str(start), "-i", str(ai), "-i", str(end)]
+    cmd += ["-loop", "1", "-t", f"{d:.6f}", "-i", str(overlay)]
+    cmd += [
+        "-filter_complex",
+        ";".join(graph),
+        "-map",
+        "[vout]",
+        "-map",
+        "[aout]",
+        "-t",
+        f"{total:.6f}",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "medium",
+        "-crf",
+        "18",
+        "-pix_fmt",
+        "yuv420p",
+        "-r",
+        fps,
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "-ar",
+        str(rate),
+        "-movflags",
+        "+faststart",
+        "-f",
+        "mp4",
+    ]
+    _encode(cmd, out, "The banners could not be added to the video.")

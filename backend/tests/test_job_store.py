@@ -177,6 +177,12 @@ def test_timestamps_round_trip_as_now_iso_text(database_url, owner):
             "script_id",  # 0010 (T-505)
             "video_url",  # 0011 (T-553, D-065)
             "video_expires_at",
+            "ai_video_url",  # 0012 (D-066, D-019, S3 storage)
+            "ai_video_key",
+            "ai_video_file",
+            "video_key",
+            "banners_applied",
+            "assembly_attempts",
         ]
         assert (job["price_credits"], job["approve_attempt"], job["needs_review"]) == (
             None,

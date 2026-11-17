@@ -18,6 +18,7 @@ from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
 
+import httpx
 from PIL import Image
 from sqlalchemy import Connection
 
@@ -25,6 +26,8 @@ from ..auth.email import EmailSender
 from ..auth.store import AuthStore
 from ..core import mail_templates
 from ..core.config import Settings
+from ..media import compose
+from ..media.storage import VideoStorage, build_video_storage
 from ..providers import VIDEO_LIFETIME_SECONDS, Provider, ProviderError
 from ..scripts import service as script_library
 from ..wallet import ledger
@@ -113,6 +116,30 @@ def _wallet(job_id: str, step: _JobLedger) -> db.LedgerStep:
     return run
 
 
+def _in_30_days() -> str:
+    # D-054, D-065: a finished video is kept 30 days.
+    expires = datetime.now(timezone.utc) + timedelta(seconds=VIDEO_LIFETIME_SECONDS)
+    return expires.isoformat(timespec="seconds")
+
+
+async def download_video(url: str, path: Path) -> None:
+    """Fetch the AI video from the provider's link into `path` (the assembling step). Free: the
+    link is the result of a video already paid for. Tests replace this function."""
+    async with httpx.AsyncClient(timeout=300, follow_redirects=True) as client:
+        async with client.stream("GET", url) as response:
+            response.raise_for_status()
+            with path.open("wb") as out:
+                async for chunk in response.aiter_bytes():
+                    out.write(chunk)
+
+
+class _BuildFromSettings:
+    """Marker: build the video storage from the settings (S3 when a bucket is set)."""
+
+
+_FROM_SETTINGS = _BuildFromSettings()
+
+
 class JobService:
     def __init__(
         self,
@@ -120,13 +147,24 @@ class JobService:
         store: JobStore,
         provider: Provider,
         email_sender: EmailSender | None = None,
+        storage: VideoStorage | None | _BuildFromSettings = _FROM_SETTINGS,
     ):
         self.settings = settings
         self.store = store
         self.provider = provider
         # T-552 (R-13): sends the "your video is ready" email; None sends nothing.
         self.email_sender = email_sender
+        # Finished videos in S3 (owner, 2026-11-17); None keeps them on local disk.
+        self.storage: VideoStorage | None = (
+            build_video_storage(settings) if isinstance(storage, _BuildFromSettings) else storage
+        )
         self._tasks: set[asyncio.Task] = set()
+        # Jobs whose assembling step is running in this process, so one job is never assembled
+        # twice at once here. Across processes the compare-and-set completion decides (rule 4).
+        self._assembling: set[str] = set()
+        # The server is small (2 GB): at most `assembly_concurrency` ffmpeg joins at a time in
+        # this process. Other jobs wait in `video_assembling` until a slot frees.
+        self._assembly_slots = asyncio.Semaphore(max(1, settings.assembly_concurrency))
 
     # ---- helpers -------------------------------------------------------
 
@@ -434,7 +472,10 @@ class JobService:
 
         Both are unknown outcomes of a paid call and are flagged for staff. A cut-off voice
         delivered nothing to the customer, so its 10 credits are returned (D-048). A cut-off
-        video submission may have started a paid video, so its hold is captured (Q-19, D-005)."""
+        video submission may have started a paid video, so its hold is captured (Q-19, D-005).
+
+        Jobs in `video_assembling` are left alone: that step calls no paid service, so the
+        poller simply runs it again (D-019)."""
         steps: tuple[tuple[str, str, _JobLedger | None], ...] = (
             (
                 db.AUDIO_GENERATING,
@@ -467,6 +508,9 @@ class JobService:
                     log.exception("could not recover interrupted job %s", job["id"])
 
     async def poll_once(self) -> None:
+        # Listed first, so a job that fails its assembling step in this cycle is tried again in
+        # the next one, not straight away. Also picks up jobs left here by a restart.
+        assembling = self.store.list_by_status(db.VIDEO_ASSEMBLING)
         for job in self.store.list_by_status(db.VIDEO_GENERATING):
             # One job's failure (for example a ledger error) must not stop the others from being
             # collected. Its status change rolled back, so it is simply tried again next cycle.
@@ -474,6 +518,17 @@ class JobService:
                 await self._poll_job(job)
             except Exception:
                 log.exception("collecting the video failed for %s; will retry", job["id"])
+        # The free, retryable step (D-019; backend joining rule 5). Kept apart from the paid
+        # path above: it never calls the video model, so retrying it can never pay twice.
+        for job in assembling:
+            try:
+                await self._assemble(job["id"])
+            except Exception:
+                log.exception("finishing the video failed for %s; will retry", job["id"])
+
+    def _assembles(self) -> bool:
+        """Whether a delivered AI video goes through `video_assembling` (banners, S3 copy)."""
+        return self.settings.banners_enabled or self.storage is not None
 
     async def _poll_job(self, job: dict) -> None:
         job_id = job["id"]
@@ -482,7 +537,22 @@ class JobService:
         except Exception:
             log.exception("polling failed for %s; will retry", job_id)
             poll = None
-        if poll is not None and poll.state == "done":
+        if poll is not None and poll.state == "done" and self._assembles():
+            # D-019, D-066: keep the AI result and move on to the free assembling step. No ledger
+            # step: the hold stays until the single capture at `completed` (money rule 10).
+            ai: dict[str, str] = {}
+            if poll.url:
+                ai["ai_video_url"] = poll.url
+                # fal keeps its link 30 days (D-065); used only if the video cannot be stored.
+                ai["video_expires_at"] = _in_30_days()
+            else:
+                (self.job_dir(job_id) / "ai_video.mp4").write_bytes(poll.data or b"")
+                ai["ai_video_file"] = "ai_video.mp4"
+            if self.store.transition(
+                job_id, db.VIDEO_GENERATING, db.VIDEO_ASSEMBLING, ledger=None, **ai
+            ):
+                await self._assemble(job_id)
+        elif poll is not None and poll.state == "done":
             video: dict[str, str] = {}
             if poll.url:
                 # D-065 (R-24, R-74): keep fal's link, not the file; fal keeps it 30 days.
@@ -527,6 +597,150 @@ class JobService:
                         f"{job['provider_request_id']}."
                     ),
                 )
+
+    # ---- step 3b: the free assembling step (banners, storage) ---------------
+
+    async def _assemble(self, job_id: str) -> None:
+        """Finish a job in `video_assembling`: add the banners and/or store the video, then ONE
+        `video_assembling → completed` transition with the capture (R-10, money rule 10).
+
+        Free and safe to retry (D-019; joining rule 5). A failed try counts an attempt and is
+        tried again next cycle; at `assembly_max_attempts` the paid AI video is delivered as it
+        is, flagged for staff (D-019). A failure of the completing transition itself (for example
+        a ledger error) is not counted: it rolled back and the step runs again next cycle."""
+        if job_id in self._assembling:
+            return
+        self._assembling.add(job_id)
+        try:
+            async with self._assembly_slots:
+                await self._assemble_one(job_id)
+        finally:
+            self._assembling.discard(job_id)
+
+    async def _assemble_one(self, job_id: str) -> None:
+        """The body of `_assemble`, run while holding an assembly slot. The job is read only
+        now, so a job that waited for the slot is seen as it is after the wait."""
+        job = self.store.get(job_id)
+        if job is None or job["status"] != db.VIDEO_ASSEMBLING:
+            return
+        limit = self.settings.assembly_max_attempts
+        if job["assembly_attempts"] >= limit:
+            fields = self._fallback(job)
+        else:
+            try:
+                fields = await self._finish_video(job)
+            except Exception as exc:
+                attempts = job["assembly_attempts"] + 1
+                details = getattr(exc, "details", "")
+                log.warning(
+                    "adding banners / storing the video failed for %s (try %d of %d): %s %s",
+                    job_id, attempts, limit, type(exc).__name__, details,
+                )  # fmt: skip
+                if attempts < limit:
+                    self.store.transition(
+                        job_id,
+                        db.VIDEO_ASSEMBLING,
+                        db.VIDEO_ASSEMBLING,
+                        assembly_attempts=attempts,
+                    )
+                    return
+                job = self.store.get(job_id)  # fresh: a try may have stored the AI video
+                if job is None or job["status"] != db.VIDEO_ASSEMBLING:
+                    return
+                fields = {**self._fallback(job), "assembly_attempts": attempts}
+        # Delivered: take the held price. A repeated or concurrent assembly finds the job no
+        # longer video_assembling, so the capture happens once.
+        completed = self.store.transition(
+            job_id,
+            db.VIDEO_ASSEMBLING,
+            db.COMPLETED,
+            ledger=_wallet(job_id, _capture),
+            **fields,
+        )
+        if completed:
+            self._notify_video_ready(job_id)
+
+    def _fallback(self, job: dict) -> dict:
+        """D-019: the paid AI video without banners, flagged for staff. The best copy that
+        exists: our stored copy in S3, else fal's link (D-065), else the local file."""
+        fields: dict = {
+            "needs_review": True,
+            "banners_applied": False if self.settings.banners_enabled else None,
+        }
+        if job["ai_video_key"]:
+            return {**fields, "video_key": job["ai_video_key"], "video_expires_at": _in_30_days()}
+        if job["ai_video_url"]:
+            return {**fields, "video_url": job["ai_video_url"]}  # its expiry is already stored
+        if job["ai_video_file"]:
+            return {**fields, "video_file": job["ai_video_file"]}
+        raise RuntimeError(f"job {job['id']} has no AI video to deliver")
+
+    def _storage_key(self, job_id: str, name: str) -> str:
+        prefix = self.settings.s3_prefix
+        return f"{prefix}/{job_id}/{name}" if prefix else f"{job_id}/{name}"
+
+    async def _finish_video(self, job: dict) -> dict:
+        """One try of the assembling step. Returns the columns the completing transition sets.
+        Temporary files (the downloaded AI video, the joined file before upload) are removed
+        whatever happens; the local AI file of mock mode is kept (joining rule 7)."""
+        banners = self.settings.banners_enabled
+        if not banners and self.storage is None:
+            # Banners were turned off while this job waited: deliver the AI video as it is.
+            if job["ai_video_file"]:
+                return {"video_file": job["ai_video_file"]}
+            return {"video_url": job["ai_video_url"]}
+        folder = self.job_dir(job["id"])
+        folder.mkdir(parents=True, exist_ok=True)
+        temps: list[Path] = []
+        try:
+            if job["ai_video_file"]:
+                ai_path = folder / job["ai_video_file"]
+            else:
+                ai_path = folder / f".ai-download-{uuid.uuid4().hex}.mp4"
+                temps.append(ai_path)
+                await download_video(job["ai_video_url"], ai_path)
+            return await asyncio.to_thread(self._join_and_store, job, ai_path, temps)
+        finally:
+            for path in temps:
+                path.unlink(missing_ok=True)
+
+    def _banner_assets(self, job: dict) -> tuple[Path, Path, Path]:
+        """The (start clip, end clip, emblem) for this job. Today every job gets the fixed,
+        owner-approved files (D-066); the one place to resolve per-job banners later."""
+        assets = self.settings.banner_dir
+        return assets / "start.mp4", assets / "end.mp4", assets / "overlay.png"
+
+    def _join_and_store(self, job: dict, ai_path: Path, temps: list[Path]) -> dict:
+        """Blocking part of a try (ffmpeg, S3), run off the event loop."""
+        job_id = job["id"]
+        folder = self.job_dir(job_id)
+        banners = self.settings.banners_enabled
+
+        def join_banners(out: Path) -> None:
+            start, end, overlay = self._banner_assets(job)
+            compose(ai_path, start, end, overlay, out, self.settings.banner_pad_color)
+
+        if self.storage is None:
+            join_banners(folder / "video.mp4")  # local disk (mock mode, no bucket)
+            return {"video_file": "video.mp4", "banners_applied": True}
+
+        ai_key = job["ai_video_key"]
+        if not ai_key:
+            ai_key = self._storage_key(job_id, "ai.mp4")
+            self.storage.put(ai_path, ai_key)
+            # Recorded now, so later tries and the fallback use the stored copy.
+            self.store.transition(
+                job_id, db.VIDEO_ASSEMBLING, db.VIDEO_ASSEMBLING, ai_video_key=ai_key
+            )
+        fields: dict = {"video_key": ai_key, "video_expires_at": _in_30_days()}
+        if banners:
+            joined = folder / f".video-{uuid.uuid4().hex}.mp4"
+            temps.append(joined)
+            join_banners(joined)
+            video_key = self._storage_key(job_id, "video.mp4")
+            self.storage.put(joined, video_key)
+            fields.update(video_key=video_key, banners_applied=True)
+        return fields
 
     def _notify_video_ready(self, job_id: str) -> None:
         """T-552 (R-13): email the customer once, after the completed transition has committed.

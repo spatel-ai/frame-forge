@@ -35,6 +35,12 @@ EXPECTED_COLUMNS = {
     "needs_review",
     "video_url",  # 0011 (T-553, D-065)
     "video_expires_at",
+    "ai_video_url",  # 0012 (D-066, D-019, S3 storage)
+    "ai_video_key",
+    "ai_video_file",
+    "video_key",
+    "banners_applied",
+    "assembly_attempts",
 }
 
 
@@ -47,7 +53,7 @@ def test_upgrade_and_downgrade_in_throwaway_schema(empty_schema, admin_engine):
     assert insp.has_table("jobs", schema=schema)
     columns = insp.get_columns("jobs", schema=schema)
     assert {c["name"] for c in columns} == EXPECTED_COLUMNS
-    assert len(columns) == 22
+    assert len(columns) == 28
     assert insp.get_pk_constraint("jobs", schema=schema)["constrained_columns"] == ["id"]
     assert any(i["column_names"] == ["status"] for i in insp.get_indexes("jobs", schema=schema))
 
@@ -422,5 +428,42 @@ def test_0011_adds_the_nullable_video_link_columns(empty_schema):
         command.downgrade(cfg, "0010")
         names = {c["name"] for c in inspect(engine).get_columns("jobs")}
         assert not names & {"video_url", "video_expires_at"}
+    finally:
+        engine.dispose()
+
+
+def test_0012_adds_the_banner_and_storage_columns(empty_schema):
+    """D-066, D-019, R-44, R-53 (S3 storage, owner 2026-11-17): 0012 adds jobs.ai_video_url,
+    ai_video_key, ai_video_file, video_key (text, NULL), banners_applied (boolean, NULL) and
+    assembly_attempts (integer, NOT NULL, 0 for existing rows); downgrade to 0011 removes them."""
+    cfg = empty_schema.alembic_config()
+    command.upgrade(cfg, "0011")
+    engine = create_engine(empty_schema.url, poolclass=NullPool)
+    new = ("ai_video_url", "ai_video_key", "ai_video_file", "video_key", "banners_applied")
+    try:
+        with engine.begin() as conn:
+            conn.execute(
+                text(
+                    "INSERT INTO jobs (id, status, language, script, image_file, video_url, "
+                    "created_at, updated_at) VALUES ('old', 'completed', 'English', 'hi', "
+                    "'image.png', 'https://v3.fal.media/x.mp4', now(), now())"
+                )
+            )
+        command.upgrade(cfg, "0012")
+        with engine.begin() as conn:
+            row = conn.execute(
+                text(f"SELECT {', '.join(new)}, assembly_attempts, video_url FROM jobs")
+            ).one()
+            assert tuple(row) == (None,) * 5 + (0, "https://v3.fal.media/x.mp4")
+        cols = {c["name"]: c for c in inspect(engine).get_columns("jobs")}
+        for name in new[:4]:
+            assert str(cols[name]["type"]) == "TEXT" and cols[name]["nullable"]
+        assert str(cols["banners_applied"]["type"]) == "BOOLEAN"
+        assert cols["banners_applied"]["nullable"]
+        attempts = cols["assembly_attempts"]
+        assert str(attempts["type"]) == "INTEGER" and not attempts["nullable"]
+        command.downgrade(cfg, "0011")
+        names = {c["name"] for c in inspect(engine).get_columns("jobs")}
+        assert not names & {*new, "assembly_attempts"}
     finally:
         engine.dispose()

@@ -18,6 +18,9 @@ AUDIO_GENERATING = "audio_generating"
 AUDIO_READY = "audio_ready"
 VIDEO_SUBMITTING = "video_submitting"
 VIDEO_GENERATING = "video_generating"
+# D-019, D-066: the paid AI video has arrived; banners are being added and the video stored. Free
+# and safe to retry. The hold stays until `completed`.
+VIDEO_ASSEMBLING = "video_assembling"
 COMPLETED = "completed"
 FAILED = "failed"
 # Statuses behind the list filter "in_progress" (T-501).
@@ -26,7 +29,7 @@ IN_PROGRESS = (
     AUDIO_READY,
     VIDEO_SUBMITTING,
     VIDEO_GENERATING,
-    "video_assembling",
+    VIDEO_ASSEMBLING,
 )
 
 _jobs = Job.__table__

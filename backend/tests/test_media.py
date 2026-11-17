@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from app.media import MediaError, join, measure
+from app.media import MediaError, compose, join, measure
 
 pytestmark = pytest.mark.skipif(
     shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None,
@@ -350,3 +350,139 @@ def test_output_cannot_replace_the_ai_video(clips):
     """R-44: the AI video is kept; joining refuses to write over it."""
     with pytest.raises(MediaError):
         join(clips["ai"], clips["start"], None, clips["ai"])
+
+
+# ---- D-066: compose (opening banner, emblem top-right, closing banner) ----------------------
+
+C_START_S, C_AI_S, C_END_S = 1.0, 2.0, 1.0
+C_TOTAL_S = C_START_S + C_AI_S + C_END_S - 0.9  # 0.4 s and 0.5 s crossfades
+YELLOW = (255, 255, 0)
+NAVY = "0x15215e"
+BANNER_DIR = Path(__file__).resolve().parent.parent / "assets" / "banners"
+# 640 px wide AI video: emblem 128 px wide, 21 px from the top and the right edge.
+EMBLEM_XY = (555, 85)
+
+
+@pytest.fixture(scope="module")
+def comp(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Path]:
+    from PIL import Image
+
+    d = tmp_path_factory.mktemp("compose")
+    overlay = d / "overlay.png"
+    Image.new("RGBA", (100, 100), (*YELLOW, 255)).save(overlay)
+    return {
+        "start": make_clip(
+            d / "start.mp4", size="320x180", fps="30", duration=C_START_S, colour="red"
+        ),
+        "ai": make_clip(d / "ai.mp4", size="640x360", fps="25", duration=C_AI_S, colour="blue"),
+        "ai_silent": make_clip(
+            d / "ai_silent.mp4",
+            size="640x360",
+            fps="25",
+            duration=C_AI_S,
+            colour="blue",
+            audio=None,
+        ),
+        "end": make_clip(d / "end.mp4", size="640x360", fps="25", duration=C_END_S, colour="lime"),
+        "overlay": overlay,
+    }
+
+
+def test_d066_compose_order_size_and_length(comp, tmp_path):
+    """R-44, R-67, D-066: start banner, AI video, end banner, at the AI video's size and frame
+    rate; length = S + D + E - 0.9 (the two crossfades)."""
+    out = tmp_path / "out.mp4"
+    compose(comp["ai"], comp["start"], comp["end"], comp["overlay"], out, NAVY)
+    info = measure(out)
+    assert (info.width, info.height, info.frame_rate) == (640, 360, Fraction(25))
+    assert abs(info.duration - C_TOTAL_S) <= TOLERANCE_S, info.duration
+    assert near(pixel(out, 0.2, 320, 180), RED)
+    assert near(pixel(out, 1.6, 320, 180), BLUE)
+    assert near(pixel(out, C_TOTAL_S - 0.15, 320, 180), GREEN)
+    decodes(out)
+
+
+def test_d066_emblem_top_right_only_while_the_avatar_speaks(comp, tmp_path):
+    """D-066, R-44: the emblem sits top-right during the AI part (after its 0.5 s fade-in); the
+    same pixel is plain AI blue in the AI video itself, and the banners have no emblem."""
+    out = tmp_path / "out.mp4"
+    compose(comp["ai"], comp["start"], comp["end"], comp["overlay"], out, NAVY)
+    x, y = EMBLEM_XY
+    assert near(pixel(comp["ai"], 0.6, x, y), BLUE)  # the AI video alone: no emblem
+    assert near(pixel(out, 1.6, x, y), YELLOW)  # the AI part: emblem
+    assert near(pixel(out, 1.6, 40, 300), BLUE)  # elsewhere in the AI part: untouched
+    assert near(pixel(out, 0.2, x, y), RED)  # the opening banner: no emblem
+    assert near(pixel(out, C_TOTAL_S - 0.15, x, y), GREEN)  # the closing banner: no emblem
+
+
+def test_d066_ai_sound_kept_and_offset(comp, tmp_path):
+    """R-44, D-066: the AI voice starts where its picture fades in (S - 0.4 s) and is followed by
+    silence; the banners' own sound is not used."""
+    out = tmp_path / "out.mp4"
+    compose(comp["ai"], comp["start"], comp["end"], comp["overlay"], out, NAVY)
+    offset = C_START_S - 0.4
+    assert loudest_db(out, 0.0, offset - 0.1) < -50  # opening banner: silent
+    assert loudest_db(out, offset + 0.2, offset + C_AI_S - 0.2) > -40  # the AI voice
+    assert loudest_db(out, offset + C_AI_S + 0.15, C_TOTAL_S - 0.05) < -50  # closing: silent
+    assert measure(out).sample_rate == measure(comp["ai"]).sample_rate
+
+
+def test_d066_ai_without_sound_gets_a_silent_track(comp, tmp_path):
+    """R-67: an AI video without sound still composes, with a silent 48 kHz track."""
+    out = tmp_path / "out.mp4"
+    compose(comp["ai_silent"], comp["start"], comp["end"], comp["overlay"], out, NAVY)
+    info = measure(out)
+    assert info.has_audio and info.sample_rate == 48000
+    assert abs(info.duration - C_TOTAL_S) <= TOLERANCE_S
+    assert loudest_db(out, 0.0, C_TOTAL_S - 0.05) < -50
+
+
+def test_d066_short_ai_video_raises_and_writes_nothing(comp, clips, tmp_path):
+    """D-066: an AI video under 1.5 s cannot carry the crossfades: MediaError, no file (the
+    caller delivers the AI video as it is, D-019)."""
+    out = tmp_path / "out.mp4"
+    with pytest.raises(MediaError):
+        compose(clips["ai"], comp["start"], comp["end"], comp["overlay"], out, NAVY)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_d066_failure_leaves_no_file_and_ai_video_untouched(comp, tmp_path):
+    """R-67, joining rule 7: a broken banner fails cleanly; no file (not even a temporary one)
+    and the AI video is byte-for-byte unchanged."""
+    bad = tmp_path / "bad.mp4"
+    bad.write_bytes(comp["end"].read_bytes()[:2000])
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    before = comp["ai"].read_bytes()
+    with pytest.raises(MediaError):
+        compose(comp["ai"], comp["start"], bad, comp["overlay"], out_dir / "out.mp4", NAVY)
+    assert list(out_dir.iterdir()) == []
+    assert comp["ai"].read_bytes() == before
+    with pytest.raises(MediaError):
+        compose(
+            comp["ai"], comp["start"], comp["end"], tmp_path / "none.png", out_dir / "o.mp4", NAVY
+        )
+    with pytest.raises(MediaError):
+        compose(comp["ai"], comp["start"], comp["end"], comp["overlay"], comp["ai"], NAVY)
+    assert comp["ai"].read_bytes() == before
+
+
+def test_d066_committed_banner_assets_compose(tmp_path):
+    """D-066, R-44: the committed banners (720x1280 start/end, 360x360 emblem) compose around a
+    square AI video; the output keeps the AI video's size."""
+    ai = make_clip(tmp_path / "ai.mp4", size="480x480", fps="25", duration=2.0, colour="blue")
+    out = tmp_path / "out.mp4"
+    compose(
+        ai,
+        BANNER_DIR / "start.mp4",
+        BANNER_DIR / "end.mp4",
+        BANNER_DIR / "overlay.png",
+        out,
+        NAVY,
+    )
+    want = 2.0 + measure(BANNER_DIR / "start.mp4").duration
+    want += measure(BANNER_DIR / "end.mp4").duration - 0.9
+    info = measure(out)
+    assert (info.width, info.height) == (480, 480)
+    assert abs(info.duration - want) <= TOLERANCE_S
+    decodes(out)

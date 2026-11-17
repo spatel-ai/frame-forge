@@ -4,6 +4,8 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
+_BACKEND_DIR = Path(__file__).resolve().parents[2]
+
 
 @dataclass(frozen=True)
 class Settings:
@@ -130,6 +132,29 @@ class Settings:
     banners_enabled: bool = field(
         default_factory=lambda: os.getenv("AVATAR_BANNERS", "on").strip().lower() != "off"
     )
+    # The banner files (D-066): start.mp4, end.mp4 and overlay.png, committed in the repository.
+    banner_dir: Path = field(
+        default_factory=lambda: Path(
+            os.getenv("AVATAR_BANNER_DIR", str(_BACKEND_DIR / "assets" / "banners"))
+        ).resolve()
+    )
+    # Fills the bars when a banner's shape differs from the AI video's (the banners' navy).
+    banner_pad_color: str = "0x15215e"
+    # Adding banners is free and safe to retry (D-019); after this many failed tries the paid AI
+    # video is delivered without banners and the job is flagged for staff.
+    assembly_max_attempts: int = 3
+    # ffmpeg joins at once per process. The server has 2 GB of memory (t3.small): one at a time.
+    assembly_concurrency: int = 1
+    # Finished videos live in the owner's private S3 bucket (owner, 2026-11-17). Empty: local
+    # disk (development, mock mode). AWS credentials come from boto3's own chain (env outside
+    # EC2, the instance role on EC2) and are never read here.
+    s3_bucket: str = field(default_factory=lambda: os.getenv("AVATAR_S3_BUCKET", "").strip())
+    s3_region: str = field(default_factory=lambda: os.getenv("AWS_REGION", "ap-south-1").strip())
+    s3_prefix: str = field(
+        default_factory=lambda: os.getenv("AVATAR_S3_PREFIX", "videos").strip().strip("/")
+    )
+    # How long a signed link to a stored video works.
+    s3_url_seconds: int = 3600
     # Keep every voice for reuse, not only failed jobs' voices (D-043). Off by default.
     save_all_voices: bool = False
     # Shown on failure screens when set (D-055); the owner adds it before launch.
@@ -174,6 +199,12 @@ class Settings:
         # so production never runs it.
         if self.environment == "production" and self.payments == "mock":
             raise ValueError("AVATAR_PAYMENTS=mock is not allowed in production.")
+        # Paid videos must be kept somewhere that outlives the provider's link (owner, 2026-11-17).
+        if self.environment == "production" and self.provider == "fal" and not self.s3_bucket:
+            raise ValueError(
+                "AVATAR_S3_BUCKET is required in production with AVATAR_PROVIDER=fal: finished "
+                "videos are stored in S3."
+            )
         if self.payments == "razorpay":
             missing = [
                 name
