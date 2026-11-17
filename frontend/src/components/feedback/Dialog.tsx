@@ -107,7 +107,7 @@ export function Dialog({ open, onClose, title, children, dismissable = true, wid
     // Engines differ in whether focus scrolling honours scroll-padding, so check it ourselves too.
     const keepFocusedClear = () => {
       const focused = document.activeElement
-      if (!space || !(focused instanceof HTMLElement) || !body.contains(focused)) return
+      if (!(focused instanceof HTMLElement) || !body.contains(focused)) return
       // A button in the footer is always in view; moving the body for it would jump the content.
       if (footers.some((footer) => footer.contains(focused))) return
       // A visually hidden control (the file input of a drop zone) is shown by its label.
@@ -115,9 +115,11 @@ export function Dialog({ open, onClose, title, children, dismissable = true, wid
       const shown = focused.offsetHeight <= 2 && labels && labels.length > 0 ? labels[labels.length - 1] : focused
       const box = body.getBoundingClientRect()
       const field = shown.getBoundingClientRect()
-      // Bring its bottom above the footer, but never push its top out of view (a tall textarea).
-      const overlap = Math.min(field.bottom - (box.bottom - space - FOOTER_GAP), field.top - box.top)
-      if (overlap > 0) body.scrollTop += overlap
+      // Bring its bottom above the footer (or, with nothing pinned, inside the body: WebKit leaves a
+      // field it tabs to partly below the edge), but never push its top out of view (a tall textarea).
+      const limit = space ? box.bottom - space - FOOTER_GAP : box.bottom
+      const overlap = Math.min(field.bottom - limit, field.top - box.top)
+      if (overlap > 0) body.scrollTop += Math.ceil(overlap)
     }
     const relayout = () => {
       footers = findFooters(body)

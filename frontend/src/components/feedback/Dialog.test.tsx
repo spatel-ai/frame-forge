@@ -263,4 +263,21 @@ describe('Dialog', () => {
     footerHeight.mockRestore()
     vi.restoreAllMocks()
   })
+  it('with no pinned footer, scrolls a focused field that ends below the body edge fully into view', async () => {
+    render(
+      <Dialog open onClose={() => {}} title="Buy credits">
+        <input aria-label="Credits" />
+      </Dialog>,
+    )
+    const input = screen.getByLabelText('Credits')
+    const body = input.closest('[style]') as HTMLElement
+    const box = (top: number, bottom: number) => ({ top, bottom, left: 0, right: 100, width: 100, height: bottom - top, x: 0, y: top, toJSON: () => ({}) }) as DOMRect
+    vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(box(68, 284))
+    vi.spyOn(input, 'getBoundingClientRect').mockReturnValue(box(250, 294))
+    vi.spyOn(input, 'offsetHeight', 'get').mockReturnValue(44)
+    body.scrollTop = 0
+    act(() => input.focus())
+    await vi.waitFor(() => expect(body.scrollTop).toBe(10))
+    vi.restoreAllMocks()
+  })
 })
