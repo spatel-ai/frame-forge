@@ -925,9 +925,9 @@
     "starts_after": "T-304, T-500",
     "task": "Job list with pagination",
     "acceptance": "Only the caller's jobs; newest first",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent working in its own worktree (M5 phase 1), launched 2026-11-17."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "GET /api/v1/jobs: caller's jobs only, newest first, status all/ready/in_progress/failed, case-insensitive search with literal % and _, paging; tests/test_job_list.py (14) + access matrix. backend check 551 passed. Merged."
   },
   {
     "id": "T-502",
@@ -970,9 +970,9 @@
     "starts_after": "T-204, T-500",
     "task": "`scripts` table and library routes",
     "acceptance": "Saved on first use; no duplicates; only the owner can list, read or delete",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent working in its own worktree (M5 phase 1), launched 2026-11-17."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Migration 0007 scripts (partial unique live index), save_or_touch (one INSERT … ON CONFLICT; 8-thread race → one row), list/read/soft delete, 404 script_not_found for others; tests/test_scripts.py + 0007 migration test + matrix. Dev DB upgraded to 0007. backend check 551 passed. Merged."
   },
   {
     "id": "T-505",
@@ -1075,9 +1075,9 @@
     "starts_after": "T-211, T-500",
     "task": "Video history and detail",
     "acceptance": "Play, download, see what it cost",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent working in its own worktree (M5 phase 1), launched 2026-11-17."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "features/videos: list (server search, status filter, paging, empty/no-match/error) and detail (player labelled AI-generated, script, cost from voice_credits/video_credits/charged_credits, failure ending per failure_kind, support email only when set). npm run check 439 passed. Merged."
   },
   {
     "id": "T-512",

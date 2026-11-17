@@ -84,7 +84,7 @@ app/jobs/              db.py (store), service.py (lifecycle and charging), route
 app/wallet/            ledger.py (the only writer of wallets and ledger_entries), routes, cli.py (grant)
 app/payments/          Razorpay orders, quote and fee, verify, webhook, reconciliation (M4)
 app/media/             ffprobe measuring and ffmpeg joining of banners (M5, T-507)
-app/scripts/           script library (M5; contract stubs until T-504)
+app/scripts/           script library: models, save_or_touch, routes (M5, T-504)
 app/templates/         banner templates (M5; contract stubs until T-506)
 app/providers.py       fal and mock
 app/export_openapi.py  prints the API contract
