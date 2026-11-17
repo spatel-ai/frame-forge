@@ -107,6 +107,8 @@ def get_config(request: Request) -> ConfigOut:
         razorpay_key_id=settings.razorpay_key_id if settings.payments == "razorpay" else None,
         min_purchase_credits=settings.min_purchase_credits,
         max_purchase_credits=settings.max_purchase_credits,
+        payment_fee_bps=settings.payment_fee_bps,
+        payment_fee_gst_bps=settings.payment_fee_gst_bps,
         support_email=settings.support_email or None,
     )
 

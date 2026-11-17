@@ -21,6 +21,8 @@ from .jobs.db import JobStore
 from .jobs.errors import register_job_error_handlers
 from .jobs.service import JobService
 from .payments import routes as payment_routes
+from .payments.gateway import build_gateway
+from .payments.service import PaymentService
 from .providers import Provider, build_provider
 from .wallet import routes as wallet_routes
 
@@ -49,14 +51,20 @@ def create_app(
         service.recover_interrupted()
         app.state.service = service
         app.state.auth_service = AuthService(settings, AuthStore(store.engine), sender)
+        payments = PaymentService(settings, store.engine, build_gateway(settings))
+        app.state.payments = payments
         poller = asyncio.create_task(service.run_poller()) if start_poller else None
+        # T-405: ask Razorpay about unpaid orders every 5 minutes, like the job poller.
+        reconciler = asyncio.create_task(payments.run_reconciler()) if start_poller else None
         try:
             yield
         finally:
-            if poller:
-                poller.cancel()
-                with suppress(asyncio.CancelledError):
-                    await poller
+            for task in (poller, reconciler):
+                if task:
+                    task.cancel()
+                    with suppress(asyncio.CancelledError):
+                        await task
+            payments.gateway.close()
             store.close()
 
     app = FastAPI(title="Frameforge API", lifespan=lifespan)

@@ -49,6 +49,8 @@ class Row:
 
     @property
     def ref(self) -> str:
+        if self.path.startswith(("/api/v1/payments", "/api/v1/webhooks")):
+            return "R-03 R-12"  # payments: only the caller's own orders, only signed proof
         if self.actor == "unconfirmed":
             return "R-12 R-01"  # the email-confirmation rule (D-036) is an R-01 rule
         return "R-01" if self.path.startswith("/api/v1/auth/") else "R-12"
@@ -132,15 +134,42 @@ ROWS: list[Row] = [
     ],
     Row("GET", "/api/v1/wallet", "anonymous", 401, "not_authenticated"),
     Row("GET", "/api/v1/wallet/transactions", "anonymous", 401, "not_authenticated"),
-    # M4 payments (T-400 contract). Owner, other-user and unconfirmed rows arrive with T-402/T-403,
-    # when the routes stop answering 501.
+    # M4 payments (T-402 to T-404; R-03). Creating an order needs a confirmed email (D-049); the
+    # quote needs only a session. The owner's order ({order_id}, or `order_id` in the body) is
+    # 404 order_not_found to everyone else, admin included.
+    *[Row("POST", "/api/v1/payments/orders", actor, 201) for actor in ("owner", "other", "admin")],
+    Row("POST", "/api/v1/payments/orders", "unconfirmed", 403, "email_not_verified"),
     Row("POST", "/api/v1/payments/orders", "anonymous", 401, "not_authenticated"),
+    *[
+        Row("GET", "/api/v1/payments/quote", actor, 200)
+        for actor in ("owner", "other", "admin", "unconfirmed")
+    ],
+    Row("GET", "/api/v1/payments/quote", "anonymous", 401, "not_authenticated"),
+    Row("GET", "/api/v1/payments/orders/{order_id}", "owner", 200),
+    *[
+        Row("GET", "/api/v1/payments/orders/{order_id}", actor, 404, "order_not_found")
+        for actor in ("other", "admin", "unconfirmed")
+    ],
     Row("GET", "/api/v1/payments/orders/{order_id}", "anonymous", 401, "not_authenticated"),
+    # The owner's verify with a made-up signature: the order is theirs, the proof is not valid.
+    Row("POST", "/api/v1/payments/verify", "owner", 400, "payment_signature_invalid"),
+    *[
+        Row("POST", "/api/v1/payments/verify", actor, 404, "order_not_found")
+        for actor in ("other", "admin", "unconfirmed")
+    ],
     Row("POST", "/api/v1/payments/verify", "anonymous", 401, "not_authenticated"),
+    Row("POST", "/api/v1/payments/mock/complete", "owner", 200),
+    *[
+        Row("POST", "/api/v1/payments/mock/complete", actor, 404, "order_not_found")
+        for actor in ("other", "admin", "unconfirmed")
+    ],
     Row("POST", "/api/v1/payments/mock/complete", "anonymous", 401, "not_authenticated"),
-    # The webhook has no session: Razorpay's signature is its only proof. Until T-404 it is a stub;
-    # T-404 changes this row to 400 webhook_signature_invalid for an unsigned call.
-    Row("POST", "/api/v1/webhooks/razorpay", "anonymous", 501, "not_implemented"),
+    # The webhook has no session: Razorpay's signature is its only proof (rule 8). A logged-in
+    # caller is no better than an anonymous one.
+    *[
+        Row("POST", "/api/v1/webhooks/razorpay", actor, 400, "webhook_signature_invalid")
+        for actor in ("anonymous", "owner")
+    ],
     # A job with no owner (made before accounts) is shown to nobody who is logged in (R-12).
     *[
         Row(method, path, actor, 404, "job_not_found", job="ownerless")
@@ -209,11 +238,28 @@ def post_job(client: TestClient) -> httpx.Response:
     )
 
 
-def send(client: TestClient, method: str, path: str) -> httpx.Response:
+def send(client: TestClient, method: str, path: str, order_id: str = "") -> httpx.Response:
     if path == "/api/v1/jobs":
         return post_job(client)
     if path == "/api/v1/auth/password/change":
         return client.post(path, json={})  # an empty body is a 422 for a logged-in owner
+    if path == "/api/v1/payments/orders":
+        return client.post(path, json={"credits": 1000})
+    if path == "/api/v1/payments/quote":
+        return client.get(path, params={"credits": 1000})
+    if path == "/api/v1/payments/verify":
+        return client.post(
+            path,
+            json={
+                "order_id": order_id,
+                "razorpay_payment_id": "pay_madeup",
+                "razorpay_signature": "0" * 64,
+            },
+        )
+    if path == "/api/v1/payments/mock/complete":
+        return client.post(path, json={"order_id": order_id, "outcome": "captured"})
+    if path == "/api/v1/webhooks/razorpay":
+        return client.post(path, content=b'{"event": "payment.captured"}')  # unsigned
     return client.request(method, path)
 
 
@@ -247,6 +293,7 @@ def ownerless_job(client: TestClient, owner_id: str) -> str:
 class World:
     clients: dict[Actor, TestClient]
     jobs: dict[JobKey, str]
+    order: str  # the owner's payment order (M4)
     emails: dict[str, str] = field(default_factory=lambda: dict(EMAILS))
 
 
@@ -283,7 +330,10 @@ def world(settings, make_user, grant) -> Iterator[World]:
             e=EMAILS["unconfirmed"],
         )
         ownerless = ownerless_job(anon, owner.user_id)
+        r = owner.post("/api/v1/payments/orders", json={"credits": 1000})
+        assert r.status_code == 201, r.text
         yield World(
+            order=r.json()["order_id"],
             clients={
                 "anonymous": anon,
                 "owner": owner,
@@ -304,12 +354,15 @@ def bare(settings) -> Iterator[TestClient]:
 
 @pytest.mark.parametrize("row", ROWS, ids=[r.name for r in ROWS])
 def test_access_matrix(world: World, row: Row) -> None:
-    """R-12 (R-01 on auth routes): each row is one route and one actor, and the app answers with
-    the expected status and error code. Another user's resource is 404, never 403."""
+    """R-12 (R-01 on auth routes, R-03 on payment routes): each row is one route and one actor,
+    and the app answers with the expected status and error code. Another user's resource is
+    404, never 403."""
     path = row.path
     if row.job is not None:
         path = row.path.format(job_id=world.jobs[row.job])
-    r = send(world.clients[row.actor], row.method, path)
+    if "{order_id}" in path:
+        path = path.format(order_id=world.order)
+    r = send(world.clients[row.actor], row.method, path, world.order)
     assert r.status_code == row.status, r.text
     if row.code is not None:
         assert r.json()["code"] == row.code, r.text

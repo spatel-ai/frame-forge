@@ -30,6 +30,10 @@ class ConfigOut(BaseModel):
     razorpay_key_id: str | None
     min_purchase_credits: int
     max_purchase_credits: int
+    # The payment fee the customer pays, in basis points (D-060). Display only: amounts come
+    # from GET /payments/quote, so the browser never computes money.
+    payment_fee_bps: int
+    payment_fee_gst_bps: int
     # Where customers write for help (D-055); null until the owner sets AVATAR_SUPPORT_EMAIL.
     support_email: str | None
 
