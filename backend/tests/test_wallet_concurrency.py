@@ -28,6 +28,7 @@ from app.jobs.service import Conflict, JobService, NotEnoughCredits
 from app.providers import MockProvider
 from app.wallet import ledger
 from app.wallet.ledger import InsufficientCredits, LedgerConflict
+from tests.conftest import CONSENT_VERSION
 
 VOICE = 10  # Settings.voice_price_credits (D-038)
 # The mock speaks 15 characters a second: 32 characters is 2.133… s, priced ceil(42.67) = 43.
@@ -346,7 +347,10 @@ def test_concurrent_approvals_of_many_jobs_hold_only_what_is_affordable(service,
     grant(service.store.engine, user, n * VOICE + affordable * PRICE + PRICE - 1)
 
     async def ready_jobs() -> list[str]:
-        ids = [service.create_job(user, png(), SCRIPT, "English")["id"] for _ in range(n)]
+        ids = [
+            service.create_job(user, png(), SCRIPT, "English", CONSENT_VERSION)["id"]
+            for _ in range(n)
+        ]
         while service._tasks:
             await asyncio.gather(*list(service._tasks), return_exceptions=True)
         return ids
@@ -393,7 +397,9 @@ def test_concurrent_job_creation_charges_only_affordable_voices(service, user, g
     spawned = no_background(service)
     image = png()
 
-    results = run_together(n, lambda _i: service.create_job(user, image, SCRIPT, "English"))
+    results = run_together(
+        n, lambda _i: service.create_job(user, image, SCRIPT, "English", CONSENT_VERSION)
+    )
     unexpected(results, NotEnoughCredits)
     created = [r["id"] for r in results if isinstance(r, dict)]
     assert len(created) == affordable

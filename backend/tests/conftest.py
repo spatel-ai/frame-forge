@@ -22,6 +22,9 @@ from app.core.config import Settings
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 SCHEMA_PREFIX = "test_t_"
+# T-502 (R-14, D-045): POST /jobs needs the consent form fields; tests that create a job send these.
+CONSENT_VERSION = Settings().consent_version
+CONSENT_FORM = {"consent": "true", "consent_version": CONSENT_VERSION}
 
 
 @dataclass(frozen=True)

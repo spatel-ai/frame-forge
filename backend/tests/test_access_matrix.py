@@ -22,6 +22,7 @@ from app.core.config import Settings
 from app.jobs import db
 from app.main import create_app
 from app.scripts.service import save_or_touch
+from tests.conftest import CONSENT_FORM
 
 HTTPS = "https://testserver"  # the session cookie is Secure, so the client must be https
 PASSWORD = "correct horse battery"
@@ -273,7 +274,7 @@ def post_job(client: TestClient) -> httpx.Response:
     return client.post(
         "/api/v1/jobs",
         files={"image": ("me.png", png(), "image/png")},
-        data={"script": "Hello.", "language": "English"},
+        data={**CONSENT_FORM, "script": "Hello.", "language": "English"},
     )
 
 

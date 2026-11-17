@@ -14,6 +14,8 @@ from app.wallet.schemas import LedgerKind
 
 EXPECTED_COLUMNS = {
     "id",
+    "consent_version",
+    "consent_at",
     "user_id",
     "status",
     "language",
@@ -42,7 +44,7 @@ def test_upgrade_and_downgrade_in_throwaway_schema(empty_schema, admin_engine):
     assert insp.has_table("jobs", schema=schema)
     columns = insp.get_columns("jobs", schema=schema)
     assert {c["name"] for c in columns} == EXPECTED_COLUMNS
-    assert len(columns) == 17
+    assert len(columns) == 19
     assert insp.get_pk_constraint("jobs", schema=schema)["constrained_columns"] == ["id"]
     assert any(i["column_names"] == ["status"] for i in insp.get_indexes("jobs", schema=schema))
 
@@ -280,3 +282,32 @@ def test_0007_builds_the_scripts_table(empty_schema, admin_engine):
 
     command.downgrade(cfg, "0006")
     assert not inspect(admin_engine).has_table("scripts", schema=schema)
+
+
+def test_0008_adds_the_nullable_consent_columns(empty_schema):
+    """T-502 (R-14, D-045): 0008 adds consent_version (text) and consent_at (timestamptz) to jobs,
+    both NULL for existing rows; downgrade to 0007 removes them."""
+    cfg = empty_schema.alembic_config()
+    command.upgrade(cfg, "0007")
+    engine = create_engine(empty_schema.url, poolclass=NullPool)
+    try:
+        with engine.begin() as conn:
+            conn.execute(
+                text(
+                    "INSERT INTO jobs (id, status, language, script, image_file, created_at, "
+                    "updated_at) VALUES ('old', 'audio_ready', 'English', 'hi', 'image.png', "
+                    "now(), now())"
+                )
+            )
+        command.upgrade(cfg, "0008")
+        with engine.begin() as conn:
+            row = conn.execute(text("SELECT consent_version, consent_at FROM jobs")).one()
+        assert tuple(row) == (None, None)
+        cols = {c["name"]: c for c in inspect(engine).get_columns("jobs")}
+        assert str(cols["consent_version"]["type"]) == "TEXT"
+        assert "TIMESTAMP" in str(cols["consent_at"]["type"]) and cols["consent_at"]["nullable"]
+        command.downgrade(cfg, "0007")
+        names = {c["name"] for c in inspect(engine).get_columns("jobs")}
+        assert not names & {"consent_version", "consent_at"}
+    finally:
+        engine.dispose()

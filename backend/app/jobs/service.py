@@ -177,7 +177,11 @@ class JobService:
 
     # ---- step 1: create the job and generate the voice ------------------
 
-    def create_job(self, user_id: str, image_bytes: bytes, script: str, language: str) -> dict:
+    def create_job(
+        self, user_id: str, image_bytes: bytes, script: str, language: str, consent_version: str
+    ) -> dict:
+        """Create the job and charge the voice. `consent_version` is stored with the time in the
+        same transaction (R-14, D-045); the route has already checked it is the current one."""
         script = script.strip()
         if not script:
             raise ValidationError("The script is empty. Type what the avatar should say.", "script")
@@ -217,7 +221,13 @@ class JobService:
         try:
             (folder / image_file).write_bytes(clean)
             job = self.store.create(
-                job_id, user_id, language, script, image_file, ledger=charge_voice
+                job_id,
+                user_id,
+                language,
+                script,
+                image_file,
+                ledger=charge_voice,
+                consent_version=consent_version,
             )
         except BaseException as exc:
             # Nothing was committed, so leave nothing on disk either.
