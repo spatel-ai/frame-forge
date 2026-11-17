@@ -730,9 +730,9 @@
     "starts_after": "T-300",
     "task": "Agree the payments API contract before building",
     "acceptance": "Routes, bodies and error codes written into the OpenAPI document",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Contract in docs/M4-PLAN.md; schemas and stubs next."
   },
   {
     "id": "T-401",
@@ -745,9 +745,9 @@
     "starts_after": "T-008",
     "task": "Re-check Razorpay documentation against D-016",
     "acceptance": "Each relied-on fact has a dated source",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "VERIFIED",
+    "evidence": "docs/RAZORPAY-FACTS.md: items A–J with official URLs, checked 2026-11-17. No contradiction with HLD §5.1. Not found in the docs: key id prefixes, payment_capture parameter, numeric rate limit, retry intervals, webhook digest encoding, whether the order-payments list includes captured payments. Documentation only; no Razorpay call."
   },
   {
     "id": "T-402",

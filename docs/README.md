@@ -11,6 +11,8 @@ The parent [CLAUDE.md](../CLAUDE.md) governs the project. These documents apply 
 | [M1.5-PLAN.md](M1.5-PLAN.md) | The build plan for the approved designs: phases, parallel work, discovery findings |
 | [M2-PLAN.md](M2-PLAN.md) | Accounts and login: owner answers, discovery, API contract, phases |
 | [M3-PLAN.md](M3-PLAN.md) | Wallet and charging: owner's prices, discovery, API contract, phases |
+| [M4-PLAN.md](M4-PLAN.md) | Razorpay payments: owner's answers, discovery, settings, API contract, phases |
+| [RAZORPAY-FACTS.md](RAZORPAY-FACTS.md) | Razorpay facts relied on, each with its official source and date (T-401) |
 | [UX.md](UX.md) | What must every screen look and behave like? The design system and the interaction standards |
 | [tracker/](tracker/) | What is the status right now? |
 | [../backend/CLAUDE.md](../backend/CLAUDE.md) | Rules for backend work |
@@ -88,7 +90,7 @@ Status: VERIFIED | MOCK-VERIFIED | IMPLEMENTED, UNVERIFIED | BLOCKED | DEFERRED
 The screen designs for every customer screen, on a design canvas. UX.md is the written standard;
 the canvas is the picture. The link is private to its owner until shared.
 
-The same 23 screens are kept in [design/](design/) as one `.dc.html` file each, with
+The same 24 screens are kept in [design/](design/) as one `.dc.html` file each, with
 `canvas.json` (the board layout) and `BRIEF.md` (the rules they were drawn to). Agents building a
 screen read the matching file there. The owner approved the designs (Q-20, D-028).
 

@@ -167,13 +167,13 @@
   {
     "id": "D-016",
     "decision": "Razorpay Orders + Standard Checkout; credits granted only on server-verified proof",
-    "status": "Proposed",
+    "status": "Confirmed",
     "waiting_on": "",
     "area": "Both",
     "choice": "The backend creates a Razorpay order. The browser opens Razorpay Checkout. Credits are granted by one idempotent routine reached from two places: the browser's verify call and the Razorpay webhook. That routine requires a valid signature, payment status `captured`, and an amount equal to the order. A reconciliation task asks Razorpay about orders left unpaid.",
     "trade_off": "More moving parts than a single callback: a verify route, a webhook route and a reconciliation task.",
     "validation": "Signature formula, paise amounts, raw-body webhook verification, event-id dedupe and unordered delivery were checked against Razorpay's documentation on 2026-11-17. Signed-fixture tests (T-406) give MOCK-VERIFIED; a run in Razorpay test mode (T-407) gives VERIFIED. Retry timing: Not verified — requires documentation review, execution, or live integration testing.",
-    "date": "2026-11-17"
+    "date": "2026-11-17 (owner approved the M4 plan; facts re-checked in T-401, [RAZORPAY-FACTS.md](RAZORPAY-FACTS.md))"
   },
   {
     "id": "D-017",
@@ -426,6 +426,39 @@
     "choice": "A job carries an approval attempt number, starting at 1 and increased each time the customer approves. The video hold, capture and release use the reference `('job', '<job_id>#<attempt>')` instead of `('job', '<job_id>')`. The voice charge and voice return keep `('job', '<job_id>')`, because a job has one voice. When submission to fal.ai fails cleanly (upload fails or fal.ai refuses), the job returns to `audio_ready` with the hold released, as HLD §5.2 says, and approving again writes a new hold under the next attempt.",
     "trade_off": "One more job column, and the ledger reads the job id from the reference by cutting at `#`.",
     "validation": "Tests: approve, clean failure, release, approve again, capture; each attempt has exactly one hold and one capture or release; repeating an attempt's operation is a no-op.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-040",
+    "decision": "A voice longer than the limit keeps its charge; the audio is kept for reuse",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "When the generated voice is longer than the allowed length, the job ends `failed` and the 10-credit voice charge is kept (no `voice_return`). The generated audio file stays on the job and is never deleted, so it can be used again. Amends D-038, which returned the charge only when no voice was delivered.",
+    "trade_off": "A customer pays 10 credits for a voice that cannot become a video today. How a saved voice is reused has no design yet; it is a requirement for M5 (history).",
+    "validation": "A test in tests/test_charging.py: status failed, voice_charge kept, no voice_return, audio file still present, ledger invariant holds.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-041",
+    "decision": "Razorpay is called with the existing httpx client, not the razorpay SDK",
+    "status": "Proposed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "The payments gateway makes its few REST calls (create order, fetch order, fetch payment, list an order's payments) with `httpx` and HTTP basic auth (key id, key secret). Signatures are checked with Python's `hmac` and `hashlib`, compared with `hmac.compare_digest`. One module, `app/payments/gateway.py`, is the only code that talks to Razorpay.",
+    "trade_off": "We maintain four small calls ourselves and must follow API changes from the docs, not from an SDK release.",
+    "validation": "Signed-fixture tests with a fake transport (no network); the owner-approved test-mode run T-407 confirms the real calls.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-042",
+    "decision": "Payments run in mock mode unless switched; outside production only test keys are accepted",
+    "status": "Proposed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "Setting `AVATAR_PAYMENTS` is `mock` (default) or `razorpay`. Mock mode makes no network call; a development-only route signs a fake payment with a fixed mock secret so the real verify and crediting code runs. In `razorpay` mode the backend refuses to start if any key or secret is missing, or if `AVATAR_ENV` is not `production` and the key id does not start with `rzp_test_`. The key id is the only Razorpay value sent to the browser.",
+    "trade_off": "If Razorpay's test key ids do not start with `rzp_test_`, the owner must report it and the check is corrected before T-407.",
+    "validation": "Config tests: missing values, a non-test key in development, and a test key in development; the T-407 run confirms the prefix.",
     "date": "2026-11-17"
   }
 ]

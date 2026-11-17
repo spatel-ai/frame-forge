@@ -259,7 +259,7 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 ## D-016 — Razorpay Orders + Standard Checkout; credits granted only on server-verified proof
 
-**Status:** Proposed · 2026-11-17 · Area: both
+**Status:** Confirmed · 2026-11-17 (owner approved the M4 plan; facts re-checked in T-401, [RAZORPAY-FACTS.md](RAZORPAY-FACTS.md)) · Area: both
 
 **Choice:** The backend creates a Razorpay order. The browser opens Razorpay Checkout. Credits are granted by one idempotent routine reached from two places: the browser's verify call and the Razorpay webhook. That routine requires a valid signature, payment status `captured`, and an amount equal to the order. A reconciliation task asks Razorpay about orders left unpaid.
 
@@ -638,3 +638,45 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 **Trade-off:** One more job column, and the ledger reads the job id from the reference by cutting at `#`.
 
 **Validation:** Tests: approve, clean failure, release, approve again, capture; each attempt has exactly one hold and one capture or release; repeating an attempt's operation is a no-op.
+
+## D-040 — A voice longer than the limit keeps its charge; the audio is kept for reuse
+
+**Status:** Confirmed · 2026-11-17 · Area: backend
+
+**Choice:** When the generated voice is longer than the allowed length, the job ends `failed` and the 10-credit voice charge is kept (no `voice_return`). The generated audio file stays on the job and is never deleted, so it can be used again. Amends D-038, which returned the charge only when no voice was delivered.
+
+**Alternatives:** Return the 10 credits (the customer got nothing usable; the company absorbs fal.ai's voice cost).
+
+**Why:** Owner's decision, 2026-11-17: fal.ai has already charged the company for a voice that was delivered; the customer's script was too long. Keeping the audio means the work is not wasted.
+
+**Trade-off:** A customer pays 10 credits for a voice that cannot become a video today. How a saved voice is reused has no design yet; it is a requirement for M5 (history).
+
+**Validation:** A test in tests/test_charging.py: status failed, voice_charge kept, no voice_return, audio file still present, ledger invariant holds.
+
+## D-041 — Razorpay is called with the existing httpx client, not the razorpay SDK
+
+**Status:** Proposed · 2026-11-17 · Area: backend
+
+**Choice:** The payments gateway makes its few REST calls (create order, fetch order, fetch payment, list an order's payments) with `httpx` and HTTP basic auth (key id, key secret). Signatures are checked with Python's `hmac` and `hashlib`, compared with `hmac.compare_digest`. One module, `app/payments/gateway.py`, is the only code that talks to Razorpay.
+
+**Alternatives:** The official `razorpay` Python SDK (adds `requests` and its own dependencies; synchronous; wraps the same REST calls).
+
+**Why:** No new dependency (backend rule); httpx is already used and tested; the endpoints and fields are few and are recorded with dated sources in docs/RAZORPAY-FACTS.md (T-401).
+
+**Trade-off:** We maintain four small calls ourselves and must follow API changes from the docs, not from an SDK release.
+
+**Validation:** Signed-fixture tests with a fake transport (no network); the owner-approved test-mode run T-407 confirms the real calls.
+
+## D-042 — Payments run in mock mode unless switched; outside production only test keys are accepted
+
+**Status:** Proposed · 2026-11-17 · Area: backend
+
+**Choice:** Setting `AVATAR_PAYMENTS` is `mock` (default) or `razorpay`. Mock mode makes no network call; a development-only route signs a fake payment with a fixed mock secret so the real verify and crediting code runs. In `razorpay` mode the backend refuses to start if any key or secret is missing, or if `AVATAR_ENV` is not `production` and the key id does not start with `rzp_test_`. The key id is the only Razorpay value sent to the browser.
+
+**Alternatives:** One switch for test and live (a pasted live key could move real money during development). Trusting the owner to paste only test keys.
+
+**Why:** The owner has real Razorpay keys. A start-up refusal makes it impossible to move real money before launch (M7) by mistake. The `rzp_test_` prefix is not stated in the official docs read on 2026-11-17 (T-401), so the check fails closed: if the prefix were wrong, the app refuses to start rather than run.
+
+**Trade-off:** If Razorpay's test key ids do not start with `rzp_test_`, the owner must report it and the check is corrected before T-407.
+
+**Validation:** Config tests: missing values, a non-test key in development, and a test key in development; the T-407 run confirms the prefix.

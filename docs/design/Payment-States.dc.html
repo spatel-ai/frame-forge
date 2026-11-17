@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>After payment</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; background: #F4F5FA; color: #14182B; font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5; padding: 40px 48px; display: flex; flex-direction: column; gap: 24px">
+<header style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 28px; line-height: 1.2">After payment: the Buy credits dialog's four endings</h1>
+<p style="margin: 0; color: #4B5169">Shown inside the same 480 px dialog after Razorpay Checkout closes. Credits are added only when our server confirms the payment; the browser's success is never enough.</p>
+</header>
+<div style="display: grid; grid-template-columns: repeat(2, 480px); gap: 32px 48px; justify-content: center">
+
+<!-- 1. Success -->
+<section aria-label="Success" style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 600; color: #4B5169; text-transform: uppercase; letter-spacing: .04em">1 · Confirmed by the server</span>
+<div role="dialog" aria-labelledby="h-ok" style="position: relative; box-sizing: border-box; background: #FFFFFF; border-radius: 16px; padding: 28px; box-shadow: 0 12px 32px rgba(20, 24, 43, 0.16); display: flex; flex-direction: column; gap: 16px; align-items: flex-start">
+<span aria-hidden="true" style="width: 48px; height: 48px; border-radius: 50%; background: #E3F5EE; color: #0B7A55; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+<h2 id="h-ok" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">Payment received</h2>
+<p style="margin: 0; color: #4B5169">500 credits were added to your wallet.</p>
+<dl style="margin: 0; width: 100%; box-sizing: border-box; padding: 16px; border-radius: 12px; background: #F4F5FA; display: flex; flex-direction: column; gap: 8px; font-variant-numeric: tabular-nums">
+<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="color: #4B5169">You paid</dt><dd style="margin: 0">₹500</dd></div>
+<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="font-weight: 700">Balance now</dt><dd style="margin: 0; font-weight: 700">1,000 credits</dd></div>
+</dl>
+<button type="button" style="align-self: stretch; min-height: 48px; padding: 12px 24px; border: 0; border-radius: 8px; background: #4A3AFF; color: #FFFFFF; font: inherit; font-weight: 600; font-size: 16px; cursor: pointer">Done</button>
+</div>
+</section>
+
+<!-- 2. Confirming -->
+<section aria-label="Confirming" style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 600; color: #4B5169; text-transform: uppercase; letter-spacing: .04em">2 · Still confirming (checked every 2 s)</span>
+<div role="dialog" aria-labelledby="h-wait" aria-busy="true" style="position: relative; box-sizing: border-box; background: #FFFFFF; border-radius: 16px; padding: 28px; box-shadow: 0 12px 32px rgba(20, 24, 43, 0.16); display: flex; flex-direction: column; gap: 16px; align-items: flex-start">
+<span aria-hidden="true" style="width: 48px; height: 48px; box-sizing: border-box; border-radius: 50%; border: 4px solid #EEECFF; border-top-color: #4A3AFF"></span>
+<h2 id="h-wait" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">Confirming your payment</h2>
+<p role="status" style="margin: 0; color: #4B5169">This usually takes a few seconds. Please keep this window open.</p>
+<div style="width: 100%; box-sizing: border-box; padding: 16px; border-radius: 12px; border: 1px solid #DFE2EC; display: flex; flex-direction: column; gap: 4px">
+<span style="font-weight: 600">After one minute, the text changes to:</span>
+<span style="color: #4B5169">"This is taking longer than usual. If money left your account, the credits will appear in your wallet within 30 minutes. You can close this window."</span>
+</div>
+<button type="button" style="align-self: stretch; min-height: 48px; padding: 12px 24px; border: 1px solid #DFE2EC; border-radius: 8px; background: #FFFFFF; color: #14182B; font: inherit; font-weight: 600; font-size: 16px; cursor: pointer">Close</button>
+</div>
+</section>
+
+<!-- 3. Failed -->
+<section aria-label="Failed" style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 600; color: #4B5169; text-transform: uppercase; letter-spacing: .04em">3 · Payment failed</span>
+<div role="dialog" aria-labelledby="h-fail" style="position: relative; box-sizing: border-box; background: #FFFFFF; border-radius: 16px; padding: 28px; box-shadow: 0 12px 32px rgba(20, 24, 43, 0.16); display: flex; flex-direction: column; gap: 16px; align-items: flex-start">
+<span aria-hidden="true" style="width: 48px; height: 48px; border-radius: 50%; background: #FDECEC; color: #B42318; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 7v6M12 17h.01"/></svg></span>
+<h2 id="h-fail" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">The payment didn't go through</h2>
+<p role="alert" style="margin: 0; color: #4B5169">No credits were added. Try again, or choose another way to pay in the Razorpay window.</p>
+<div style="align-self: stretch; display: flex; gap: 12px">
+<button type="button" style="flex: 1; min-height: 48px; padding: 12px 24px; border: 1px solid #DFE2EC; border-radius: 8px; background: #FFFFFF; color: #14182B; font: inherit; font-weight: 600; font-size: 16px; cursor: pointer">Close</button>
+<button type="button" style="flex: 1; min-height: 48px; padding: 12px 24px; border: 0; border-radius: 8px; background: #4A3AFF; color: #FFFFFF; font: inherit; font-weight: 600; font-size: 16px; cursor: pointer">Try again</button>
+</div>
+</div>
+</section>
+
+<!-- 4. Cancelled -->
+<section aria-label="Cancelled" style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 600; color: #4B5169; text-transform: uppercase; letter-spacing: .04em">4 · Window closed before paying</span>
+<div role="dialog" aria-labelledby="h-cancel" style="position: relative; box-sizing: border-box; background: #FFFFFF; border-radius: 16px; padding: 28px; box-shadow: 0 12px 32px rgba(20, 24, 43, 0.16); display: flex; flex-direction: column; gap: 16px; align-items: flex-start">
+<span aria-hidden="true" style="width: 48px; height: 48px; border-radius: 50%; background: #F4F5FA; color: #4B5169; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span>
+<h2 id="h-cancel" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">Payment cancelled</h2>
+<p style="margin: 0; color: #4B5169">You closed the payment window, so no credits were added. If you did finish paying, the credits will appear in your wallet within 30 minutes.</p>
+<div style="align-self: stretch; display: flex; gap: 12px">
+<button type="button" style="flex: 1; min-height: 48px; padding: 12px 24px; border: 1px solid #DFE2EC; border-radius: 8px; background: #FFFFFF; color: #14182B; font: inherit; font-weight: 600; font-size: 16px; cursor: pointer">Close</button>
+<button type="button" style="flex: 1; min-height: 48px; padding: 12px 24px; border: 0; border-radius: 8px; background: #4A3AFF; color: #FFFFFF; font: inherit; font-weight: 600; font-size: 16px; cursor: pointer">Try again</button>
+</div>
+</div>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

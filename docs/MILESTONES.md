@@ -158,8 +158,9 @@ overspend, and that the stored balance equals the sum of the ledger.
 
 ## M4 — Razorpay payments
 
-**Gate A needs:** Q-06 answered; Razorpay facts re-checked (T-401). **Gate C:** T-407 needs the
-owner's test keys (Q-10). Test mode is free, but it is an external run and needs the owner's
+**Gate A needs:** Q-06 answered (done 2026-11-17: ₹500 to ₹10,000); Razorpay facts re-checked (T-401,
+done: [RAZORPAY-FACTS.md](RAZORPAY-FACTS.md)); plan in [M4-PLAN.md](M4-PLAN.md). **Gate C:** T-407 needs the
+owner's test keys (Q-10: the owner has them). Test mode is free, but it is an external run and needs the owner's
 go-ahead.
 
 **Exit evidence:** A purchase credits the wallet exactly once in each of these cases: normal

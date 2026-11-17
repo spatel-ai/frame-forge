@@ -59,7 +59,8 @@
     "escalation": "Cost",
     "handling": "Needs your answer",
     "blocks": "M4",
-    "status": "Open"
+    "status": "Answered",
+    "answer": "Any whole-rupee amount from ₹500 to ₹10,000 per purchase (₹1 = 1 credit). Owner, 2026-11-17."
   },
   {
     "id": "Q-07",
@@ -100,7 +101,8 @@
     "escalation": "None",
     "handling": "Default applies unless you object",
     "blocks": "M4",
-    "status": "Open"
+    "status": "Answered",
+    "answer": "The owner has a Razorpay account with keys and a webhook secret and pastes them into backend/.env. Using them needs the owner's approval per run (Gate C, T-407). Owner, 2026-11-17."
   },
   {
     "id": "Q-11",
