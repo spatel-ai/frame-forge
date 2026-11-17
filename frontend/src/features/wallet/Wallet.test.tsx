@@ -161,11 +161,12 @@ describe('wallet page', () => {
     expect(await screen.findByText('Loading transactions')).toBeTruthy()
   })
 
-  it('R-13 has one h1 and no Buy credits button', async () => {
+  it('R-13 has one h1 and one Buy credits button', async () => {
     renderAt()
     await screen.findByText('No transactions yet')
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
-    expect(screen.queryByText(/buy credits/i)).toBeNull()
+    expect(screen.getAllByRole('button', { name: 'Buy credits' })).toHaveLength(1)
+    expect(screen.queryByRole('dialog')).toBeNull() // closed until asked
   })
 })
 

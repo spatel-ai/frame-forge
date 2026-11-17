@@ -120,3 +120,21 @@ export const transactionsKey = (page: number, pageSize: number) => ['wallet', 't
 export const getWallet = () => request<Wallet>('/api/v1/wallet')
 export const getTransactions = (page = 1, pageSize = 20) =>
   request<Transactions>(`/api/v1/wallet/transactions?page=${page}&page_size=${pageSize}`)
+
+// Payments (M4 contract, T-410). The server decides every amount; the browser sends only the credits wanted.
+export type PaymentOrder = components['schemas']['OrderOut']
+export type PaymentOrderStatus = components['schemas']['OrderStatusOut']
+export type PaymentVerified = components['schemas']['VerifyOut']
+export type PaymentProof = components['schemas']['MockCompleteOut']
+
+export const createOrder = (credits: number) => request<PaymentOrder>('/api/v1/payments/orders', json({ credits }))
+export const getOrder = (orderId: string) =>
+  request<PaymentOrderStatus>(`/api/v1/payments/orders/${encodeURIComponent(orderId)}`)
+export const verifyPayment = (orderId: string, razorpayPaymentId: string, razorpaySignature: string) =>
+  request<PaymentVerified>(
+    '/api/v1/payments/verify',
+    json({ order_id: orderId, razorpay_payment_id: razorpayPaymentId, razorpay_signature: razorpaySignature }),
+  )
+/** Mock mode only: what Checkout's handler would give the browser. 404 in any other mode. */
+export const mockCompletePayment = (orderId: string, outcome: 'captured' | 'failed') =>
+  request<PaymentProof>('/api/v1/payments/mock/complete', json({ order_id: orderId, outcome }))
