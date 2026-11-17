@@ -3,8 +3,7 @@
 Backend (PostgreSQL, API, Caddy for HTTPS) on one EC2 instance, videos and backups in S3, web app on
 Vercel. The instance uses an IAM role: no AWS access keys exist anywhere. There is no SSH: you open
 a shell through Session Manager. Files: `deploy/aws/frameforge.yaml`, `docker-compose.aws.yml`,
-`deploy/Caddyfile.aws`, `deploy/make-backend-package.sh`, `deploy/vercel-setup.sh`,
-`frontend/vercel.json`. The generic server guide is `docs/DEPLOY.md`; this file replaces its steps
+`deploy/Caddyfile.aws`, `deploy/make-backend-package.sh`, `frontend/vercel.mjs`. The generic server guide is `docs/DEPLOY.md`; this file replaces its steps
 1 to 7 for AWS.
 
 ## Status: NOT VERIFIED on a real account
@@ -126,14 +125,19 @@ build takes several minutes. Logs: `sudo frameforge-compose logs -f backend`.
 
 From the repository root, then:
 
-```bash
-deploy/vercel-setup.sh <ApiDomain>      # puts the API domain into frontend/vercel.json
-cd frontend && npx vercel --prod
+In Vercel: import the repository with **Root Directory = `frontend`**, then add one environment
+variable (Project > Settings > Environment Variables, for Production and Preview):
+
+```
+API_TARGET=https://<ApiDomain>
 ```
 
-Or in the Vercel dashboard: import the project with root directory `frontend` (framework Vite, output
-`dist`; `vercel.json` already says so). The placeholder must be replaced before the build, so run
-the script first (do not commit the result if you want to keep the placeholder in git). Add the
+and deploy (or `cd frontend && npx vercel --prod`). `frontend/vercel.mjs` reads the variable at
+build time and forwards `/api/*` to it; the build stops with a clear message if it is missing.
+To change the backend later, change the variable and redeploy: no file is edited. For local
+development put the same line in `frontend/.env` (see `frontend/.env.example`).
+
+Add the
 custom domain `app.example.com` in Vercel, then make sure `FrontendOrigin` (stack) and
 `AVATAR_APP_URL` / `AVATAR_ALLOWED_ORIGINS` (`backend/.env`) match it. After editing `backend/.env` run
 `sudo frameforge-compose up -d backend`.

@@ -105,13 +105,17 @@ and CORS allowing `GET`/`HEAD` from the website's address (for the Download butt
 
 ## 4. Frontend on Vercel
 
-```bash
-deploy/vercel-setup.sh api.yourdomain.com     # writes the API domain into frontend/vercel.json
-cd frontend && npx vercel --prod
+In Vercel: import the repository with **Root Directory = `frontend`**, then add one environment
+variable (Project > Settings > Environment Variables, for Production and Preview):
+
+```
+API_TARGET=https://api.yourdomain.com
 ```
 
-Or import the GitHub repo in Vercel with root directory `frontend` after committing the changed
-`vercel.json`.
+and deploy (or `cd frontend && npx vercel --prod`). `frontend/vercel.mjs` reads the variable at
+build time and forwards `/api/*` to it; the build stops with a clear message if it is missing.
+To change the backend later, change the variable and redeploy: no file is edited. For local
+development put the same line in `frontend/.env` (see `frontend/.env.example`).
 
 ## 5. Update later
 
