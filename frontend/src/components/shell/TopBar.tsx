@@ -19,9 +19,10 @@ export function TopBar({ mockMode, razorpayPayments = false, children }: TopBarP
       {mockMode && (
         <div className={styles.mock}>
           <Pill tone="warning" icon>
-            {razorpayPayments
-              ? 'Mock video — payments go through Razorpay'
-              : 'Mock mode — no real generation, no cost'}
+            {razorpayPayments ? 'Mock video' : 'Mock mode'}
+            <span className={styles.more}>
+              {razorpayPayments ? ' — payments go through Razorpay' : ' — no real generation, no cost'}
+            </span>
           </Pill>
         </div>
       )}

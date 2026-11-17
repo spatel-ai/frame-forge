@@ -31,12 +31,12 @@
 }
 .skip:focus { transform: none; outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
 
-.userName { font-weight: var(--text-title-weight); color: var(--color-ink-soft); }
-/* Phones keep the credits pill only (UX.md section 5). The pill links to /wallet, where credits are bought. */
-@media (max-width: 767px) {
-  .userName, .buyLink { display: none; }
+.userName { min-width: 0; max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--text-title-weight); color: var(--color-ink-soft); }
+.pillLink { flex: none; text-decoration: none; }
+/* 320 px: a tighter credits pill (still 44 px tall) so the one-row top bar fits. */
+@media (max-width: 359px) {
+  .pillLink > span { padding: 0 var(--space-2); gap: var(--space-1); }
 }
-.pillLink { text-decoration: none; }
 
 .buyLink {
   display: inline-flex; align-items: center; min-height: var(--target-min); padding: var(--space-2) var(--space-4);
@@ -45,3 +45,8 @@
 }
 .buyLink:hover { background: var(--color-primary-soft); }
 .buyLink:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+
+/* Phones keep the credits pill only (UX.md section 5). The pill links to /wallet, where credits are bought. */
+@media (max-width: 767px) {
+  .userName, .buyLink { display: none; }
+}

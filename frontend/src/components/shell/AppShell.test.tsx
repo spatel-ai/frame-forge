@@ -123,7 +123,7 @@ describe('AppShell', () => {
 
   it('R-77 shows the mock badge only for the mock provider', async () => {
     const { unmount } = renderAt('/create', 'mock')
-    expect(await screen.findByText('Mock mode — no real generation, no cost')).toBeTruthy()
+    expect(await screen.findByText((_, el) => el?.tagName === 'SPAN' && el.textContent === 'Mock mode — no real generation, no cost')).toBeTruthy()
     unmount()
     renderAt('/create', 'fal')
     await vi.waitFor(() => expect(getConfig).toHaveBeenCalled())
@@ -134,7 +134,7 @@ describe('AppShell', () => {
   it('R-77 with mock video but Razorpay payments, the badge does not claim "no cost"', async () => {
     vi.mocked(getConfig).mockResolvedValueOnce({ ...(await getConfig()), provider: 'mock', payments: 'razorpay' })
     renderAt('/create', 'mock')
-    expect(await screen.findByText('Mock video — payments go through Razorpay')).toBeTruthy()
+    expect(await screen.findByText((_, el) => el?.tagName === 'SPAN' && el.textContent === 'Mock video — payments go through Razorpay')).toBeTruthy()
     expect(screen.queryByText(/no cost/)).toBeNull()
   })
 

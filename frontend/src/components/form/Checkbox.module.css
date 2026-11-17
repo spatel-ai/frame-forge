@@ -9,7 +9,7 @@
   flex: none;
   width: var(--space-5);
   height: var(--space-5);
-  margin: var(--space-2) 0 0;
+  margin: calc((var(--target-min) - var(--space-5)) / 2) 0 0;
   accent-color: var(--color-primary);
   cursor: pointer;
 }
@@ -28,7 +28,9 @@
 }
 
 .label {
-  padding-top: var(--space-2);
+  box-sizing: border-box;
+  min-height: var(--target-min);
+  padding-block: calc((var(--target-min) - 1em * var(--text-body-line)) / 2);
   font-size: var(--text-body-size);
   line-height: var(--text-body-line);
   color: var(--color-ink);

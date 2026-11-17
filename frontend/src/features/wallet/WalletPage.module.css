@@ -12,7 +12,10 @@
 .table { width: 100%; border-collapse: collapse; margin-bottom: var(--space-4); }
 .table th { text-align: left; color: var(--color-ink-soft); font-size: var(--text-caption-size); font-weight: var(--text-caption-weight); }
 .table th, .table td { padding: var(--space-3); border-bottom: 1px solid var(--color-line); }
-.table a { color: var(--color-primary-strong); }
+.table a { color: var(--color-primary-strong); display: inline-flex; align-items: center; min-height: var(--target-min); font-weight: var(--text-title-weight); }
+.table a:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+/* 44 px tap height without taller rows: the link's extra height is pulled back out of the cell padding. */
+.table td:has(> a) { padding-block: 0; }
 .right { text-align: right !important; }
 .change > span:first-child { white-space: nowrap; }
 .change { font-variant-numeric: tabular-nums; font-weight: var(--text-title-weight); }
