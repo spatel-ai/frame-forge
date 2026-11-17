@@ -9,7 +9,7 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import Connection, Row, insert, select, update
+from sqlalchemy import Connection, Row, func, insert, select, update
 
 from ..core.database import make_engine
 from .models import Job
@@ -20,6 +20,14 @@ VIDEO_SUBMITTING = "video_submitting"
 VIDEO_GENERATING = "video_generating"
 COMPLETED = "completed"
 FAILED = "failed"
+# Statuses behind the list filter "in_progress" (T-501).
+IN_PROGRESS = (
+    AUDIO_GENERATING,
+    AUDIO_READY,
+    VIDEO_SUBMITTING,
+    VIDEO_GENERATING,
+    "video_assembling",
+)
 
 _jobs = Job.__table__
 # For relative updates in `transition`, e.g. `approve_attempt=jobs.c.approve_attempt + 1`.
@@ -107,6 +115,35 @@ class JobStore:
                 select(_jobs).where(_jobs.c.id == job_id, _jobs.c.user_id == user_id)
             ).first()
         return _to_dict(row) if row else None
+
+    def list_owned(
+        self,
+        user_id: str,
+        page: int = 1,
+        page_size: int = 20,
+        statuses: tuple[str, ...] | None = None,
+        q: str | None = None,
+    ) -> tuple[list[dict], int]:
+        """One page (1-based) of the user's jobs, newest first, and the count that matches the
+        filters. `statuses` limits by status; `q` is a case-insensitive substring of the script,
+        with `%` and `_` taken literally. Jobs with no owner never match."""
+        if page < 1 or page_size < 1:
+            raise ValueError("page and page_size must be at least 1")
+        where = [_jobs.c.user_id == user_id]
+        if statuses is not None:
+            where.append(_jobs.c.status.in_(statuses))
+        if q:
+            where.append(_jobs.c.script.icontains(q, autoescape=True))
+        with self.engine.connect() as conn:
+            total = conn.execute(select(func.count()).select_from(_jobs).where(*where)).scalar_one()
+            rows = conn.execute(
+                select(_jobs)
+                .where(*where)
+                .order_by(_jobs.c.created_at.desc(), _jobs.c.id.desc())
+                .limit(page_size)
+                .offset((page - 1) * page_size)
+            ).all()
+        return [_to_dict(r) for r in rows], total
 
     def list_by_status(self, status: str) -> list[dict]:
         with self.engine.connect() as conn:

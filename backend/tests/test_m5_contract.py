@@ -172,7 +172,6 @@ def client(tmp_path, database_url):
 @pytest.mark.parametrize(
     ("method", "path"),
     [
-        ("get", "/api/v1/jobs"),
         ("get", "/api/v1/voices"),
         ("get", "/api/v1/scripts"),
         ("get", "/api/v1/scripts/abc"),

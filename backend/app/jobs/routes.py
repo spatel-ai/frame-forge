@@ -9,7 +9,8 @@ from ..auth.deps import CurrentUser, current_user
 from ..core.config import Settings
 from ..core.errors import ApiError, ErrorOut
 from ..wallet import ledger
-from .schemas import ConfigOut, FailureKind, JobOut, JobsOut, SavedVoicesOut
+from . import db
+from .schemas import ConfigOut, FailureKind, JobOut, JobsOut, JobSummaryOut, SavedVoicesOut
 from .service import JobService
 
 router = APIRouter(prefix="/api/v1")
@@ -49,6 +50,15 @@ def _paying_user(request: Request, user: ConfirmedUser) -> CurrentUser:
 
 
 PayingUser = Annotated[CurrentUser, Depends(_paying_user)]
+
+
+# The Videos page filter (T-501): None means every status.
+_STATUS_FILTERS: dict[str, tuple[str, ...] | None] = {
+    "all": None,
+    "ready": (db.COMPLETED,),
+    "in_progress": db.IN_PROGRESS,
+    "failed": (db.FAILED,),
+}
 
 
 def _settings(request: Request) -> Settings:
@@ -196,7 +206,7 @@ async def create_job(
 @router.get(
     "/jobs",
     response_model=JobsOut,
-    responses={**_UNAUTHENTICATED, **_INVALID, 501: {"model": ErrorOut}},
+    responses={**_UNAUTHENTICATED, **_INVALID},
     summary="The caller's jobs, newest first (T-501)",
 )
 def list_jobs(
@@ -207,7 +217,26 @@ def list_jobs(
     status: Literal["all", "ready", "in_progress", "failed"] = "all",
     q: Annotated[str | None, Query(max_length=200)] = None,
 ) -> JobsOut:
-    raise ApiError(501, "This is not built yet.", "not_implemented")
+    statuses = _STATUS_FILTERS[status]
+    jobs, total = _service(request).store.list_owned(user.id, page, page_size, statuses, q)
+    return JobsOut(
+        items=[
+            JobSummaryOut(
+                id=j["id"],
+                status=j["status"],
+                language=j["language"],
+                script_excerpt=j["script"][:120],
+                audio_duration_seconds=j["audio_duration_seconds"],
+                failure_kind=_failure_kind(j),
+                created_at=j["created_at"],
+                updated_at=j["updated_at"],
+            )
+            for j in jobs
+        ],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get(
