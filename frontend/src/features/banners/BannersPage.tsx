@@ -21,13 +21,19 @@ function UploadDialog({ open, onClose }: { open: boolean; onClose: () => void })
   const [name, setName] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [errors, setErrors] = useState<Errors>({})
+  const [zoneKey, setZoneKey] = useState(0)
   const nameRef = useRef<HTMLInputElement>(null)
+  // A fresh dialog each time it is closed by the person; a failed upload never closes it, so nothing is lost there.
+  const reset = () => {
+    setName('')
+    setFile(null)
+    setErrors({})
+    setZoneKey((k) => k + 1)
+  }
   const save = useMutation({
     mutationFn: ({ n, f }: { n: string; f: File }) => createBanner(n, f),
     onSuccess: () => {
-      setName('')
-      setFile(null)
-      setErrors({})
+      reset()
       onClose()
       return queryClient.invalidateQueries({ queryKey: bannersKey })
     },
@@ -48,8 +54,14 @@ function UploadDialog({ open, onClose }: { open: boolean; onClose: () => void })
     setErrors({})
     if (file) save.mutate({ n: name.trim(), f: file })
   }
+  const uploading = save.isPending
+  const close = () => {
+    if (uploading) return
+    reset()
+    onClose()
+  }
   return (
-    <Dialog open={open} onClose={() => { if (!save.isPending) onClose() }} title="Upload banner">
+    <Dialog open={open} onClose={close} title="Upload banner">
       <form className={styles.form} onSubmit={submit} noValidate>
         <TextField
           ref={nameRef}
@@ -64,8 +76,11 @@ function UploadDialog({ open, onClose }: { open: boolean; onClose: () => void })
           }}
           onBlur={() => { if (name) setErrors((p) => ({ ...p, name: bannerNameError(name) })) }}
           error={errors.name}
+          disabled={uploading}
         />
         <FileDropZone
+          key={zoneKey}
+          disabled={uploading}
           label="Banner image"
           hint="PNG, JPEG or WebP, up to 5 MB."
           required
@@ -80,8 +95,9 @@ function UploadDialog({ open, onClose }: { open: boolean; onClose: () => void })
         />
         {errors.other && <Notice tone="danger" title="We could not save the banner">{errors.other}</Notice>}
         <div className={styles.actions}>
-          <Button type="button" variant="secondary" disabled={save.isPending} onClick={onClose}>Cancel</Button>
-          <Button type="submit" busy={save.isPending} busyLabel="Uploading…">Upload banner</Button>
+          {uploading && <p className={styles.wait} role="status">Uploading… please wait. This window closes when it is done.</p>}
+          <Button type="button" variant="secondary" disabled={uploading} onClick={close}>Cancel</Button>
+          <Button type="submit" busy={uploading} busyLabel="Uploading…">Upload banner</Button>
         </div>
       </form>
     </Dialog>
@@ -91,8 +107,10 @@ function UploadDialog({ open, onClose }: { open: boolean; onClose: () => void })
 function DeleteDialog({ banner, onClose }: { banner: Banner | null; onClose: () => void }) {
   const queryClient = useQueryClient()
   const [error, setError] = useState<string | null>(null)
+  const removing = useRef(false)
   const remove = useMutation({
     mutationFn: (id: string) => deleteBanner(id),
+    onSettled: () => { removing.current = false },
     onSuccess: () => {
       onClose()
       return queryClient.invalidateQueries({ queryKey: bannersKey })
@@ -126,6 +144,8 @@ function DeleteDialog({ banner, onClose }: { banner: Banner | null; onClose: () 
               busy={remove.isPending}
               busyLabel="Deleting…"
               onClick={() => {
+                if (removing.current || remove.isPending) return
+                removing.current = true
                 setError(null)
                 remove.mutate(banner.id)
               }}
@@ -149,8 +169,16 @@ export default function BannersPage() {
   if (query.isPending) {
     body = (
       <SkeletonGroup label="Loading your banners">
-        <Skeleton height={200} />
-        <Skeleton height={200} />
+        <div className={styles.grid}>
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className={`${styles.card} ${styles.skelCard}`}>
+              <div className={styles.skelMedia}><Skeleton height="100%" /></div>
+              <Skeleton shape="line" width="70%" />
+              <Skeleton shape="line" width="40%" />
+              <div className={styles.cardActions}><Skeleton height={44} width={80} /></div>
+            </div>
+          ))}
+        </div>
       </SkeletonGroup>
     )
   } else if (query.isError && !data) {
