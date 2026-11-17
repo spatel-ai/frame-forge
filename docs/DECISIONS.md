@@ -1108,3 +1108,98 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 
 **Validation:** Tests with a fake storage and a stubbed boto3 client: both keys stored, redirect for the owner, 404 for others, 410 after expiry, fallback when S3 is down. A real-bucket run happens at deployment.
 
+---
+
+## D-071 — Preset voices are spoken by Gemini TTS in all three languages
+
+**Status:** Confirmed (owner approved the M5.6 plan, 2026-11-17) · 2026-11-17 · Area: backend
+
+**Choice:** The customer chooses a gender and then one of five voices of that gender: female Kore, Zephyr, Aoede, Leda, Despina; male Puck, Charon, Fenrir, Orus, Achird. A chosen preset is spoken by `fal-ai/gemini-3.1-flash-tts` in English, Hindi and Punjabi. The catalogue is a setting. A job that sends no voice choice behaves exactly as before.
+
+**Alternatives:** MiniMax preset voices (their ids and genders could not be verified on fal.ai's pages); Kokoro (no Punjabi, and no stated gender for its Hindi voices).
+
+**Why:** One catalogue with the same voices in every language, and a gender for every voice stated on Google Cloud's Gemini-TTS page (read 2026-11-17).
+
+**Trade-off:** Gemini TTS has not run live here for English or Hindi, and Google lists Punjabi as Preview. Not verified — requires documentation review, execution, or live integration testing.
+
+**Validation:** Mock tests of the arguments sent for each language and preset; an unknown preset is refused. Real sound waits for an owner-run test (D-076).
+
+---
+
+## D-072 — Punjabi in the customer's own voice is a spoken script
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: backend
+
+**Choice:** For Punjabi the customer records themselves reading the script. The recording is checked, converted and used directly as the job's audio; no voice model is called. The voice step costs 10 credits, the same as a generated voice. The job starts at the listen-and-approve step.
+
+**Alternatives:** Cloning for Punjabi (no fal.ai model lists Punjabi for cloning); a provider outside fal.ai (a new integration); 0 credits for the voice step.
+
+**Why:** Owner: it must be the customer's own voice in Punjabi, and the price is 10 credits.
+
+**Trade-off:** The customer reads the whole script aloud for every video, and the script text may differ from what was said.
+
+**Validation:** Mock tests: a spoken job reaches `audio_ready` with 10 credits charged and the price from the measured length; bad recordings are refused before any charge.
+
+---
+
+## D-073 — A recorded voice needs its own consent: own voice only
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: backend
+
+**Choice:** Recording a voice requires a second checkbox, separate from the photo consent: "This is my own voice, and I agree to it being sent to our video provider to make this video." Its version and time are stored on the job. Without it no recording is accepted.
+
+**Alternatives:** One combined consent for photo and voice; allowing another person's voice with their permission.
+
+**Why:** Owner chose own voice only. fal.ai's acceptable-use policy requires the person's consent and leaves collecting it to the app.
+
+**Trade-off:** A customer cannot use a colleague's voice even with permission.
+
+**Validation:** Tests: a recording without consent, or with an old consent version, is refused with nothing charged or stored.
+
+---
+
+## D-074 — Voice samples are made once and stored
+
+**Status:** Confirmed (owner approved the M5.6 plan, 2026-11-17) · 2026-11-17 · Area: backend
+
+**Choice:** Each preset voice has one stored sample clip per language, speaking a fixed sentence: 30 clips. The customer plays them free, as often as they like, from `GET /voice-presets/{id}/sample`. A staff command makes the missing clips and never remakes one that exists.
+
+**Alternatives:** Speaking the customer's own script in the chosen voice on every click (a paid call per click, slow, and open to abuse).
+
+**Why:** Owner: the selected voice must be playable before continuing, so the customer knows how the video will sound.
+
+**Trade-off:** The sample is not the customer's script. They hear their real script at the listen-and-approve step before any video is paid for. Until the owner runs the real sample test, the clips are mock tones.
+
+**Validation:** Mock tests: the command makes 30 clips, a second run makes none, the route serves a clip and answers 404 when it is missing.
+
+---
+
+## D-075 — Voice cloning ("My voices") is deferred to a second release
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: backend
+
+**Choice:** Cloning a recorded voice is not built in M5.6. The agreed outline is kept for later: up to 3 saved voices per account, 150 credits once per voice and then 10 per video, 150 returned on a clear failure and kept until staff review when the outcome is unclear, MiniMax voice-clone with one short speech call straight after cloning so the provider keeps the voice.
+
+**Alternatives:** Building cloning now on the mock provider; making an exception to the email gate to test first.
+
+**Why:** No fal.ai page shows how a cloned voice id is passed to the speech model, and its Hindi quality is unknown. The owner chose to split the work after the plan review.
+
+**Trade-off:** English and Hindi customers cannot use their own voice until the second release.
+
+**Validation:** The second release starts only after an owner-run clone test passes (D-076). Not verified — requires documentation review, execution, or live integration testing.
+
+---
+
+## D-076 — No real testing by engineering: the whole platform is built and tested on mock data
+
+**Status:** Confirmed (owner, 2026-11-17; tightens D-021) · 2026-11-17 · Area: backend
+
+**Choice:** Engineering and its agents never run a real fal.ai or Razorpay call. All development and testing uses the mock provider and mock payments. A small real test happens only when engineering explicitly asks the owner for that one test, stating what it proves and its cost, and the owner agrees; the owner may run it themselves. Plans must not assume a real run will happen.
+
+**Alternatives:** Per-run approval with engineering running the test (D-021 as first written).
+
+**Why:** Owner: "do not perform the real testing. Use mock data... I cannot afford the real testing. I will do the test for the small test cases, but you have to explicitly ask for me."
+
+**Trade-off:** Provider behaviour stays unproven for longer; work is reported MOCK-VERIFIED and the unverified items are listed.
+
+**Validation:** Every delegation brief carries this rule; commands that could reach a paid provider refuse to run without an explicit flag.

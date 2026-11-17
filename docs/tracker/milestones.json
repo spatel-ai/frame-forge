@@ -64,8 +64,16 @@
     "status": "In progress"
   },
   {
-    "id": "M6",
+    "id": "M5.6",
     "order": 8,
+    "milestone": "Voice choice",
+    "outcome": "The backend lets a customer choose a gender and a preset voice, play a sample, or record a spoken script; designs for every device, including cloning",
+    "depends_on": "M5.5 job code (T-553), owner answers of 2026-11-17",
+    "status": "In progress"
+  },
+  {
+    "id": "M6",
+    "order": 9,
     "milestone": "Admin and operations",
     "outcome": "Staff can see, correct and reconcile money, and manage templates",
     "depends_on": "M5, Q-05, Q-09",
@@ -73,7 +81,7 @@
   },
   {
     "id": "M7",
-    "order": 9,
+    "order": 10,
     "milestone": "Hardening and launch",
     "outcome": "Deployed, secured, verified live with real money",
     "depends_on": "M6, Q-03, Q-07, Q-12, Q-13, Q-18",

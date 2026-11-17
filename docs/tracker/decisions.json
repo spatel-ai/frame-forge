@@ -746,5 +746,71 @@
     "trade_off": "One more service and dependency; signed links from an instance role can expire early when the role's credentials rotate. Not verified against a real bucket: Not verified — requires documentation review, execution, or live integration testing.",
     "validation": "Tests with a fake storage and a stubbed boto3 client: both keys stored, redirect for the owner, 404 for others, 410 after expiry, fallback when S3 is down. A real-bucket run happens at deployment.",
     "date": "2026-11-17"
+  },
+  {
+    "id": "D-071",
+    "decision": "Preset voices are spoken by Gemini TTS in all three languages",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "The customer chooses a gender and then one of five voices of that gender: female Kore, Zephyr, Aoede, Leda, Despina; male Puck, Charon, Fenrir, Orus, Achird. A chosen preset is spoken by `fal-ai/gemini-3.1-flash-tts` in English, Hindi and Punjabi. The catalogue is a setting. A job that sends no voice choice behaves exactly as before.",
+    "trade_off": "Gemini TTS has not run live here for English or Hindi, and Google lists Punjabi as Preview. Not verified — requires documentation review, execution, or live integration testing.",
+    "validation": "Mock tests of the arguments sent for each language and preset; an unknown preset is refused. Real sound waits for an owner-run test (D-076).",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-072",
+    "decision": "Punjabi in the customer's own voice is a spoken script",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "For Punjabi the customer records themselves reading the script. The recording is checked, converted and used directly as the job's audio; no voice model is called. The voice step costs 10 credits, the same as a generated voice. The job starts at the listen-and-approve step.",
+    "trade_off": "The customer reads the whole script aloud for every video, and the script text may differ from what was said.",
+    "validation": "Mock tests: a spoken job reaches `audio_ready` with 10 credits charged and the price from the measured length; bad recordings are refused before any charge.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-073",
+    "decision": "A recorded voice needs its own consent: own voice only",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "Recording a voice requires a second checkbox, separate from the photo consent: \"This is my own voice, and I agree to it being sent to our video provider to make this video.\" Its version and time are stored on the job. Without it no recording is accepted.",
+    "trade_off": "A customer cannot use a colleague's voice even with permission.",
+    "validation": "Tests: a recording without consent, or with an old consent version, is refused with nothing charged or stored.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-074",
+    "decision": "Voice samples are made once and stored",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "Each preset voice has one stored sample clip per language, speaking a fixed sentence: 30 clips. The customer plays them free, as often as they like, from `GET /voice-presets/{id}/sample`. A staff command makes the missing clips and never remakes one that exists.",
+    "trade_off": "The sample is not the customer's script. They hear their real script at the listen-and-approve step before any video is paid for. Until the owner runs the real sample test, the clips are mock tones.",
+    "validation": "Mock tests: the command makes 30 clips, a second run makes none, the route serves a clip and answers 404 when it is missing.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-075",
+    "decision": "Voice cloning (\"My voices\") is deferred to a second release",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "Cloning a recorded voice is not built in M5.6. The agreed outline is kept for later: up to 3 saved voices per account, 150 credits once per voice and then 10 per video, 150 returned on a clear failure and kept until staff review when the outcome is unclear, MiniMax voice-clone with one short speech call straight after cloning so the provider keeps the voice.",
+    "trade_off": "English and Hindi customers cannot use their own voice until the second release.",
+    "validation": "The second release starts only after an owner-run clone test passes (D-076). Not verified — requires documentation review, execution, or live integration testing.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-076",
+    "decision": "No real testing by engineering: the whole platform is built and tested on mock data",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "Engineering and its agents never run a real fal.ai or Razorpay call. All development and testing uses the mock provider and mock payments. A small real test happens only when engineering explicitly asks the owner for that one test, stating what it proves and its cost, and the owner agrees; the owner may run it themselves. Plans must not assume a real run will happen.",
+    "trade_off": "Provider behaviour stays unproven for longer; work is reported MOCK-VERIFIED and the unverified items are listed.",
+    "validation": "Every delegation brief carries this rule; commands that could reach a paid provider refuse to run without an explicit flag.",
+    "date": "2026-11-17"
   }
 ]
