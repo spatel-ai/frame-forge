@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Link, useOutletContext } from 'react-router'
-import { ApiError, deleteScript, scriptsKey } from '../../api/client'
+import { ApiError, createScript, deleteScript, scriptsKey } from '../../api/client'
 import type { SavedScript } from '../../api/client'
 import type { ShellContext } from '../../components/AppShell'
 import { Banner, Dialog, EmptyState, ErrorState, Pill, Skeleton, SkeletonGroup } from '../../components/feedback'
-import { Button, Select, TextField } from '../../components/form'
+import { Button, Select, TextArea, TextField } from '../../components/form'
 import { ScriptIcon } from '../../components/icons'
 import { Pagination } from '../../components/layout'
 import { errMsg } from '../../lib/util'
@@ -14,6 +14,67 @@ import styles from './scripts.module.css'
 
 const PAGE_SIZE = 10
 const INTRO = 'Every script you use is saved here automatically. Deleting a script never changes a video you already made.'
+
+function NewScriptDialog({ open, onClose, languages, maxChars }: {
+  open: boolean
+  onClose: () => void
+  languages: string[]
+  maxChars: number | undefined
+}) {
+  const queryClient = useQueryClient()
+  const [language, setLanguage] = useState(languages[0] ?? '')
+  const [text, setText] = useState('')
+  const [errors, setErrors] = useState<{ script?: string; language?: string; other?: string }>({})
+  useEffect(() => {
+    if (!language && languages[0]) setLanguage(languages[0])
+  }, [language, languages])
+  const save = useMutation({
+    mutationFn: () => createScript(language, text),
+    onSuccess: () => {
+      setText('')
+      setErrors({})
+      onClose()
+      return queryClient.invalidateQueries({ queryKey: scriptsKey })
+    },
+    onError: (err) => {
+      if (err instanceof ApiError && (err.fields.script || err.fields.language)) {
+        setErrors({ script: err.fields.script, language: err.fields.language })
+      } else setErrors({ other: `${errMsg(err)} Your text is still here; try again.` })
+    },
+  })
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!text.trim()) {
+      setErrors({ script: 'Type what the person should say.' })
+      return
+    }
+    save.mutate()
+  }
+  return (
+    <Dialog open={open} onClose={onClose} title="New script">
+      <form className={styles.confirm} onSubmit={submit} noValidate>
+        <p className={styles.confirmText}>Save a script to use later. No voice is made and no credits are taken.</p>
+        <Select label="Language" value={language} onChange={(e) => setLanguage(e.target.value)} error={errors.language}>
+          {languages.map((l) => <option key={l} value={l}>{l}</option>)}
+        </Select>
+        <TextArea
+          label="What should the person say?"
+          hint={maxChars ? `Up to ${maxChars} characters.` : undefined}
+          max={maxChars}
+          rows={6}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          error={errors.script}
+        />
+        {errors.other && <Banner tone="danger" title="We could not save the script">{errors.other}</Banner>}
+        <div className={styles.actions}>
+          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button type="submit" busy={save.isPending} busyLabel="Saving…">Save script</Button>
+        </div>
+      </form>
+    </Dialog>
+  )
+}
 
 function DeleteDialog({ script, onClose }: { script: SavedScript | null; onClose: () => void }) {
   const queryClient = useQueryClient()
@@ -69,6 +130,7 @@ function DeleteDialog({ script, onClose }: { script: SavedScript | null; onClose
 }
 
 export default function ScriptsPage() {
+  const [creating, setCreating] = useState(false)
   const { config } = useOutletContext<ShellContext>()
   const f = useScriptFilters(PAGE_SIZE)
   const query = useScripts(f.params)
@@ -136,7 +198,10 @@ export default function ScriptsPage() {
 
   return (
     <section className={styles.page} aria-labelledby="h-scripts">
-      <h1 id="h-scripts" className={styles.title}>My scripts</h1>
+      <div className={styles.head}>
+        <h1 id="h-scripts" className={styles.title}>My scripts</h1>
+        <Button onClick={() => setCreating(true)}>New script</Button>
+      </div>
       <p className={styles.intro}>{INTRO}</p>
       {showControls && (
         <div className={styles.controls}>
@@ -154,6 +219,12 @@ export default function ScriptsPage() {
       )}
       {body}
       <DeleteDialog script={toDelete} onClose={() => setToDelete(null)} />
+      <NewScriptDialog
+        open={creating}
+        onClose={() => setCreating(false)}
+        languages={languages}
+        maxChars={config?.max_script_chars}
+      />
     </section>
   )
 }

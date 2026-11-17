@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, deleteScript, getConfig, getMe, getWallet, listScripts } from '../../api/client'
+import { ApiError, createScript, deleteScript, getConfig, getMe, getWallet, listScripts } from '../../api/client'
 import type { Config, SavedScript, ScriptsPage, User } from '../../api/client'
 import { routes } from '../../routes'
 
@@ -14,6 +14,7 @@ vi.mock('../../api/client', async (importOriginal) => ({
   getWallet: vi.fn(),
   listScripts: vi.fn(),
   deleteScript: vi.fn(),
+  createScript: vi.fn(),
 }))
 
 const config: Config = {
@@ -171,5 +172,37 @@ describe('Delete a script', () => {
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete script' }))
     expect(await screen.findByText(/Server down/)).toBeTruthy()
     expect(screen.getByText(/The script is still saved/)).toBeTruthy()
+  })
+})
+
+describe('new script', () => {
+  it('R-43 New script saves without making a voice and refreshes the list', async () => {
+    vi.mocked(listScripts).mockResolvedValueOnce(page([])).mockResolvedValue(page([script(1)]))
+    vi.mocked(createScript).mockResolvedValue(script(1))
+    renderAt('/scripts')
+    await userEvent.click(await screen.findByRole('button', { name: 'New script' }))
+    const d = within(await screen.findByRole('dialog'))
+    expect(d.getByText(/No voice is made and no credits are taken/)).toBeTruthy()
+    await userEvent.type(d.getByLabelText('What should the person say?'), 'Saved script number 1')
+    await userEvent.click(d.getByRole('button', { name: 'Save script' }))
+    expect(createScript).toHaveBeenCalledWith('English', 'Saved script number 1')
+    expect(await screen.findByText('Saved script number 1')).toBeTruthy()
+  })
+
+  it('R-43 an empty script is refused in the browser; a server field error shows under its field and keeps the text', async () => {
+    vi.mocked(listScripts).mockResolvedValue(page([]))
+    vi.mocked(createScript).mockRejectedValue(
+      new ApiError(422, 'Wrong alphabet', 'validation_error', { script: 'The script is written in Hindi.' }),
+    )
+    renderAt('/scripts')
+    await userEvent.click(await screen.findByRole('button', { name: 'New script' }))
+    const d = within(await screen.findByRole('dialog'))
+    await userEvent.click(d.getByRole('button', { name: 'Save script' }))
+    expect(await d.findByText('Type what the person should say.')).toBeTruthy()
+    expect(createScript).not.toHaveBeenCalled()
+    await userEvent.type(d.getByLabelText('What should the person say?'), 'नमस्ते')
+    await userEvent.click(d.getByRole('button', { name: 'Save script' }))
+    expect(await d.findByText('The script is written in Hindi.')).toBeTruthy()
+    expect((d.getByLabelText('What should the person say?') as HTMLTextAreaElement).value).toBe('नमस्ते')
   })
 })

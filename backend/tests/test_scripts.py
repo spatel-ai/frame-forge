@@ -167,3 +167,29 @@ def test_concurrent_save_of_the_same_text_makes_one_row(database_url, client, ui
     finally:
         eng.dispose()
     assert len(ids) == n and len(set(ids)) == 1
+
+
+def test_new_script_is_saved_on_its_own_with_the_create_checks(client, uid, sign_up):
+    """R-43 (owner request 2026-11-17): My scripts → New script saves without making a voice;
+    the same text again returns the same script; the Create checks apply; another user does
+    not see it."""
+    body = {"language": "English", "text": "  Hello from a script saved on its own.  "}
+    r = client.post("/api/v1/scripts", json=body)
+    assert r.status_code == 201, r.text
+    saved = r.json()
+    assert saved["text"] == "Hello from a script saved on its own."
+    again = client.post("/api/v1/scripts", json=body).json()
+    assert again["id"] == saved["id"]
+    assert client.get("/api/v1/scripts").json()["total"] == 1
+    for bad, field in (
+        ({"language": "English", "text": "   "}, "script"),
+        ({"language": "English", "text": "x" * 801}, "script"),
+        ({"language": "Klingon", "text": "Hello"}, "language"),
+        ({"language": "English", "text": "नमस्ते दुनिया"}, "script"),
+    ):
+        r = client.post("/api/v1/scripts", json=bad)
+        assert r.status_code == 422 and field in r.json()["fields"], r.text
+    assert client.get("/api/v1/scripts").json()["total"] == 1
+    with TestClient(client.app, base_url=HTTPS) as other:
+        sign_up(other, "other@example.com")
+        assert other.get("/api/v1/scripts").json()["total"] == 0

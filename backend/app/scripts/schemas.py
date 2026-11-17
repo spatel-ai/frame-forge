@@ -3,6 +3,13 @@
 from pydantic import BaseModel
 
 
+class ScriptIn(BaseModel):
+    """A script saved on its own from My scripts (owner request, 2026-11-17, R1 test order)."""
+
+    language: str
+    text: str
+
+
 class ScriptOut(BaseModel):
     id: str
     language: str

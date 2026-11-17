@@ -166,6 +166,9 @@ ROWS: list[Row] = [
     # owner's script is 404 script_not_found to everyone else, admin included.
     *[Row("GET", "/api/v1/scripts", actor, 200) for actor in ("owner", "other", "admin")],
     Row("GET", "/api/v1/scripts", "anonymous", 401, "not_authenticated"),
+    # Saving a script on its own: any logged-in caller saves into their own library only.
+    *[Row("POST", "/api/v1/scripts", actor, 201) for actor in ("owner", "other", "admin")],
+    Row("POST", "/api/v1/scripts", "anonymous", 401, "not_authenticated"),
     Row("GET", "/api/v1/scripts/{script_id}", "owner", 200),
     Row("DELETE", "/api/v1/scripts/{script_id}", "owner", 204),
     *[
@@ -303,6 +306,8 @@ def send(client: TestClient, method: str, path: str, order_id: str = "") -> http
         return client.post(path, json={"order_id": order_id, "outcome": "captured"})
     if path == "/api/v1/webhooks/razorpay":
         return client.post(path, content=b'{"event": "payment.captured"}')  # unsigned
+    if method == "POST" and path == "/api/v1/scripts":
+        return client.post(path, json={"language": "English", "text": "Matrix script."})
     return client.request(method, path)
 
 

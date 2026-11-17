@@ -1,6 +1,7 @@
 """Script library routes (contract T-500, built in T-504; R-43, R-50, R-12).
 
-A script is saved automatically when a job uses it (D-017); there is no create route. Only the
+A script is saved automatically when a job uses it (D-017), and can also be saved on its own
+(`POST /scripts`, owner request 2026-11-17) with the same checks as Create. Only the
 caller's own scripts are ever listed, read or deleted: another user's script is 404
 `script_not_found`. Deleting a script never changes a job, which keeps its own copy."""
 
@@ -14,7 +15,7 @@ from starlette.concurrency import run_in_threadpool
 from ..auth.deps import CurrentUser, current_user
 from ..core.errors import ApiError, ErrorOut
 from . import service
-from .schemas import ScriptOut, ScriptsOut
+from .schemas import ScriptIn, ScriptOut, ScriptsOut
 
 router = APIRouter(prefix="/api/v1/scripts", tags=["scripts"])
 
@@ -62,6 +63,20 @@ async def list_scripts(
         service.list_scripts, _engine(request), user.id, page, page_size, q, language
     )
     return ScriptsOut(items=[_out(r) for r in rows], total=total, page=page, page_size=page_size)
+
+
+@router.post(
+    "",
+    status_code=201,
+    response_model=ScriptOut,
+    responses={401: _E, 422: _E},
+    summary="Save a script to My scripts without making a voice (same checks as Create)",
+)
+async def create_script(request: Request, body: ScriptIn, user: User) -> ScriptOut:
+    # The same rules as a job's script: length, known language, matching alphabet (R-43, R-51).
+    text = request.app.state.service.check_script(body.text, body.language)
+    row = await run_in_threadpool(service.save, _engine(request), user.id, body.language, text)
+    return _out(row)
 
 
 @router.get(

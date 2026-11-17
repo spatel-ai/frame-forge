@@ -60,6 +60,16 @@ def save_or_touch(conn: Connection, user_id: str, language: str, script: str) ->
     return str(row.id)
 
 
+def save(engine: Engine, user_id: str, language: str, script: str) -> ScriptRow:
+    """Save a script on its own (My scripts → New script). Same one-live-row rule as
+    save_or_touch: identical text in the same language returns the existing row, touched."""
+    with engine.begin() as conn:
+        script_id = save_or_touch(conn, user_id, language, script)
+    row = get_script(engine, user_id, script_id)
+    assert row is not None  # just written in our own transaction
+    return row
+
+
 def _escape_like(term: str) -> str:
     return term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 

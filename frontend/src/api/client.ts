@@ -190,5 +190,8 @@ export function listScripts(params: ScriptListParams = {}) {
   return request<ScriptsPage>(`/api/v1/scripts${query ? `?${query}` : ''}`)
 }
 export const getScript = (id: string) => request<SavedScript>(`/api/v1/scripts/${encodeURIComponent(id)}`)
+/** My scripts → New script: saved without making a voice; the server applies the Create checks. */
+export const createScript = (language: string, text: string) =>
+  request<SavedScript>('/api/v1/scripts', json({ language, text }))
 export const deleteScript = (id: string) =>
   request<void>(`/api/v1/scripts/${encodeURIComponent(id)}`, { method: 'DELETE' })

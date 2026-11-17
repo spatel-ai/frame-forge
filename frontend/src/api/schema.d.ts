@@ -393,7 +393,8 @@ export interface paths {
         /** The caller's saved scripts, most recently used first; optional search and language */
         get: operations["list_scripts_api_v1_scripts_get"];
         put?: never;
-        post?: never;
+        /** Save a script to My scripts without making a voice (same checks as Create) */
+        post: operations["create_script_api_v1_scripts_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -874,6 +875,16 @@ export interface components {
         SavedVoicesOut: {
             /** Items */
             items: components["schemas"]["SavedVoiceOut"][];
+        };
+        /**
+         * ScriptIn
+         * @description A script saved on its own from My scripts (owner request, 2026-11-17, R1 test order).
+         */
+        ScriptIn: {
+            /** Language */
+            language: string;
+            /** Text */
+            text: string;
         };
         /** ScriptOut */
         ScriptOut: {
@@ -2124,6 +2135,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ScriptsOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    create_script_api_v1_scripts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScriptIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScriptOut"];
                 };
             };
             /** @description Unauthorized */

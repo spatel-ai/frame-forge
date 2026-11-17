@@ -1005,6 +1005,25 @@
         "title": "SavedVoicesOut",
         "type": "object"
       },
+      "ScriptIn": {
+        "description": "A script saved on its own from My scripts (owner request, 2026-11-17, R1 test order).",
+        "properties": {
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "language",
+          "text"
+        ],
+        "title": "ScriptIn",
+        "type": "object"
+      },
       "ScriptOut": {
         "properties": {
           "created_at": {
@@ -2720,6 +2739,55 @@
           }
         },
         "summary": "The caller's saved scripts, most recently used first; optional search and language",
+        "tags": [
+          "scripts"
+        ]
+      },
+      "post": {
+        "operationId": "create_script_api_v1_scripts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScriptIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Save a script to My scripts without making a voice (same checks as Create)",
         "tags": [
           "scripts"
         ]

@@ -188,17 +188,10 @@ class JobService:
             image.save(out, image_format)
         return out.getvalue(), _IMAGE_FORMATS[image_format]
 
-    # ---- step 1: create the job and generate the voice ------------------
-
-    def create_job(
-        self, user_id: str, image_bytes: bytes, script: str, language: str, consent_version: str
-    ) -> dict:
-        """Create the job and charge the voice. `consent_version` is stored with the time in the
-        same transaction (R-14, D-045); the route has already checked it is the current one.
-
-        R-43, R-51: in that same transaction the script is saved to the customer's library (or an
-        identical live one is touched) and its id stored in `jobs.script_id`; if any check or the
-        voice charge fails, no script is saved. Script text is never logged."""
+    def check_script(self, script: str, language: str) -> str:
+        """The script rules for a job and for a script saved on its own (R-43, R-51): not empty,
+        within the length limit, a known language, and written in that language's alphabet.
+        Returns the stripped text; raises ValidationError naming the field."""
         script = script.strip()
         if not script:
             raise ValidationError("The script is empty. Type what the avatar should say.", "script")
@@ -223,6 +216,20 @@ class JobService:
                     f"{language}. Select {name} in the language list and try again.",
                     "script",
                 )
+        return script
+
+    # ---- step 1: create the job and generate the voice ------------------
+
+    def create_job(
+        self, user_id: str, image_bytes: bytes, script: str, language: str, consent_version: str
+    ) -> dict:
+        """Create the job and charge the voice. `consent_version` is stored with the time in the
+        same transaction (R-14, D-045); the route has already checked it is the current one.
+
+        R-43, R-51: in that same transaction the script is saved to the customer's library (or an
+        identical live one is touched) and its id stored in `jobs.script_id`; if any check or the
+        voice charge fails, no script is saved. Script text is never logged."""
+        script = self.check_script(script, language)
         clean, extension = self._clean_image(image_bytes)
 
         job_id = uuid.uuid4().hex
