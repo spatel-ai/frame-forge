@@ -59,7 +59,10 @@ the git repository.
 - Pricing (owner decisions D-006, D-038): 20 credits per second of voice for the video, plus 10
   credits for each voice. Use example numbers consistently: a 12-second video costs 240 credits
   for the video and 10 for the voice (250 in all); the example balance is 500 credits. ₹1 = 1
-  credit; purchases are expressed in credits, 500 to 10,000 (D-047). "Credits do not expire" is a
+  credit; purchases are expressed in credits, 1,000 to 10,000 (D-059; quick picks 1,000, 2,500, 5,000,
+  10,000). The customer pays a 2% payment fee on top (D-060): 1,000 credits is ₹1,000 plus ₹20,
+  ₹1,020 in all, shown before paying. When a video is short of credits, "Add credits" opens Buy
+  credits and, after paying, returns to the same video (D-061). "Credits do not expire" is a
   Decided: credits never expire (D-052). Do not write a maximum video length as a rule (D-044).
 - Example content: an Indian small business. Example user: Asha Verma, asha@example.com.
   Languages are English, Hindi and Punjabi only.

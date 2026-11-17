@@ -22,16 +22,31 @@ body{margin:0}
 
 <!-- 1. Success -->
 <section aria-label="Success" style="display: flex; flex-direction: column; gap: 8px">
-<span style="font-size: 13px; font-weight: 600; color: #4B5169; text-transform: uppercase; letter-spacing: .04em">1 · Confirmed by the server</span>
+<span style="font-size: 13px; font-weight: 600; color: #4B5169; text-transform: uppercase; letter-spacing: .04em">1a · Confirmed by the server</span>
 <div role="dialog" aria-labelledby="h-ok" style="position: relative; box-sizing: border-box; background: #FFFFFF; border-radius: 16px; padding: 28px; box-shadow: 0 12px 32px rgba(20, 24, 43, 0.16); display: flex; flex-direction: column; gap: 16px; align-items: flex-start">
 <span aria-hidden="true" style="width: 48px; height: 48px; border-radius: 50%; background: #E3F5EE; color: #0B7A55; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
 <h2 id="h-ok" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">Payment received</h2>
-<p style="margin: 0; color: #4B5169">500 credits were added to your wallet.</p>
+<p style="margin: 0; color: #4B5169">1,000 credits were added to your wallet.</p>
 <dl style="margin: 0; width: 100%; box-sizing: border-box; padding: 16px; border-radius: 12px; background: #F4F5FA; display: flex; flex-direction: column; gap: 8px; font-variant-numeric: tabular-nums">
-<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="color: #4B5169">You paid</dt><dd style="margin: 0">₹500</dd></div>
-<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="font-weight: 700">Balance now</dt><dd style="margin: 0; font-weight: 700">1,000 credits</dd></div>
+<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="color: #4B5169">You paid (₹1,000 plus ₹20 payment fee)</dt><dd style="margin: 0">₹1,020</dd></div>
+<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="font-weight: 700">Balance now</dt><dd style="margin: 0; font-weight: 700">1,500 credits</dd></div>
 </dl>
 <button type="button" style="align-self: stretch; min-height: 48px; padding: 12px 24px; border: 0; border-radius: 8px; background: #4A3AFF; color: #FFFFFF; font: inherit; font-weight: 600; font-size: 16px; cursor: pointer">Done</button>
+</div>
+</section>
+
+<!-- 1b. Success, came from a video -->
+<section aria-label="Success from a video" style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 600; color: #4B5169; text-transform: uppercase; letter-spacing: .04em">1b · Confirmed, came from a video</span>
+<div role="dialog" aria-labelledby="h-ok-video" style="position: relative; box-sizing: border-box; background: #FFFFFF; border-radius: 16px; padding: 28px; box-shadow: 0 12px 32px rgba(20, 24, 43, 0.16); display: flex; flex-direction: column; gap: 16px; align-items: flex-start">
+<span aria-hidden="true" style="width: 48px; height: 48px; border-radius: 50%; background: #E3F5EE; color: #0B7A55; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+<h2 id="h-ok-video" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">Payment received</h2>
+<p style="margin: 0; color: #4B5169">1,000 credits were added to your wallet. Your balance is now 1,290 credits. You can approve your video.</p>
+<dl style="margin: 0; width: 100%; box-sizing: border-box; padding: 16px; border-radius: 12px; background: #F4F5FA; display: flex; flex-direction: column; gap: 8px; font-variant-numeric: tabular-nums">
+<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="color: #4B5169">You paid (₹1,000 plus ₹20 payment fee)</dt><dd style="margin: 0">₹1,020</dd></div>
+<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="font-weight: 700">Balance now</dt><dd style="margin: 0; font-weight: 700">1,290 credits</dd></div>
+</dl>
+<button type="button" style="align-self: stretch; min-height: 48px; padding: 12px 24px; border: 0; border-radius: 8px; background: #4A3AFF; color: #FFFFFF; font: inherit; font-weight: 600; font-size: 16px; cursor: pointer">Back to your video</button>
 </div>
 </section>
 
