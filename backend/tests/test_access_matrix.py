@@ -139,7 +139,6 @@ ROWS: list[Row] = [
     *[
         Row(method, path, actor, 501, "not_implemented")
         for method, path in (
-            ("GET", "/api/v1/jobs"),
             ("GET", "/api/v1/voices"),
             ("GET", "/api/v1/scripts"),
             ("GET", "/api/v1/scripts/{script_id}"),
@@ -149,6 +148,9 @@ ROWS: list[Row] = [
         )
         for actor in ("owner", "other", "admin")
     ],
+    # T-501: the job list. Every logged-in caller gets 200 and only their own jobs
+    # (test_job_list.py); there is no resource id to refuse.
+    *[Row("GET", "/api/v1/jobs", actor, 200) for actor in ("owner", "other", "admin")],
     *[
         Row(method, path, "anonymous", 401, "not_authenticated")
         for method, path in (
