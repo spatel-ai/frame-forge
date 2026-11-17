@@ -280,3 +280,49 @@ def test_0007_builds_the_scripts_table(empty_schema, admin_engine):
 
     command.downgrade(cfg, "0006")
     assert not inspect(admin_engine).has_table("scripts", schema=schema)
+
+
+def test_0008_builds_the_templates_table(empty_schema, admin_engine):
+    """T-506 (R-44, R-46): 0008 creates templates; the database refuses an unknown kind and a
+    zero length, defaults `active` to true, and downgrade to 0007 removes the table."""
+    cfg = empty_schema.alembic_config()
+    schema = empty_schema.name
+    command.upgrade(cfg, "head")
+    insp = inspect(admin_engine)
+    assert {c["name"] for c in insp.get_columns("templates", schema)} == {
+        "id",
+        "name",
+        "kind",
+        "clip_file",
+        "preview_file",
+        "duration_ms",
+        "has_audio",
+        "active",
+        "created_by",
+        "created_at",
+    }
+    insert = (
+        "INSERT INTO templates (id, name, kind, clip_file, preview_file, duration_ms, has_audio, "
+        "created_at) VALUES (:id, 'n', :kind, 'f.mp4', 'f.mp4', :ms, false, now())"
+    )
+    engine = create_engine(empty_schema.url, poolclass=NullPool)
+    try:
+        with engine.begin() as conn:
+            conn.execute(text(insert), {"id": "t1", "kind": "start", "ms": 1000})
+            assert conn.execute(text("SELECT active FROM templates")).scalar_one() is True
+        for bad in (
+            {"id": "t2", "kind": "middle", "ms": 1000},
+            {"id": "t3", "kind": "end", "ms": 0},
+        ):
+            try:
+                with engine.begin() as conn:
+                    conn.execute(text(insert), bad)
+            except Exception as exc:
+                assert "ck_templates" in str(exc)
+            else:
+                raise AssertionError(f"accepted {bad}")
+    finally:
+        engine.dispose()
+
+    command.downgrade(cfg, "0007")
+    assert not inspect(admin_engine).has_table("templates", schema=schema)

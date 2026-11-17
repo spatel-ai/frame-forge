@@ -26,3 +26,19 @@ clip is not 1280×720 or its duration is more than 0.1 s from the expected lengt
 
 Banners are free and optional (D-058). The owner can replace these clips with their own later;
 keep the same size, frame rate and audio format so the joining step accepts them.
+
+## Banner templates command (`app.templates.cli`)
+
+Adds, lists and retires the start and end banner clips customers can pick (R-44, R-46, R-47).
+Free: no network, no paid service. Needs `ffprobe` and the database. Run from `backend/`:
+
+```bash
+uv run python -m app.templates.cli add --kind start --name "Festive opening" clip.mp4
+uv run python -m app.templates.cli list          # active only; add --all to include retired
+uv run python -m app.templates.cli retire <id>   # sets active=false; never deletes
+```
+
+`add` measures the clip with ffprobe and refuses (exit code 2, nothing written) anything that is
+not a playable video, has no picture, or is longer than the `max_template_seconds` setting (5 s).
+It copies the clip to `<data_dir>/templates/<id>.mp4`; the preview is the same file. The starter
+clips from `make_banner_clips.py` can be added this way.

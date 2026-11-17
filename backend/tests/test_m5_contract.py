@@ -173,8 +173,6 @@ def client(tmp_path, database_url):
     ("method", "path"),
     [
         ("get", "/api/v1/voices"),
-        ("get", "/api/v1/templates"),
-        ("get", "/api/v1/templates/abc/preview"),
     ],
 )
 def test_unbuilt_routes_need_a_session_then_answer_501(client, sign_up, method, path):
