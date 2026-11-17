@@ -16,11 +16,16 @@ if (!/^https:\/\/[^/\s]+$/.test(target)) {
   )
 }
 
+// Shown in the build log, and sent as a response header on every page, so a wrong address is easy
+// to spot (the API address is public anyway: it is in the site's DNS).
+console.log(`[vercel.mjs] API_TARGET = ${target}`)
+
 export const config = {
   framework: 'vite',
   installCommand: 'npm ci',
   buildCommand: 'npm run build',
   outputDirectory: 'dist',
+  headers: [{ source: '/(.*)', headers: [{ key: 'x-api-target', value: target }] }],
   rewrites: [
     { source: '/api/:path*', destination: `${target}/api/:path*` },
     { source: '/(.*)', destination: '/index.html' },
