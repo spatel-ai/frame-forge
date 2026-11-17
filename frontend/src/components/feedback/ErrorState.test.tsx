@@ -10,6 +10,13 @@ describe('ErrorState', () => {
     expect(container.querySelector('svg')).not.toBeNull()
   })
 
+  it('titles with an h3 by default and with the requested heading level', () => {
+    const { rerender } = render(<ErrorState title="Failed" message="m" />)
+    expect(screen.getByRole('heading', { name: 'Failed' }).tagName).toBe('H3')
+    rerender(<ErrorState title="Failed" message="m" headingLevel={2} />)
+    expect(screen.getByRole('heading', { name: 'Failed' }).tagName).toBe('H2')
+  })
+
   it('offers Try again by keyboard and the action slot', async () => {
     const onRetry = vi.fn()
     render(<ErrorState message="Failed" onRetry={onRetry} action={<a href="/help">Get help</a>} />)

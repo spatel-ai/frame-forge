@@ -1,16 +1,17 @@
 import type { Job } from '../../api/client'
+import { ErrorState } from '../../components/feedback'
 import { Button } from '../../components/form'
 import styles from './screens.module.css'
 import { formatCredits } from './credits'
 import { ProgressScreen } from './ProgressScreen'
 import { ResultScreen } from './ResultScreen'
-import { ScreenError } from './ScreenError'
 import { ReviewScreen } from './ReviewScreen'
 
 function FailedScreen({ job, onReset }: { job: Job; onReset: () => void }) {
   const voiceFailed = !job.audio_url
   return (
-    <ScreenError
+    <ErrorState
+      headingLevel={2}
       title={voiceFailed ? 'We could not make the voice' : 'We could not make this video'}
       message={`${job.error ?? 'Something went wrong on our side.'} ${job.charged_credits === 0 ? 'Nothing was charged.' : `Charged: ${formatCredits(job.charged_credits)} credits.`} Start over to try again.`}
       action={
@@ -49,7 +50,8 @@ export function JobView({ job, onReset }: { job: Job; onReset: () => void }) {
       return <FailedScreen job={job} onReset={onReset} />
     default:
       return (
-        <ScreenError
+        <ErrorState
+          headingLevel={2}
           title="Something unexpected happened"
           message="We do not recognise the state of this video. Start over to make a new one."
           action={<Button onClick={onReset}>Start over</Button>}

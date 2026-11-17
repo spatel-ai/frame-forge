@@ -1,9 +1,8 @@
 import type { Job } from '../../api/client'
-import { Banner, Pill } from '../../components/feedback'
+import { Banner, ErrorState, Pill } from '../../components/feedback'
 import { Button, DownloadVideoButton } from '../../components/form'
 import { Card } from '../../components/layout'
 import { formatCredits } from './credits'
-import { ScreenError } from './ScreenError'
 import styles from './screens.module.css'
 
 const VIDEO_EXPIRED = 'This video has expired. Videos are kept for 30 days.'
@@ -11,7 +10,8 @@ const VIDEO_EXPIRED = 'This video has expired. Videos are kept for 30 days.'
 export function ResultScreen({ job, onReset }: { job: Job; onReset: () => void }) {
   if (!job.video_url) {
     return (
-      <ScreenError
+      <ErrorState
+        headingLevel={2}
         title="Your video file is not available"
         message={`The video finished but we could not find its file. ${job.charged_credits === 0 ? 'Nothing was charged.' : `Charged: ${formatCredits(job.charged_credits)} credits.`} Start over to try again.`}
         action={<Button onClick={onReset}>Start over</Button>}
@@ -23,7 +23,7 @@ export function ResultScreen({ job, onReset }: { job: Job; onReset: () => void }
       <section className={`${styles.panel} ${styles.wide}`} aria-label="Your video">
         {job.video_expired ? (
           // D-065: the provider keeps the video 30 days; the route answers 410 after that.
-          <ScreenError title="This video has expired" message={VIDEO_EXPIRED} />
+          <ErrorState headingLevel={2} title="This video has expired" message={VIDEO_EXPIRED} />
         ) : (
           <>
             <video className={`${styles.media} ${styles.video}`} controls src={job.video_url} />
