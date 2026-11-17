@@ -24,11 +24,18 @@ function isFieldName(key: string): key is FieldName {
   return (FIELD_ORDER as string[]).includes(key)
 }
 
+/** Characters as the server counts them: Unicode code points, so an emoji is one, not two. */
+function scriptLength(text: string): number {
+  return [...text].length
+}
+
+/** Checks the trimmed text, as it is sent: spaces at the start and end never count. */
 function validateScript(script: string, max: number): string | undefined {
   const text = script.trim()
   if (!text) return 'Please enter a script.'
-  if (text.length > max) {
-    const over = text.length - max
+  const length = scriptLength(text)
+  if (length > max) {
+    const over = length - max
     return `Your script is ${over} ${over === 1 ? 'character' : 'characters'} too long. Shorten it to continue.`
   }
   return undefined
@@ -125,8 +132,9 @@ export function JobForm({
   const onImageChange = (next: File | null) => {
     setFile(next)
     clearServer('image')
-    // A rejected file already shows its own message in the drop zone; only clear ours.
-    if (next) setClient('image', undefined)
+    // The latest event wins: a chosen file clears our message, and a rejected file shows the drop
+    // zone's own reason ("That file is 11.0 MB…"), which our older "Please choose a photo." would hide.
+    setClient('image', undefined)
   }
 
   const onScriptChange = (value: string) => {

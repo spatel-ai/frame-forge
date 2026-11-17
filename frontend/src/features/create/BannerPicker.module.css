@@ -29,3 +29,23 @@
   }
   .grid label { display: flex; flex-direction: column; justify-content: flex-start; }
 }
+/*
+  Many banners: the card list keeps a height of its own (set by BannerPicker.tsx as --cards-cap: about
+  4.5 cards on a phone, 3.5 rows from 768 px) and scrolls itself, never taller than 60% of a short
+  screen. The half-shown last card and the fade over the bottom edge show that it scrolls.
+*/
+.capped fieldset > div {
+  max-height: min(var(--cards-cap), 60vh); max-height: min(var(--cards-cap), 60dvh);
+  overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  /* With a max-height, 1fr rows would shrink to share it; each row keeps its own height instead. */
+  grid-auto-rows: auto;
+  /* Room for the focus ring, and a focused card stops above the fade. */
+  padding: var(--space-1); scroll-padding-block: var(--space-1) var(--space-6);
+  /* The padding and the scroll bar (where scroll bars take room; measured as --scrollbar) sit in the
+     card's own padding, so the cards keep the width, and the columns, they have without the cap. */
+  margin-inline: calc(-1 * var(--space-1)) calc(-1 * (var(--space-1) + var(--scrollbar, 0px)));
+}
+.capped[data-more-below] fieldset > div {
+  -webkit-mask-image: linear-gradient(to bottom, var(--color-ink) calc(100% - var(--space-6)), transparent);
+  mask-image: linear-gradient(to bottom, var(--color-ink) calc(100% - var(--space-6)), transparent);
+}

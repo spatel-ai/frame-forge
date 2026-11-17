@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react'
 import type { SavedScript } from '../../api/client'
 import { Dialog, EmptyState, ErrorState, Pill, Skeleton, SkeletonGroup } from '../../components/feedback'
 import { Button, Select, TextField } from '../../components/form'
@@ -8,6 +9,46 @@ import { errMsg } from '../../lib/util'
 import styles from './ScriptPicker.module.css'
 
 const PAGE_SIZE = 6
+const SHORT_SCREEN = '(max-height: 500px)'
+
+/**
+ * Measures the page controls for the rows' scroll margin. On a short screen (a phone held sideways) the list and its page controls take the height left in
+ * the dialog body and scroll by themselves, so the search stays in view. CSS cannot do this: the
+ * dialog's height is fit-content, so a percentage height has nothing to resolve against.
+ */
+function useFitToDialog(deps: unknown) {
+  const ref = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const results = ref.current
+    if (!results || typeof window.matchMedia !== 'function') return
+    const short = window.matchMedia(SHORT_SCREEN)
+    let body: HTMLElement | null = results.parentElement
+    while (body && !/(auto|scroll)/.test(getComputedStyle(body).overflowY)) body = body.parentElement
+    const pager = results.lastElementChild as HTMLElement | null
+    const fit = () => {
+      // Rows focused with the keyboard stop above the pinned page controls, however tall they wrap.
+      if (pager) results.style.setProperty('--pager-room', `${Math.ceil(pager.getBoundingClientRect().height)}px`)
+      results.style.maxHeight = ''
+      if (!short.matches || !body) return
+      const top = results.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop
+      const room = Math.floor(body.clientHeight - top)
+      if (results.scrollHeight > room && room > 0) results.style.maxHeight = `${room}px`
+    }
+    fit()
+    short.addEventListener('change', fit)
+    window.addEventListener('resize', fit)
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(fit)
+    const list = results.firstElementChild
+    if (observer && list) observer.observe(list)
+    if (observer && pager) observer.observe(pager)
+    return () => {
+      short.removeEventListener('change', fit)
+      window.removeEventListener('resize', fit)
+      observer?.disconnect()
+    }
+  }, [deps])
+  return ref
+}
 
 function PickerBody({
   languages,
@@ -22,6 +63,7 @@ function PickerBody({
   const query = useScripts(f.params)
   const data = query.data
   const emptyAll = !!data && data.total === 0 && !f.filtered
+  const resultsRef = useFitToDialog(data)
 
   let body
   if (query.isPending) {
@@ -56,6 +98,7 @@ function PickerBody({
   } else if (data) {
     body = (
       <>
+        <div ref={resultsRef} className={styles.results}>
         <ul className={styles.list}>
           {data.items.map((s) => (
             <li key={s.id}>
@@ -71,6 +114,7 @@ function PickerBody({
         </ul>
         <div className={styles.pager}>
           <Pagination page={data.page} pageSize={data.page_size} total={data.total} onPageChange={f.setPage} />
+        </div>
         </div>
       </>
     )

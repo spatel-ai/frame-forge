@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useOutletContext } from 'react-router'
 import { ApiError, approveJob, bannersKey, meKey } from '../../api/client'
 import type { ShellContext } from '../../components/AppShell'
@@ -32,8 +32,14 @@ export function ReviewScreen({ job, onReset }: { job: Job; onReset: () => void }
   // Remembered for this job in component state only (D-067).
   const [bannerId, setBannerId] = useState<string | null>(null)
   const [bannerError, setBannerError] = useState<string | null>(null)
+  // isPending only turns true on the next render, so a fast double tap could send two approves.
+  // This ref is set synchronously by the first tap and cleared when that request settles.
+  const approveSent = useRef(false)
   const approveMutation = useMutation({
     mutationFn: (id: string | null) => approveJob(job.id, id ?? undefined),
+    onSettled: () => {
+      approveSent.current = false
+    },
     onSuccess: (j) => {
       queryClient.setQueryData(jobKey(job.id), j)
       void invalidateWallet(queryClient)
@@ -68,8 +74,9 @@ export function ReviewScreen({ job, onReset }: { job: Job; onReset: () => void }
   const needsBanner = bannersOn && !bannerId
 
   const approve = () => {
-    if (approving) return
+    if (approving || approveSent.current) return
     if (bannersOn && !bannerId) return
+    approveSent.current = true
     approveMutation.mutate(bannersOn ? bannerId : null)
   }
 
