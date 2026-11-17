@@ -17,7 +17,7 @@ export const navItems: NavItem[] = [
   { to: '/videos', label: 'Videos', icon: VideoIcon, enabled: false },
   { to: '/scripts', label: 'Scripts', icon: ScriptIcon, enabled: false },
   { to: '/wallet', label: 'Wallet', icon: WalletIcon, enabled: false },
-  { to: '/account', label: 'Account', icon: UserIcon, enabled: false },
+  { to: '/account', label: 'Account', icon: UserIcon, enabled: true },
 ]
 
 export const enabledNavItems = (items: NavItem[] = navItems): NavItem[] => items.filter((i) => i.enabled)

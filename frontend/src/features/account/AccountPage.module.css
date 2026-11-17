@@ -1,0 +1,14 @@
+.page { display: flex; flex-direction: column; gap: var(--space-5); max-width: 720px; }
+.title { margin: 0; font-size: var(--text-page-title-size); font-weight: var(--text-page-title-weight); }
+.heading { margin: 0 0 var(--space-4); font-size: var(--text-section-size); font-weight: var(--text-section-weight); }
+.facts { margin: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.fact { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-4); min-height: var(--target-min); }
+.fact dt { flex: 0 0 120px; color: var(--color-ink-soft); }
+.fact dd { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); font-weight: var(--text-title-weight); }
+.form { display: flex; flex-direction: column; gap: var(--space-4); align-items: flex-start; }
+.narrow { width: 100%; max-width: 360px; }
+.note { margin: 0; color: var(--color-ink-soft); font-size: var(--text-caption-size); }
+.line { margin: 0 0 var(--space-3); }
+.row { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; }
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-3); justify-content: flex-end; margin-top: var(--space-4); }
+.gap { margin-top: var(--space-3); }

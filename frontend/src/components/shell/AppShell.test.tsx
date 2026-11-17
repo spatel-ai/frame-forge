@@ -61,7 +61,7 @@ describe('AppShell', () => {
     renderAt('/create')
     for (const name of ['Main', 'Main (phone)']) {
       const nav = screen.getByRole('navigation', { name })
-      expect(within(nav).getAllByRole('link').map((a) => a.textContent)).toEqual(['Create'])
+      expect(within(nav).getAllByRole('link').map((a) => a.textContent)).toEqual(['Create', 'Account'])
     }
     expect(screen.queryByText('Home')).toBeNull()
     expect(screen.queryByText(/coming soon/i)).toBeNull()
@@ -70,7 +70,7 @@ describe('AppShell', () => {
 
   it('R-76 keeps the switched-off items in the data, with only Create enabled', () => {
     expect(navItems.map((i) => i.label)).toEqual(['Home', 'Create', 'Videos', 'Scripts', 'Wallet', 'Account'])
-    expect(enabledNavItems().map((i) => i.label)).toEqual(['Create'])
+    expect(enabledNavItems().map((i) => i.label)).toEqual(['Create', 'Account'])
   })
 
   it('R-76 marks Create as the current page on /create/abc', async () => {
