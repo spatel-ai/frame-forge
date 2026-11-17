@@ -1,7 +1,7 @@
 import { act, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, login, meKey, signup } from '../../api/client'
-import { safeNext } from './validation'
+import { safeNext } from '../../lib/validation'
 import { at, renderAuth, testUser } from './testUtils'
 
 vi.mock('../../api/client', async (importOriginal) => ({

@@ -8,7 +8,7 @@ import { Button, PasswordField } from '../../components/form'
 import { ChevronLeftIcon, ClockIcon, KeyIcon } from '../../components/icons'
 import { AuthLayout } from './AuthLayout'
 import styles from './auth.module.css'
-import { useFields, validateConfirm, validateNewPassword } from './validation'
+import { useFields, validateConfirm, validateNewPassword } from '../../lib/validation'
 
 const NETWORK_MESSAGE = 'We could not reach the server. Check your connection and try again.'
 

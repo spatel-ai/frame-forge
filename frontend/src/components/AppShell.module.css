@@ -29,3 +29,11 @@
 
 .userName { font-weight: var(--text-title-weight); color: var(--color-ink-soft); }
 .pillLink { text-decoration: none; }
+
+.buyLink {
+  display: inline-flex; align-items: center; min-height: var(--target-min); padding: var(--space-2) var(--space-4);
+  border: var(--line-width) solid var(--color-primary); border-radius: var(--radius-control);
+  color: var(--color-primary-strong); font-weight: var(--text-title-weight); text-decoration: none;
+}
+.buyLink:hover { background: var(--color-primary-soft); }
+.buyLink:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }

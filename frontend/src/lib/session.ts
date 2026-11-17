@@ -2,7 +2,7 @@ import { MutationCache, QueryCache, QueryClient, useQuery } from '@tanstack/reac
 import type { createBrowserRouter } from 'react-router'
 import { ApiError, getMe, meKey } from '../api/client'
 import type { User } from '../api/client'
-import { storeId } from '../features/create/storage'
+import { storeId } from './jobStorage'
 
 const RETRY_MS = 3000
 const ME_STALE_MS = 60_000

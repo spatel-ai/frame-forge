@@ -6,7 +6,7 @@ import { useMe } from '../../lib/session'
 import { CreateLayout } from './CreateLayout'
 import { JobForm } from './JobForm'
 import { STEP_DETAILS } from './steps'
-import { readStoredId, storeId } from './storage'
+import { readStoredId, storeId } from '../../lib/jobStorage'
 import styles from './JobForm.module.css'
 
 function FormSkeleton() {

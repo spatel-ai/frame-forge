@@ -7,7 +7,7 @@ import { Banner } from '../../components/feedback'
 import { Button, PasswordField, TextField } from '../../components/form'
 import { AuthLayout } from './AuthLayout'
 import styles from './auth.module.css'
-import { safeNext, useFields, validateCurrentPassword, validateEmail } from './validation'
+import { safeNext, useFields, validateCurrentPassword, validateEmail } from '../../lib/validation'
 
 const ORDER = ['email', 'password'] as const
 

@@ -3,7 +3,7 @@ import { Link, Outlet } from 'react-router'
 import { getConfig } from '../api/client'
 import type { Config } from '../api/client'
 import { useMe } from '../lib/session'
-import { useWallet } from '../features/wallet/useWallet'
+import { useWallet } from '../lib/wallet'
 import { errMsg } from '../lib/util'
 import { Banner, CreditsPill } from './feedback'
 import { BottomNav, Sidebar, TopBar } from './shell'
@@ -38,9 +38,12 @@ export default function AppShell() {
       <div className={styles.column}>
         <TopBar mockMode={config?.provider === 'mock'}>
           {me && !wallet.isError && (
-            <Link to="/wallet" className={styles.pillLink}>
-              <CreditsPill balance={wallet.data?.available_credits} loading={wallet.isPending} />
-            </Link>
+            <>
+              <Link to="/wallet" className={styles.pillLink}>
+                <CreditsPill balance={wallet.data?.available_credits} loading={wallet.isPending} />
+              </Link>
+              <Link to="/wallet?buy=1" className={styles.buyLink}>Buy credits</Link>
+            </>
           )}
           {me && <span className={styles.userName}>{me.name}</span>}
         </TopBar>
