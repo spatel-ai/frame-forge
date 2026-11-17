@@ -61,16 +61,15 @@ describe('AppShell', () => {
     renderAt('/create')
     for (const name of ['Main', 'Main (phone)']) {
       const nav = screen.getByRole('navigation', { name })
-      expect(within(nav).getAllByRole('link').map((a) => a.textContent)).toEqual(['Create', 'Wallet', 'Account'])
+      expect(within(nav).getAllByRole('link').map((a) => a.textContent)).toEqual(['Home', 'Create', 'Wallet', 'Account'])
     }
-    expect(screen.queryByText('Home')).toBeNull()
     expect(screen.queryByText(/coming soon/i)).toBeNull()
     await screen.findByText(/Mock mode/)
   })
 
-  it('R-76 keeps the switched-off items in the data, with Create, Wallet and Account enabled', () => {
+  it('R-76 keeps the switched-off items in the data, with Home, Create, Wallet and Account enabled', () => {
     expect(navItems.map((i) => i.label)).toEqual(['Home', 'Create', 'Videos', 'Scripts', 'Wallet', 'Account'])
-    expect(enabledNavItems().map((i) => i.label)).toEqual(['Create', 'Wallet', 'Account'])
+    expect(enabledNavItems().map((i) => i.label)).toEqual(['Home', 'Create', 'Wallet', 'Account'])
   })
 
   it('R-76 marks Create as the current page on /create/abc', async () => {

@@ -12,7 +12,7 @@ export function NavLinks({ items, iconSize, linkClass, activeClass, labelClass }
   return (
     <>
       {items.map(({ to, label, icon: Icon }) => (
-        <NavLink key={to} to={to} className={({ isActive }) => (isActive ? `${linkClass} ${activeClass}` : linkClass)}>
+        <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => (isActive ? `${linkClass} ${activeClass}` : linkClass)}>
           <Icon size={iconSize} />
           <span className={labelClass}>{label}</span>
         </NavLink>
