@@ -7,6 +7,8 @@ import AccountPage from './features/account/AccountPage'
 import CreatePage from './features/create/CreatePage'
 import JobPage from './features/create/JobPage'
 import HomePage from './features/home/HomePage'
+import VideoDetailPage from './features/videos/VideoDetailPage'
+import VideosPage from './features/videos/VideosPage'
 import WalletPage from './features/wallet/WalletPage'
 
 // /verify-email and /reset-password work logged in or out; only /login and /signup send a user on.
@@ -28,6 +30,8 @@ export const routes: RouteObject[] = [
       { index: true, element: <HomePage /> },
       { path: 'create', element: <CreatePage /> },
       { path: 'create/:jobId', element: <JobPage /> },
+      { path: 'videos', element: <VideosPage /> },
+      { path: 'videos/:jobId', element: <VideoDetailPage /> },
       { path: 'wallet', element: <WalletPage /> },
       { path: 'account', element: <AccountPage /> },
       { path: '*', element: <NotFound /> },
