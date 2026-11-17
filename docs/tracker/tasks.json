@@ -610,9 +610,9 @@
     "starts_after": "T-202, T-300",
     "task": "`wallets` and `ledger_entries` with constraints",
     "acceptance": "The database itself rejects a negative available balance and a duplicate entry",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent building in a worktree."
   },
   {
     "id": "T-302",
@@ -625,9 +625,9 @@
     "starts_after": "T-301",
     "task": "Ledger service: credit, hold, capture, release",
     "acceptance": "Row-locked; idempotent on `(kind, ref_type, ref_id)`",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent building in a worktree."
   },
   {
     "id": "T-303",
@@ -700,9 +700,9 @@
     "starts_after": "T-211, T-300",
     "task": "Balance in the header; wallet page with transactions",
     "acceptance": "Balance refreshes after every charge",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "IMPLEMENTED, UNVERIFIED",
+    "evidence": "Credits pill (available credits, en-IN, links to /wallet via the router; hidden on error) and /wallet page from the design: balance card with reserved note, transactions with plain-English kinds, signs as sent, hold/release amounts from reserved_delta, job links, pagination, empty/error/skeleton; Wallet nav enabled; invalidateWallet helper; useWallet refetches on focus. Contract gap found by the agent (no reserved amount) fixed by adding reserved_delta. 15 tests; npm run check 336 passed. No 'Buy credits' until M4. Not yet run against the real backend or seen in a browser."
   },
   {
     "id": "T-311",
@@ -715,9 +715,9 @@
     "starts_after": "T-155, T-211, T-300",
     "task": "Show the price before approval; handle \"not enough credits\"",
     "acceptance": "Approval disabled with the shortfall shown",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent building in a worktree."
   },
   {
     "id": "T-400",
