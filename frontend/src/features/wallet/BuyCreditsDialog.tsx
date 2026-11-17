@@ -108,6 +108,7 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
   const [notVerified, setNotVerified] = useState<string | null>(null)
   const [otherError, setOtherError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const payingRef = useRef(false) // state is stale inside two clicks in one task; the ref is not
   const inputRef = useRef<HTMLInputElement>(null)
 
   const stopPolling = useCallback(() => {
@@ -117,7 +118,7 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
   }, [])
   useEffect(() => stopPolling, [stopPolling])
 
-  const parsed = /^\d+$/.test(amount.trim()) ? Number(amount.trim()) : null
+  const parsed = /^-?\d+$/.test(amount.trim()) ? Number(amount.trim()) : null
   const validate = (): string | undefined => {
     if (parsed === null) return 'Enter a whole number of credits.'
     if (parsed < min) return `Buy at least ${credits.format(min)} credits.`
@@ -147,10 +148,16 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
   const quote = valid && quoteQuery.data && quoteQuery.data.credits === parsed ? quoteQuery.data : null
   const quoteError = quoteQuery.error instanceof ApiError ? quoteQuery.error : null
   const quoteFieldError = valid && quoteFor === parsed ? quoteError?.fields.credits : undefined
-  const quoteOtherError = valid && quoteFor === parsed && quoteError && !quoteFieldError ? errMsg(quoteError) : null
+  // Any failed price request counts, a dropped connection as much as a server answer; both offer "Try again".
+  const quoteFailed = valid && quoteFor === parsed && quoteQuery.isError && !quoteQuery.isFetching && !quoteFieldError
+  // Once a price request has failed, its message space stays reserved (hidden) so the dialog does not change height
+  // when the retry brings the price.
+  const [quoteFailedBefore, setQuoteFailedBefore] = useState(false)
+  if (quoteFailed && !quoteFailedBefore) setQuoteFailedBefore(true)
+  const quoteOtherError = quoteFailed ? (quoteError ? errMsg(quoteError) : 'We could not get the price.') : null
   const error = serverError ?? localError ?? quoteFieldError
   // A price for the amount in the field is on its way (debounce or request in flight).
-  const quoting = open && valid && !quote && !quoteFieldError && !quoteOtherError
+  const quoting = open && valid && !quote && !quoteFieldError && !quoteFailed
   // The GST row is kept in place while the price loads, so the dialog does not change height when it arrives.
   const showGst = quote ? quote.fee_gst_paise > 0 : (config?.payment_fee_gst_bps ?? 0) > 0
 
@@ -242,12 +249,13 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
 
   const pay = async (event?: FormEvent) => {
     event?.preventDefault()
-    if (busy) return
+    if (busy || payingRef.current) return
     setTouched(true)
     if (!valid || parsed === null) {
       inputRef.current?.focus()
       return
     }
+    payingRef.current = true
     setBusy(true)
     setServerError(undefined)
     setNotVerified(null)
@@ -294,12 +302,14 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
         inputRef.current?.focus()
       } else setOtherError(`${errMsg(e)} You were not charged.`)
     } finally {
+      payingRef.current = false
       setBusy(false)
     }
   }
 
   const mockComplete = async (order: PaymentOrder, outcome: 'captured' | 'failed') => {
-    if (busy) return
+    if (busy || payingRef.current) return
+    payingRef.current = true
     setBusy(true)
     const id = run.current
     try {
@@ -315,6 +325,7 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
         setStage({ kind: 'failed', unknown: true })
       } else setStage({ kind: 'failed' })
     } finally {
+      payingRef.current = false
       setBusy(false)
     }
   }
@@ -358,6 +369,7 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
                   className={styles.pick}
                   onClick={() => {
                     changeAmount(String(n))
+                    if (quoteFailed && n === parsed) void quoteQuery.refetch() // same amount again: ask again
                     setQuoteFor(n)
                     setTouched(false)
                   }}
@@ -413,9 +425,14 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
           </dl>
           <p className={styles.fine}>The payment fee covers the card or UPI charge.</p>
           {returnTo && <p className={styles.fine}>After paying you'll come back to this video.</p>}
-          {(quoteOtherError || notVerified || otherError) && (
+          {(quoteFailedBefore || notVerified || otherError) && (
             <div className={styles.messages}>
-              {quoteOtherError && <p role="alert" className={styles.problem}>{quoteOtherError} Nothing was charged.</p>}
+              {quoteFailedBefore && (
+                <div className={quoteFailed ? styles.quoteFail : `${styles.quoteFail} ${styles.reserved}`} aria-hidden={quoteFailed ? undefined : true}>
+                  <p role={quoteFailed ? 'alert' : undefined} className={styles.problem}>{quoteOtherError ?? 'We could not get the price.'} Nothing was charged.</p>
+                  <Button type="button" variant="secondary" onClick={() => void quoteQuery.refetch()}>Try again</Button>
+                </div>
+              )}
               {notVerified && (
                 <Banner
                   tone="warning"
@@ -495,7 +512,7 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
           <span className={`${styles.badge} ${styles.bad}`} aria-hidden="true"><AlertIcon size={24} /></span>
           <p role="alert" className={styles.text}>
             {stage.unknown
-              ? 'We could not confirm this payment yet. If it went through, your balance will update on its own. Check your balance before trying again.'
+              ? 'We could not confirm this payment yet. If it went through, your balance will update, but this can take a few minutes. Check your balance before trying again.'
               : mockMode
                 ? 'No credits were added. Try again.'
                 : 'No credits were added. Try again, or choose another way to pay in the Razorpay window.'}
