@@ -1,0 +1,29 @@
+# API-only reverse proxy for the AWS host (docker-compose.aws.yml). The web app is on Vercel.
+# API_DOMAIN comes from deploy/aws.env; its DNS A record must point at the Elastic IP so Caddy
+# can get the HTTPS certificate by itself (ports 80 and 443 open).
+{$API_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Content-Security-Policy "frame-ancestors 'none'"
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	# Photo uploads are at most 10 MB; 12 MB leaves room for the multipart envelope.
+	request_body {
+		max_size 12MB
+	}
+
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+	handle /healthz {
+		reverse_proxy backend:8000
+	}
+	handle {
+		respond "Not found" 404
+	}
+}

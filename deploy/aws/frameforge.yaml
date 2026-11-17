@@ -1,0 +1,277 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Frameforge R1 backend host: one S3 bucket (videos, deploy package, backups) and one EC2 instance
+  (Docker: PostgreSQL, API, Caddy) with an IAM role (no access keys) and an Elastic IP.
+  Uses the default VPC of the region. Contains no secrets.
+
+Parameters:
+  ApiDomain:
+    Type: String
+    Description: Public name of the API, for example api.example.com (no https://). Its DNS A record must point at the Elastic IP shown in the stack outputs. Do not change it after creation; edit /opt/frameforge/deploy/aws.env on the instance instead.
+    AllowedPattern: '^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$'
+    ConstraintDescription: A lower-case domain name such as api.example.com, without https://.
+  FrontendOrigin:
+    Type: String
+    Description: Public address of the web app, used for the S3 CORS rule, for example https://app.example.com or https://frameforge.vercel.app (no trailing slash).
+    AllowedPattern: '^https?://[^/\s]+$'
+    ConstraintDescription: An origin such as https://app.example.com, without a path or trailing slash.
+  InstanceType:
+    Type: String
+    Default: t3.small
+    Description: t3.small has 2 GB RAM. Changing to t3.medium later is a stack update (the instance stops and starts; data and the Elastic IP stay).
+    AllowedValues: [t3.small, t3.medium, t3.large]
+  VolumeSizeGb:
+    Type: Number
+    Default: 30
+    MinValue: 20
+    MaxValue: 500
+    Description: Root volume size in GB (gp3, encrypted). Holds Docker images, the database and local backups.
+  LatestAmi:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+    Description: SSM public parameter for the latest Amazon Linux 2023 x86_64 image. It is resolved again on every stack update; read the change set before executing it (see docs/DEPLOY-AWS.md).
+
+Resources:
+  VideoBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub frameforge-videos-${AWS::AccountId}-${AWS::Region}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-videos-30-days
+            Status: Enabled
+            Prefix: videos/
+            ExpirationInDays: 30
+          - Id: expire-backups-30-days
+            Status: Enabled
+            Prefix: backups/
+            ExpirationInDays: 30
+          - Id: abort-incomplete-multipart-1-day
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods: [GET, HEAD]
+            AllowedOrigins: [!Ref FrontendOrigin]
+            AllowedHeaders: ["*"]
+            ExposedHeaders: [Content-Length, Content-Range, Accept-Ranges]
+            MaxAge: 3000
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: frameforge-bucket-access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: VideosReadWriteDelete
+                Effect: Allow
+                Action: [s3:PutObject, s3:GetObject, s3:DeleteObject]
+                Resource: !Sub ${VideoBucket.Arn}/videos/*
+              - Sid: DeployPackageRead
+                Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub ${VideoBucket.Arn}/deploy/*
+              - Sid: BackupsWrite
+                Effect: Allow
+                Action: s3:PutObject
+                Resource: !Sub ${VideoBucket.Arn}/backups/*
+              - Sid: ListBucket
+                Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt VideoBucket.Arn
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref InstanceRole]
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Frameforge API - HTTP and HTTPS only (no SSH; use Session Manager)
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP (certificate challenge and redirect to HTTPS)
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS
+
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAmi
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref InstanceProfile
+      SecurityGroupIds: [!GetAtt SecurityGroup.GroupId]
+      MetadataOptions:
+        HttpTokens: required
+        HttpEndpoint: enabled
+        # 2 so that the API container (one more network hop) can reach the instance role.
+        HttpPutResponseHopLimit: 2
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp3
+            VolumeSize: !Ref VolumeSizeGb
+            Encrypted: true
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: frameforge-backend
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euxo pipefail
+          exec > >(tee -a /var/log/frameforge-bootstrap.log) 2>&1
+
+          # 2 GB swap before anything else (t3.small has 2 GB RAM; image builds need headroom).
+          if [ ! -f /swapfile ]; then
+            dd if=/dev/zero of=/swapfile bs=1M count=2048
+            chmod 600 /swapfile
+            mkswap /swapfile
+            swapon /swapfile
+            echo '/swapfile none swap sw 0 0' >> /etc/fstab
+          fi
+          echo 'vm.swappiness=10' > /etc/sysctl.d/99-frameforge.conf
+          sysctl -p /etc/sysctl.d/99-frameforge.conf
+
+          # Docker, cron and the Compose and Buildx plugins (official release binaries).
+          dnf install -y docker cronie
+          systemctl enable --now docker crond
+          mkdir -p /usr/local/lib/docker/cli-plugins
+          curl -fsSL -o /usr/local/lib/docker/cli-plugins/docker-compose \
+            https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64
+          curl -fsSL -o /usr/local/lib/docker/cli-plugins/docker-buildx \
+            https://github.com/docker/buildx/releases/download/v0.17.1/buildx-v0.17.1.linux-amd64
+          chmod +x /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/lib/docker/cli-plugins/docker-buildx
+
+          # Non-secret settings the stack needs (never put secrets here).
+          mkdir -p /opt/frameforge/deploy /opt/frameforge/backend /var/backups/frameforge
+          cat > /opt/frameforge/deploy/aws.env <<'ENVEOF'
+          AVATAR_S3_BUCKET=${VideoBucket}
+          AWS_REGION=${AWS::Region}
+          API_DOMAIN=${ApiDomain}
+          AVATAR_DOMAIN=${ApiDomain}
+          ENVEOF
+
+          # One place that knows the Compose flags.
+          cat > /usr/local/bin/frameforge-compose <<'CMPEOF'
+          #!/bin/bash
+          cd /opt/frameforge
+          exec docker compose --env-file deploy/aws.env --env-file deploy/secrets.env \
+            -f docker-compose.prod.yml -f docker-compose.aws.yml "$@"
+          CMPEOF
+          chmod +x /usr/local/bin/frameforge-compose
+
+          # Deploy: fetch the package from S3, unpack, check the secrets file, start the stack.
+          cat > /usr/local/bin/frameforge-deploy <<'DEPEOF'
+          #!/bin/bash
+          set -euo pipefail
+          if [ "$(id -u)" -ne 0 ]; then
+            echo "Run it as: sudo frameforge-deploy" >&2
+            exit 1
+          fi
+          BUCKET=$(grep '^AVATAR_S3_BUCKET=' /opt/frameforge/deploy/aws.env | cut -d= -f2)
+          REGION=$(grep '^AWS_REGION=' /opt/frameforge/deploy/aws.env | cut -d= -f2)
+          PKG=/tmp/frameforge-backend.tar.gz
+          echo "Downloading s3://$BUCKET/deploy/frameforge-backend.tar.gz ..."
+          aws s3 cp "s3://$BUCKET/deploy/frameforge-backend.tar.gz" "$PKG" --region "$REGION"
+          tar -xzf "$PKG" -C /opt/frameforge
+          rm -f "$PKG"
+          if [ ! -f /opt/frameforge/backend/.env ]; then
+            echo "" >&2
+            echo "STOPPED: /opt/frameforge/backend/.env does not exist." >&2
+            echo "Create it first (variable names are in docs/DEPLOY-AWS.md, step 4), for example:" >&2
+            echo "  sudo nano /opt/frameforge/backend/.env" >&2
+            echo "then run: sudo frameforge-deploy" >&2
+            exit 1
+          fi
+          chmod 600 /opt/frameforge/backend/.env
+          if [ ! -f /opt/frameforge/deploy/secrets.env ]; then
+            echo "First deploy: generating the database password (root-only file)."
+            umask 077
+            echo "POSTGRES_PASSWORD=$(openssl rand -hex 24)" > /opt/frameforge/deploy/secrets.env
+          fi
+          chmod 600 /opt/frameforge/deploy/secrets.env
+          frameforge-compose up -d --build
+          frameforge-compose ps
+          echo "Done. Check: curl https://$(grep '^API_DOMAIN=' /opt/frameforge/deploy/aws.env | cut -d= -f2)/healthz"
+          DEPEOF
+          chmod +x /usr/local/bin/frameforge-deploy
+
+          # Nightly pg_dump at 02:30: kept 14 days on the volume, copied to S3 (30-day lifecycle).
+          cat > /usr/local/bin/frameforge-backup <<'BAKEOF'
+          #!/bin/bash
+          set -euo pipefail
+          OUT=/var/backups/frameforge
+          BUCKET=$(grep '^AVATAR_S3_BUCKET=' /opt/frameforge/deploy/aws.env | cut -d= -f2)
+          REGION=$(grep '^AWS_REGION=' /opt/frameforge/deploy/aws.env | cut -d= -f2)
+          FILE="$OUT/avatar-$(date +%F).dump"
+          mkdir -p "$OUT"
+          frameforge-compose exec -T db pg_dump -U avatar -d avatar --format=custom > "$FILE"
+          find "$OUT" -name 'avatar-*.dump' -mtime +14 -delete
+          aws s3 cp "$FILE" "s3://$BUCKET/backups/$(basename "$FILE")" --region "$REGION"
+          BAKEOF
+          chmod +x /usr/local/bin/frameforge-backup
+          echo '30 2 * * * root /usr/local/bin/frameforge-backup >> /var/log/frameforge-backup.log 2>&1' \
+            > /etc/cron.d/frameforge-backup
+          chmod 644 /etc/cron.d/frameforge-backup
+
+          echo "Bootstrap finished. Next: upload the package and run sudo frameforge-deploy."
+
+  ElasticIp:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref Instance
+      Tags:
+        - Key: Name
+          Value: frameforge-backend
+
+Outputs:
+  BucketName:
+    Description: S3 bucket (videos/, deploy/, backups/). Retained when the stack is deleted.
+    Value: !Ref VideoBucket
+  ElasticIp:
+    Description: Public IP of the backend
+    Value: !Ref ElasticIp
+  DnsRecordToCreate:
+    Description: Create this DNS record at your domain provider
+    Value: !Sub ${ApiDomain}  A  ${ElasticIp}
+  SessionManagerCommand:
+    Description: Open a shell on the instance (needs the AWS CLI and the Session Manager plugin), or use the console Connect button
+    Value: !Sub aws ssm start-session --target ${Instance} --region ${AWS::Region}
+  PackageUploadPath:
+    Description: Upload the backend package here
+    Value: !Sub s3://${VideoBucket}/deploy/frameforge-backend.tar.gz
+  PackageUploadCommand:
+    Description: Command to upload the package
+    Value: !Sub aws s3 cp dist/frameforge-backend.tar.gz s3://${VideoBucket}/deploy/frameforge-backend.tar.gz --region ${AWS::Region}

@@ -6,3 +6,7 @@ __pycache__/
 frontend/node_modules/
 frontend/dist/
 .claude/worktrees/
+dist/
+deploy/*.env
+!deploy/*.env.example
+!deploy/local.env
