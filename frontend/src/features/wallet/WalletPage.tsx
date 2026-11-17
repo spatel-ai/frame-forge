@@ -138,6 +138,7 @@ export default function WalletPage() {
   const wantsBuy = params.get('buy') === '1'
   useEffect(() => {
     if (!wantsBuy) return
+    // oxlint-disable-next-line react/set-state-in-effect -- the address is the external trigger; it is consumed once here
     setBuy((b) => ({ open: true, n: b.n + 1 }))
     setParams((p) => { p.delete('buy'); return p }, { replace: true })
   }, [wantsBuy, setParams])
