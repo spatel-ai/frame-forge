@@ -85,6 +85,11 @@
   .panel { padding: var(--space-5); }
   .close { margin-inline-end: calc(-1 * var(--space-2)); }
 }
+/* A sideways phone or tablet at 768 px or wider (centred dialog, about 360 px of height): the phone
+   sheet's tighter padding, so a short form and its buttons fit without scrolling. */
+@media (max-height: 500px) and (min-width: 768px) {
+  .panel { padding: var(--space-4); gap: var(--space-3); }
+}
 /* Opt-in (wideWhenShort): a sideways phone or tablet at 768 px or wider has about 260 px of height, so
    a two-column body needs more than 480 px of width. */
 @media (max-height: 500px) and (min-width: 768px) {
