@@ -234,9 +234,13 @@ def join(
     concat_inputs = "".join(f"[v{i}][a{i}]" for i in range(len(parts)))
     graph += f";{concat_inputs}concat=n={len(parts)}:v=1:a=1[vout][aout]"
 
-    out.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp_name = tempfile.mkstemp(prefix=f".{out.name}.", suffix=".part", dir=out.parent)
-    os.close(fd)
+    failure = "The banners could not be joined to the video."
+    try:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        fd, tmp_name = tempfile.mkstemp(prefix=f".{out.name}.", suffix=".part", dir=out.parent)
+        os.close(fd)
+    except OSError as exc:
+        raise MediaError(failure, str(exc)) from exc
     tmp = Path(tmp_name)
     try:
         cmd += [
@@ -268,8 +272,12 @@ def join(
             "mp4",
             str(tmp),
         ]
-        _run(cmd, JOIN_TIMEOUT_S, "The banners could not be joined to the video.")
-        os.replace(tmp, out)
+        _run(cmd, JOIN_TIMEOUT_S, failure)
+        try:
+            os.chmod(tmp, 0o644)  # mkstemp makes 0600; give the usual file mode
+            os.replace(tmp, out)
+        except OSError as exc:
+            raise MediaError(failure, str(exc)) from exc
     finally:
         tmp.unlink(missing_ok=True)
     return True

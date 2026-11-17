@@ -4,6 +4,6 @@ Works on files alone: it knows nothing of jobs, the wallet or the database, and 
 service, so a failed join may simply be run again.
 """
 
-from app.media.join import MediaError, MediaInfo, join, measure
+from app.media.joining import MediaError, MediaInfo, join, measure
 
 __all__ = ["MediaError", "MediaInfo", "join", "measure"]

@@ -288,6 +288,64 @@ def test_truncated_clip_raises_and_leaves_nothing(clips, tmp_path):
     assert clips["ai"].read_bytes() == before
 
 
+def test_failed_ffmpeg_run_leaves_no_temp_file(clips, tmp_path):
+    """R-67: an AI video that measures fine but cannot be encoded (odd size 321x181, which H.264
+    4:2:0 cannot hold) fails during the ffmpeg run itself; the temporary file is removed."""
+    odd = tmp_path / "odd.mp4"
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-nostdin",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "color=c=blue:s=321x181:r=25:d=0.5",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "ultrafast",
+            "-pix_fmt",
+            "yuv444p",
+            str(odd),
+        ],
+        check=True,
+    )
+    assert (measure(odd).width, measure(odd).height) == (321, 181)
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    with pytest.raises(MediaError) as error:
+        join(odd, clips["start"], None, out_dir / "out.mp4")
+    assert error.value.details  # ffmpeg's own message is kept for the log
+    assert list(out_dir.iterdir()) == []
+
+
+def test_unwritable_output_folder_raises_media_error(clips, tmp_path):
+    """R-44: a folder that cannot be written raises the module's error, not a raw OSError."""
+    blocker = tmp_path / "not-a-folder"
+    blocker.write_text("x")
+    with pytest.raises(MediaError):
+        join(clips["ai"], clips["start"], None, blocker / "out.mp4")
+
+
+def test_missing_ffmpeg_gives_a_clear_error(clips, tmp_path, monkeypatch):
+    """R-67: without ffmpeg/ffprobe on PATH, measuring and joining raise MediaError naming it."""
+    monkeypatch.setattr("app.media.joining.shutil.which", lambda name: None)
+    with pytest.raises(MediaError, match="ffprobe"):
+        measure(clips["ai"])
+    with pytest.raises(MediaError, match="ffmpeg"):
+        join(clips["ai"], clips["start"], None, tmp_path / "out.mp4")
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_joined_file_is_readable(clips, tmp_path):
+    """R-44: the joined file gets the usual 0644 mode, not the temp file's 0600."""
+    out = tmp_path / "out.mp4"
+    join(clips["ai"], None, clips["end"], out)
+    assert out.stat().st_mode & 0o777 == 0o644
+
+
 def test_output_cannot_replace_the_ai_video(clips):
     """R-44: the AI video is kept; joining refuses to write over it."""
     with pytest.raises(MediaError):
