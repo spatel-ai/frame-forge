@@ -180,7 +180,10 @@ export const FileDropZone = forwardRef<HTMLInputElement, FileDropZoneProps>(func
           onDrop={handleDrop}
         >
           <UploadIcon size={24} />
-          <span className={styles.prompt}>Drag a file here, or choose one</span>
+          <span className={styles.prompt}>
+            <span className={styles.promptMouse}>Drag a file here, or choose one</span>
+            <span className={styles.promptTouch}>Choose a file</span>
+          </span>
         </label>
       )}
       <FieldMessage ids={ids} error={shownError} success={success} />

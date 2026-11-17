@@ -1,5 +1,5 @@
 .empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-2); padding: var(--space-6) var(--space-4); }
 .icon { display: inline-flex; color: var(--color-ink-muted); margin-bottom: var(--space-2); }
 .title { margin: 0; font-size: var(--text-title-size); font-family: var(--font-body); font-weight: var(--text-title-weight); }
-.body { margin: 0; color: var(--color-ink-soft); max-width: 40ch; }
+.body { margin: 0; overflow-wrap: anywhere; color: var(--color-ink-soft); max-width: 40ch; }
 .action { margin-top: var(--space-3); }
