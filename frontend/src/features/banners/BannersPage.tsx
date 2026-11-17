@@ -14,6 +14,7 @@ import styles from './banners.module.css'
 const INTRO =
   'Upload your logo or banner image. You choose one for each video: it opens and closes the video and shows in the corner while the person speaks.'
 
+const WAIT_TEXT = 'Uploading… please wait. This window closes when it is done.'
 type Errors = { name?: string; image?: string; other?: string }
 
 function UploadDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -68,7 +69,6 @@ function UploadDialog({ open, onClose }: { open: boolean; onClose: () => void })
           label="Banner name"
           hint={`Up to ${BANNER_NAME_MAX} characters. Only you see it.`}
           required
-          maxLength={BANNER_NAME_MAX}
           value={name}
           onChange={(e) => {
             setName(e.target.value)
@@ -95,9 +95,14 @@ function UploadDialog({ open, onClose }: { open: boolean; onClose: () => void })
         />
         {errors.other && <Notice tone="danger" title="We could not save the banner">{errors.other}</Notice>}
         <div className={styles.actions}>
-          {uploading && <p className={styles.wait} role="status">Uploading… please wait. This window closes when it is done.</p>}
           <Button type="button" variant="secondary" disabled={uploading} onClick={close}>Cancel</Button>
           <Button type="submit" busy={uploading} busyLabel="Uploading…">Upload banner</Button>
+          {/* Last in the DOM so it shows above the buttons (the bar is column-reverse). The hidden copy
+              reserves the line so the buttons do not move when the text appears. */}
+          <div className={styles.waitBox}>
+            <span className={styles.waitSizer} aria-hidden="true">{WAIT_TEXT}</span>
+            <p className={styles.wait} role="status" aria-live="polite">{uploading ? WAIT_TEXT : ''}</p>
+          </div>
         </div>
       </form>
     </Dialog>

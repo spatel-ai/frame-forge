@@ -122,13 +122,25 @@ describe('Banners page (D-067)', () => {
     expect(createBanner).not.toHaveBeenCalled()
   })
 
-  it('R-85: the name field allows at most 60 characters', async () => {
+  it('R-85: the name field counts characters like the rule: 60 emoji upload, 61 are refused', async () => {
     vi.mocked(listBanners).mockResolvedValue({ items: [] })
+    vi.mocked(createBanner).mockResolvedValue(banner(1))
     const user = renderAt('/banners')
     await screen.findByText('No banners yet')
     const d = await openUpload(user)
-    await user.type(d.getByLabelText(/Banner name/), 'x'.repeat(70))
-    expect((d.getByLabelText(/Banner name/) as HTMLInputElement).value).toHaveLength(60)
+    const field = d.getByLabelText(/Banner name/) as HTMLInputElement
+    await user.click(field)
+    await user.paste('😀'.repeat(61))
+    expect(Array.from(field.value)).toHaveLength(61)
+    await user.upload(d.getByLabelText(/Banner image/), png())
+    await user.click(d.getByRole('button', { name: 'Upload banner' }))
+    expect(d.getByText('Use 60 characters or fewer.')).toBeTruthy()
+    expect(createBanner).not.toHaveBeenCalled()
+    await user.clear(field)
+    await user.click(field)
+    await user.paste('😀'.repeat(60))
+    await user.click(d.getByRole('button', { name: 'Upload banner' }))
+    expect(createBanner).toHaveBeenCalledWith('😀'.repeat(60), expect.any(File))
   })
 
   it('R-85: server field errors show under the same fields and nothing typed is lost', async () => {
@@ -200,7 +212,7 @@ describe('Banners page (D-067)', () => {
     await user.type(d.getByLabelText(/Banner name/), 'Shop logo')
     await user.upload(d.getByLabelText(/Banner image/), png())
     await user.click(d.getByRole('button', { name: 'Upload banner' }))
-    expect(await d.findByText(/Uploading… please wait/)).toBeTruthy()
+    expect((await d.findByRole('status')).textContent).toMatch(/Uploading… please wait/)
     expect((d.getByLabelText(/Banner name/) as HTMLInputElement).disabled).toBe(true)
     expect((d.getByRole('button', { name: 'Replace' }) as HTMLButtonElement).disabled).toBe(true)
     expect((d.getByRole('button', { name: 'Remove' }) as HTMLButtonElement).disabled).toBe(true)
