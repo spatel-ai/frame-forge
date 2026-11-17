@@ -91,13 +91,15 @@ When the test-mode run is approved, the owner adds a webhook in the Razorpay Das
 
 | Route | Body → result | Errors |
 | --- | --- | --- |
-| `GET /api/v1/payments/quote?credits=N` | → `{credits, price_paise, fee_paise, fee_gst_paise, amount_paise}` (D-060) | 401, 422 `fields.credits` |
-| `POST /api/v1/payments/orders` | `{credits}` (D-047) → `{order_id, razorpay_order_id, price_paise, fee_paise, fee_gst_paise, amount_paise, credits, key_id, status}`; `amount_paise` is the total the customer pays | 401, 403 `email_not_verified` (D-049, Proposed), 422 `fields.credits`, 502 `payment_provider_unavailable` |
-| `GET /api/v1/payments/orders/{order_id}` | → `{order_id, status, credits, created_at}` | 401, 404 (missing or not yours) |
-| `POST /api/v1/payments/verify` | `{order_id, razorpay_payment_id, razorpay_signature}` → `{order_id, status, credits, wallet}` | 401, 404, 400 `payment_signature_invalid`, 409 `payment_not_captured`, 502 |
+| `GET /api/v1/payments/quote?credits=N` | → `{credits, price_paise, fee_paise, fee_gst_paise, amount_paise}` (D-060) | 401, 422 `validation_error` with `fields.credits` |
+| `POST /api/v1/payments/orders` | `{credits}` (D-047) → `{order_id, razorpay_order_id, price_paise, fee_paise, fee_gst_paise, amount_paise, credits, key_id, status}`; `amount_paise` is the total the customer pays | 401, 403 `email_not_verified` (D-049), 422 `validation_error` with `fields.credits`, 502 `payment_provider_unavailable` |
+| `GET /api/v1/payments/orders/{order_id}` | → `{order_id, status, credits, created_at}` | 401, 404 `order_not_found` (missing or not yours) |
+| `POST /api/v1/payments/verify` | `{order_id, razorpay_payment_id, razorpay_signature}` → `{order_id, status, credits, wallet}` | 401, 404 `order_not_found`, 400 `payment_signature_invalid`, 409 `payment_not_captured`, 502 |
 | `POST /api/v1/webhooks/razorpay` | raw body, `X-Razorpay-Signature`, `x-razorpay-event-id` → 200 | 400 `webhook_signature_invalid` (no session, no origin check) |
 | `POST /api/v1/payments/mock/complete` | development and mock mode only: `{order_id, outcome: "captured"\|"failed"}` → the Checkout handler's fields, signed with the mock secret | 404 in any other mode |
 | `GET /api/v1/config` | adds `payments`, `razorpay_key_id` (null in mock), `min_purchase_credits`, `max_purchase_credits`, `payment_fee_bps`, `payment_fee_gst_bps` (display only), `support_email` | — |
+
+Production refuses to start with `AVATAR_PAYMENTS=mock` (D-042, added at review).
 
 The order `status` is one of `created`, `paid` or `failed`. `failed` is shown only after a
 definite failure, and a later capture still credits.

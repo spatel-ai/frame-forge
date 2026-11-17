@@ -1030,9 +1030,9 @@
     "starts_after": "T-507",
     "task": "Joining module tests with small generated clips",
     "acceptance": "Both banners, one, none, a silent clip, clips of a different size and frame rate",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Covered by T-507's backend/tests/test_media.py (17 tests, reviewed by Fable): both banners, start only, end only, none, silent clip, AI video without sound, different size, frame rate (29.97) and sound format, portrait AI video, broken and truncated inputs. No separate agent needed."
   },
   {
     "id": "T-509",
