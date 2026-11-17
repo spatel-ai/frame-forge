@@ -940,9 +940,9 @@
     "starts_after": "T-501",
     "task": "Record consent on each job",
     "acceptance": "Job cannot be created without it",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent working in its own worktree (M5 phase 2), launched 2026-11-17."
   },
   {
     "id": "T-503",
@@ -1000,9 +1000,9 @@
     "starts_after": "T-504",
     "task": "`templates` table, a command to add clips, and the list route",
     "acceptance": "A clip is measured when added; only active templates are listed",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent working in its own worktree (M5 phase 2), launched 2026-11-17."
   },
   {
     "id": "T-507",
@@ -1105,9 +1105,9 @@
     "starts_after": "T-311, T-500",
     "task": "Script picker on Create and a \"My scripts\" screen",
     "acceptance": "Paste new or pick saved; delete with confirmation",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent working in its own worktree (M5 phase 2), launched 2026-11-17."
   },
   {
     "id": "T-514",
