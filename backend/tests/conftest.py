@@ -41,6 +41,14 @@ class TestSchema:
         return cfg
 
 
+@pytest.fixture(autouse=True)
+def _no_real_email(monkeypatch):
+    """Tests never send real email: the owner's Gmail login, if exported in the shell, is
+    removed for every test (R1 email gate). Tests that need SMTP patch smtplib and set values."""
+    monkeypatch.delenv("USER_EMAIL", raising=False)
+    monkeypatch.delenv("USER_EMAIL_PASSWORD", raising=False)
+
+
 @pytest.fixture(scope="session")
 def admin_engine():
     # NullPool: no connection is held between schema create and drop.
