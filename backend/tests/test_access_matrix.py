@@ -21,6 +21,7 @@ from sqlalchemy import Engine, text
 from app.core.config import Settings
 from app.jobs import db
 from app.main import create_app
+from app.scripts.service import save_or_touch
 
 HTTPS = "https://testserver"  # the session cookie is Secure, so the client must be https
 PASSWORD = "correct horse battery"
@@ -140,9 +141,6 @@ ROWS: list[Row] = [
         Row(method, path, actor, 501, "not_implemented")
         for method, path in (
             ("GET", "/api/v1/voices"),
-            ("GET", "/api/v1/scripts"),
-            ("GET", "/api/v1/scripts/{script_id}"),
-            ("DELETE", "/api/v1/scripts/{script_id}"),
             ("GET", "/api/v1/templates"),
             ("GET", "/api/v1/templates/{template_id}/preview"),
         )
@@ -156,12 +154,24 @@ ROWS: list[Row] = [
         for method, path in (
             ("GET", "/api/v1/jobs"),
             ("GET", "/api/v1/voices"),
-            ("GET", "/api/v1/scripts"),
-            ("GET", "/api/v1/scripts/{script_id}"),
-            ("DELETE", "/api/v1/scripts/{script_id}"),
             ("GET", "/api/v1/templates"),
             ("GET", "/api/v1/templates/{template_id}/preview"),
         )
+    ],
+    # M5 script library (T-504; R-43, R-50). The list is always the caller's own (200); the
+    # owner's script is 404 script_not_found to everyone else, admin included.
+    *[Row("GET", "/api/v1/scripts", actor, 200) for actor in ("owner", "other", "admin")],
+    Row("GET", "/api/v1/scripts", "anonymous", 401, "not_authenticated"),
+    Row("GET", "/api/v1/scripts/{script_id}", "owner", 200),
+    Row("DELETE", "/api/v1/scripts/{script_id}", "owner", 204),
+    *[
+        Row(method, "/api/v1/scripts/{script_id}", actor, 404, "script_not_found")
+        for method in ("GET", "DELETE")
+        for actor in ("other", "admin")
+    ],
+    *[
+        Row(method, "/api/v1/scripts/{script_id}", "anonymous", 401, "not_authenticated")
+        for method in ("GET", "DELETE")
     ],
     # M4 payments (T-402 to T-404; R-03). Creating an order needs a confirmed email (D-049); the
     # quote needs only a session. The owner's order ({order_id}, or `order_id` in the body) is
@@ -323,6 +333,7 @@ class World:
     clients: dict[Actor, TestClient]
     jobs: dict[JobKey, str]
     order: str  # the owner's payment order (M4)
+    script: str = ""  # the owner's saved script (M5, T-504)
     emails: dict[str, str] = field(default_factory=lambda: dict(EMAILS))
 
 
@@ -361,8 +372,11 @@ def world(settings, make_user, grant) -> Iterator[World]:
         ownerless = ownerless_job(anon, owner.user_id)
         r = owner.post("/api/v1/payments/orders", json={"credits": 1000})
         assert r.status_code == 201, r.text
+        with engine_of(anon).begin() as conn:
+            script = save_or_touch(conn, owner.user_id, "English", "The owner's saved script.")
         yield World(
             order=r.json()["order_id"],
+            script=script,
             clients={
                 "anonymous": anon,
                 "owner": owner,
@@ -391,8 +405,8 @@ def test_access_matrix(world: World, row: Row) -> None:
         path = row.path.format(job_id=world.jobs[row.job])
     if "{order_id}" in path:
         path = path.format(order_id=world.order)
-    # M5 stubs: the owner's script or template ids arrive with T-504 and T-506.
-    path = path.replace("{script_id}", "s0").replace("{template_id}", "t0")
+    # M5: the script id is the owner's real script (T-504); template ids arrive with T-506.
+    path = path.replace("{script_id}", world.script).replace("{template_id}", "t0")
     r = send(world.clients[row.actor], row.method, path, world.order)
     assert r.status_code == row.status, r.text
     if row.code is not None:
