@@ -153,6 +153,17 @@ describe('JobForm client validation', () => {
     expect(createJob).not.toHaveBeenCalled()
   })
 
+  it('R-79: a script at the limit plus trailing spaces shows "10 / 10" and is sent trimmed', async () => {
+    const { user } = renderForm()
+    await user.upload(photoInput(), photo())
+    await user.type(scriptBox(), 'a'.repeat(10) + '   ')
+    expect(screen.getByTestId('char-counter').textContent).toBe('10 / 10')
+    await user.click(consentBox())
+    await user.click(submit())
+    expect(screen.queryByText(/too long/)).toBeNull()
+    expect(createJob).toHaveBeenCalledTimes(1)
+  })
+
   it('R-79: a photo over the size limit is rejected when chosen, before any upload', async () => {
     const { user } = renderForm()
     await user.upload(photoInput(), photo(1024 * 1024 + 1))

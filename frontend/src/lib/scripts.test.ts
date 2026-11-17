@@ -18,5 +18,6 @@ describe('script helpers', () => {
   it('R-43 builds "Language · N characters · Last used <date>"', () => {
     expect(scriptMeta(s(new Date(2026, 10, 16, 10)), now)).toBe('English · 171 characters · Last used yesterday')
     expect(scriptMeta(s(new Date(2026, 10, 12, 10), 'a'), now)).toBe('English · 1 character · Last used 12 Nov')
+    expect(scriptMeta(s(new Date(2026, 10, 12, 10), '😀😀 '), now)).toBe('English · 2 characters · Last used 12 Nov')
   })
 })

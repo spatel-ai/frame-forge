@@ -4,7 +4,7 @@ import type { FormEvent } from 'react'
 import { ApiError, createJob, getScript, meKey, NetworkError, scriptKey, scriptsKey } from '../../api/client'
 import type { Config, Job, SavedScript } from '../../api/client'
 import { Banner } from '../../components/feedback'
-import { Button, FileDropZone, Select, SelectableCard, SelectableCardGroup, TextArea } from '../../components/form'
+import { Button, countChars, FileDropZone, Select, SelectableCard, SelectableCardGroup, TextArea } from '../../components/form'
 import { Card } from '../../components/layout'
 import { invalidateWallet, useWallet } from '../../lib/wallet'
 import { ConsentBlock, VoiceCostBox } from './ConsentBlock'
@@ -24,16 +24,11 @@ function isFieldName(key: string): key is FieldName {
   return (FIELD_ORDER as string[]).includes(key)
 }
 
-/** Characters as the server counts them: Unicode code points, so an emoji is one, not two. */
-function scriptLength(text: string): number {
-  return [...text].length
-}
-
 /** Checks the trimmed text, as it is sent: spaces at the start and end never count. */
 function validateScript(script: string, max: number): string | undefined {
   const text = script.trim()
   if (!text) return 'Please enter a script.'
-  const length = scriptLength(text)
+  const length = countChars(text)
   if (length > max) {
     const over = length - max
     return `Your script is ${over} ${over === 1 ? 'character' : 'characters'} too long. Shorten it to continue.`

@@ -234,6 +234,20 @@ describe('new script', () => {
     expect(d.queryByText(/longer than 800 characters/)).toBeNull()
   })
 
+  it('R-43 spaces at the ends do not count: 800 characters plus trailing spaces show "800 / 800" and save', async () => {
+    vi.mocked(listScripts).mockResolvedValue(page([]))
+    vi.mocked(createScript).mockResolvedValue(script(1))
+    renderAt('/scripts')
+    await userEvent.click(await screen.findByRole('button', { name: 'New script' }))
+    const d = within(await screen.findByRole('dialog'))
+    await userEvent.click(d.getByLabelText('What should the person say?'))
+    await userEvent.paste('x'.repeat(800) + '   ')
+    expect(d.getByTestId('char-counter').textContent).toBe('800 / 800')
+    await userEvent.click(d.getByRole('button', { name: 'Save script' }))
+    expect(createScript).toHaveBeenCalledTimes(1)
+    expect(d.queryByText(/longer than 800 characters/)).toBeNull()
+  })
+
   it('R-43 the limit counts characters like the server: 500 emoji (1000 UTF-16 units) are accepted', async () => {
     vi.mocked(listScripts).mockResolvedValue(page([]))
     vi.mocked(createScript).mockResolvedValue(script(1))

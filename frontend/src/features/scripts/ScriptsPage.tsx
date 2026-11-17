@@ -5,12 +5,12 @@ import { ApiError, createScript, deleteScript, scriptsKey } from '../../api/clie
 import type { SavedScript } from '../../api/client'
 import type { ShellContext } from '../../components/AppShell'
 import { Banner, Dialog, EmptyState, ErrorState, Pill, Skeleton, SkeletonGroup } from '../../components/feedback'
-import { Button, Select, TextArea, TextField } from '../../components/form'
+import { Button, countChars, Select, TextArea, TextField } from '../../components/form'
 import { ScriptIcon } from '../../components/icons'
 import { Pagination } from '../../components/layout'
 import { errMsg } from '../../lib/util'
 import { scriptMeta, useScriptFilters, useScripts } from '../../lib/scripts'
-import { capSearch, countChars, HEADING_QUERY_CHARS, MAX_SEARCH_CHARS, shortQuery, validateScriptText } from './scriptText'
+import { capSearch, HEADING_QUERY_CHARS, MAX_SEARCH_CHARS, shortQuery, validateScriptText } from './scriptText'
 import styles from './scripts.module.css'
 
 const SKELETON_ROWS = 3

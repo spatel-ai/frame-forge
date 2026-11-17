@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { bannersKey, listBanners } from '../api/client'
+import { countChars } from '../components/form'
 
 /** Shared by the Banners page and the Create picker (features may not import each other). D-067. */
 export const BANNER_NAME_MAX = 60
@@ -20,6 +21,6 @@ export const bannerDate = (iso: string): string => dayMonthYear.format(new Date(
 export function bannerNameError(name: string): string | undefined {
   const n = name.trim()
   if (!n) return 'Give the banner a name.'
-  if (n.length > BANNER_NAME_MAX) return `Use ${BANNER_NAME_MAX} characters or fewer.`
+  if (countChars(n) > BANNER_NAME_MAX) return `Use ${BANNER_NAME_MAX} characters or fewer.`
   return undefined
 }

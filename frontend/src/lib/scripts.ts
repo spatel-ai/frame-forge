@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { listScripts, scriptListKey } from '../api/client'
+import { countChars } from '../components/form'
 import type { SavedScript, ScriptListParams } from '../api/client'
 
 /** Shared by My scripts and the Create picker (features may not import each other). */
@@ -23,7 +24,7 @@ export function formatLastUsed(iso: string, now: Date = new Date()): string {
 
 /** "English · 171 characters · Last used yesterday" */
 export function scriptMeta(s: SavedScript, now?: Date): string {
-  const n = s.text.length
+  const n = countChars(s.text)
   return `${s.language} · ${n} ${n === 1 ? 'character' : 'characters'} · Last used ${formatLastUsed(s.last_used_at, now)}`
 }
 
