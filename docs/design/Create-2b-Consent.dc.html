@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Create a video: permission and voice</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700&display=swap">
+<style>
+body{margin:0}
+a{color:#3626D9}a:hover{color:#14182B}
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; flex-wrap: wrap; background: #F4F5FA; color: #14182B; font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5">
+<nav aria-label="Main" style="flex: 1 1 232px; max-width: 100%; box-sizing: border-box; background: #FFFFFF; border-right: 1px solid #DFE2EC; padding: 24px 16px; display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 12px 20px">
+<span style="width: 32px; height: 32px; border-radius: 10px; background: #4A3AFF; display: flex; align-items: center; justify-content: center; color: #FFFFFF"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5l12 7-12 7z"/></svg></span>
+<span style="font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 18px">Frameforge</span>
+</div>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; color: #4B5169; font-weight: 500; text-decoration: none"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</a>
+<a href="Create-1-Details.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 12px; min-height: 44px; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; background: #EEECFF; color: #3626D9; font-weight: 600; text-decoration: none"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Create</a>
+<a href="Videos.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; color: #4B5169; font-weight: 500; text-decoration: none"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z"/></svg>Videos</a>
+<a href="Scripts.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; color: #4B5169; font-weight: 500; text-decoration: none"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/></svg>Scripts</a>
+<a href="Wallet.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; color: #4B5169; font-weight: 500; text-decoration: none"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M16 12.5h2"/></svg>Wallet</a>
+<a href="Account.dc.html" style="display: flex; align-items: center; gap: 12px; min-height: 44px; box-sizing: border-box; padding: 10px 12px; border-radius: 8px; color: #4B5169; font-weight: 500; text-decoration: none; margin-top: auto"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Account</a>
+</nav>
+<div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 32px; background: #FFFFFF; border-bottom: 1px solid #DFE2EC">
+<h1 style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 28px; line-height: 1.2">Create a video</h1>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<span style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 8px 16px; border: 1px solid #DFE2EC; border-radius: 999px; font-weight: 600; font-variant-numeric: tabular-nums"><span aria-hidden="true" style="width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; background: #FFB020; border: 2px solid #9A5B00"></span>500 credits</span>
+<a href="Buy-Credits.dc.html" style="display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box; padding: 8px 16px; border: 1px solid #4A3AFF; border-radius: 8px; color: #3626D9; font-weight: 600; text-decoration: none">Buy credits</a>
+</div>
+</header>
+<main style="padding: 32px; display: flex; flex-direction: column; gap: 24px; max-width: 1120px; width: 100%; box-sizing: border-box">
+<ol aria-label="Steps" style="list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 24px">
+<li style="display: flex; align-items: center; gap: 10px; color: #4B5169"><span style="width: 28px; height: 28px; border-radius: 50%; background: #0B7A55; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></span>Photo and script</li>
+<li aria-current="step" style="display: flex; align-items: center; gap: 10px; font-weight: 600; color: #14182B"><span style="width: 28px; height: 28px; border-radius: 50%; background: #4A3AFF; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 13px">2</span>Banners</li>
+<li style="display: flex; align-items: center; gap: 10px; color: #4B5169"><span style="width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid #8A90A8; display: flex; align-items: center; justify-content: center; font-size: 13px">3</span>Voice and price</li>
+<li style="display: flex; align-items: center; gap: 10px; color: #4B5169"><span style="width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid #8A90A8; display: flex; align-items: center; justify-content: center; font-size: 13px">4</span>Video</li>
+</ol>
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+<div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 24px"><section aria-labelledby="h-sum" style="background: #FFFFFF; border: 1px solid #DFE2EC; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px; min-width: 0; box-sizing: border-box">
+<h2 id="h-sum" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">Your choices so far</h2><dl style="margin: 0; display: flex; flex-direction: column; gap: 12px; font-variant-numeric: tabular-nums">
+<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="color: #4B5169">Photo</dt><dd style="margin: 0; text-align: right">asha-portrait.jpg</dd></div>
+<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="color: #4B5169">Script</dt><dd style="margin: 0; text-align: right">English · 171 characters</dd></div>
+<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="color: #4B5169">Start banner</dt><dd style="margin: 0; text-align: right">Festive opening</dd></div>
+<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="color: #4B5169">End banner</dt><dd style="margin: 0; text-align: right">Call to action</dd></div>
+</dl><a href="Create-2-Banners.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; min-height: 44px; font-weight: 600">Change banners</a>
+</section>
+<div style="display: flex; flex-direction: column; gap: 8px"><span style="font-size: 13px; font-weight: 600; color: #4B5169; text-transform: uppercase; letter-spacing: .04em">Fewer than 10 credits</span><div role="status" style="background: #FFF1D6; color: #14182B; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px"><p style="margin: 0; display: flex; align-items: flex-start; gap: 10px; font-weight: 600"><svg aria-hidden="true" style="flex: none; margin-top: 2px; color: #9A5B00" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg>You need 10 credits to make a voice. You have 4.</p><a href="Buy-Credits.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box; padding: 8px 16px; border: 1px solid #4A3AFF; border-radius: 8px; background: #FFFFFF; color: #3626D9; font-weight: 600; text-decoration: none">Buy credits</a><span style="font-size: 13px; font-weight: 400">You will come back to this step.</span></div></div>
+</div>
+<div style="flex: 1 1 400px; min-width: 0; display: flex; flex-direction: column; gap: 8px"><span style="font-size: 13px; font-weight: 600; color: #4B5169; text-transform: uppercase; letter-spacing: .04em">Not ticked: button is off</span><section aria-labelledby="h-c1" style="background: #FFFFFF; border: 1px solid #DFE2EC; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px; min-width: 0; box-sizing: border-box">
+<h2 id="h-c1" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">Permission to use this photo</h2>
+<div style="display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 1px solid #DFE2EC; border-radius: 12px; background: #F4F5FA">
+<input type="checkbox" id="c1" aria-describedby="c1-hint" style="width: 24px; height: 24px; flex: none; margin: 10px 0 0; accent-color: #4A3AFF">
+<div style="display: flex; flex-direction: column; gap: 6px; padding-top: 8px">
+<span style="display: inline-flex; align-self: flex-start; align-items: center; padding: 2px 10px; border-radius: 6px; background: #FFF1D6; border: 1px solid #F2D9A6; color: #9A5B00; font-size: 13px; font-weight: 600">PLACEHOLDER (Q-11): final wording not decided</span>
+<label for="c1" style="font-weight: 600">I am the person in this photo, or I have their permission to use it.</label>
+<span id="c1-hint" style="color: #4B5169; font-size: 13px">Required. We keep a record of this agreement with your video.</span>
+</div>
+</div>
+<dl style="margin: 0; display: flex; flex-direction: column; gap: 12px; font-variant-numeric: tabular-nums">
+<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="color: #4B5169">Voice (10 credits)</dt><dd style="margin: 0; text-align: right">Taken now</dd></div>
+<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="color: #4B5169">Your balance</dt><dd style="margin: 0; text-align: right">500 credits</dd></div>
+<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="font-weight: 700">Balance after</dt><dd style="margin: 0; text-align: right; font-weight: 700">490 credits</dd></div>
+</dl>
+<p style="margin: 0; color: #4B5169; font-size: 13px">If we cannot make the voice, the 10 credits are returned. If you decide not to make the video after listening, they are kept. The video price is shown after you listen, and nothing more is taken until you approve it.</p>
+<div style="display: flex; flex-direction: column; gap: 8px"><button type="button" disabled aria-describedby="c1-why" style="min-height: 48px; padding: 12px 24px; border: 1px solid #DFE2EC; border-radius: 8px; background: #F4F5FA; color: #666C85; font: inherit; font-weight: 600; font-size: 16px; cursor: not-allowed">Make my voice · 10 credits</button><p id="c1-why" style="margin: 0; color: #4B5169; font-size: 13px">Tick the box above to continue.</p></div>
+</section></div>
+<div style="flex: 1 1 400px; min-width: 0; display: flex; flex-direction: column; gap: 8px"><span style="font-size: 13px; font-weight: 600; color: #4B5169; text-transform: uppercase; letter-spacing: .04em">Ticked: button is on</span><section aria-labelledby="h-c2" style="background: #FFFFFF; border: 1px solid #DFE2EC; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px; min-width: 0; box-sizing: border-box">
+<h2 id="h-c2" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 20px">Permission to use this photo</h2>
+<div style="display: flex; align-items: flex-start; gap: 12px; padding: 16px; border: 1px solid #DFE2EC; border-radius: 12px; background: #F4F5FA">
+<input type="checkbox" id="c2" aria-describedby="c2-hint" checked style="width: 24px; height: 24px; flex: none; margin: 10px 0 0; accent-color: #4A3AFF">
+<div style="display: flex; flex-direction: column; gap: 6px; padding-top: 8px">
+<span style="display: inline-flex; align-self: flex-start; align-items: center; padding: 2px 10px; border-radius: 6px; background: #FFF1D6; border: 1px solid #F2D9A6; color: #9A5B00; font-size: 13px; font-weight: 600">PLACEHOLDER (Q-11): final wording not decided</span>
+<label for="c2" style="font-weight: 600">I am the person in this photo, or I have their permission to use it.</label>
+<span id="c2-hint" style="color: #4B5169; font-size: 13px">Required. We keep a record of this agreement with your video.</span>
+</div>
+</div>
+<dl style="margin: 0; display: flex; flex-direction: column; gap: 12px; font-variant-numeric: tabular-nums">
+<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="color: #4B5169">Voice (10 credits)</dt><dd style="margin: 0; text-align: right">Taken now</dd></div>
+<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="color: #4B5169">Your balance</dt><dd style="margin: 0; text-align: right">500 credits</dd></div>
+<div style="display: flex; justify-content: space-between; gap: 16px"><dt style="font-weight: 700">Balance after</dt><dd style="margin: 0; text-align: right; font-weight: 700">490 credits</dd></div>
+</dl>
+<p style="margin: 0; color: #4B5169; font-size: 13px">If we cannot make the voice, the 10 credits are returned. If you decide not to make the video after listening, they are kept. The video price is shown after you listen, and nothing more is taken until you approve it.</p>
+<div style="display: flex; flex-direction: column; gap: 8px"><button type="button"  style="min-height: 48px; padding: 12px 24px; border: 0; border-radius: 8px; background: #4A3AFF; color: #FFFFFF; font: inherit; font-weight: 600; font-size: 16px; cursor: pointer">Make my voice · 10 credits</button><p id="c2-why" style="margin: 0; color: #4B5169; font-size: 13px">Voice is made right after you press the button. 10 credits are taken now.</p></div>
+</section></div>
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

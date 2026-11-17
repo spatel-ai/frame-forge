@@ -234,7 +234,7 @@
     },
     "n-price": {
       "fill": "orange",
-      "text": "Prices show [PRICE] because the credit rate per second is not decided yet (question Q-01). Balances, names, scripts and dates are example content.",
+      "text": "Prices use example numbers: 20 credits per second of video plus 10 credits for each voice, so a 12-second video costs 240 credits plus 10 for the voice. Balances, names, scripts and dates are example content.",
       "w": 420,
       "x": 9120,
       "y": 0

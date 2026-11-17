@@ -1,0 +1,95 @@
+{
+  "boards": [
+    {
+      "file": "Create-1b-Script-Picker.dc.html",
+      "title": "Create 1: choose from my scripts",
+      "w": 1440,
+      "h": 960,
+      "suggested_section": "Home and the create flow"
+    },
+    {
+      "file": "Script-Picker-States.dc.html",
+      "title": "Script picker: empty, no match, chosen, edited",
+      "w": 1440,
+      "h": 1100,
+      "suggested_section": "Home and the create flow"
+    },
+    {
+      "file": "Voice-Choice-States.dc.html",
+      "title": "Create 1: choosing a saved voice",
+      "w": 1440,
+      "h": 960,
+      "suggested_section": "Home and the create flow"
+    },
+    {
+      "file": "Create-2b-Consent.dc.html",
+      "title": "Create 2: permission, then make my voice",
+      "w": 1440,
+      "h": 960,
+      "suggested_section": "Home and the create flow"
+    },
+    {
+      "file": "Progress-States.dc.html",
+      "title": "Progress: voice, adding banners, no banners",
+      "w": 1440,
+      "h": 1100,
+      "suggested_section": "Home and the create flow"
+    },
+    {
+      "file": "Create-5b-Result-No-Banners.dc.html",
+      "title": "Create 5: result without banners",
+      "w": 1440,
+      "h": 960,
+      "suggested_section": "Home and the create flow"
+    },
+    {
+      "file": "Failure-Results-Voice.dc.html",
+      "title": "Voice failures: three endings",
+      "w": 1440,
+      "h": 960,
+      "suggested_section": "Failures and limits"
+    },
+    {
+      "file": "Failure-Results-Video.dc.html",
+      "title": "Video failures and the testing limit",
+      "w": 1440,
+      "h": 1100,
+      "suggested_section": "Failures and limits"
+    },
+    {
+      "file": "Video-Detail.dc.html",
+      "title": "Video detail",
+      "w": 1440,
+      "h": 960,
+      "suggested_section": "Library, wallet and account"
+    },
+    {
+      "file": "Scripts-Delete-Dialog.dc.html",
+      "title": "Delete a script",
+      "w": 1440,
+      "h": 960,
+      "suggested_section": "Library, wallet and account"
+    },
+    {
+      "file": "Empty-States.dc.html",
+      "title": "Empty states: Home, Videos, My scripts",
+      "w": 1440,
+      "h": 960,
+      "suggested_section": "Library, wallet and account"
+    }
+  ],
+  "notes": [
+    {
+      "section": "Home and the create flow",
+      "text": "New for M5, awaiting your approval. Consent (wording is a placeholder, Q-11) now comes before the voice is made (D-045). A saved voice from a video that did not finish can start a new video with no voice charge (D-043). Banners that could not be added are stated plainly (Q-17 default: still charged). Existing boards Create 1, 2 and 3 were updated to match."
+    },
+    {
+      "section": "Failures and limits",
+      "text": "Every failure says what happened, what was charged and what to do next. Voice failed or unknown: 10 credits returned. Voice made but too long, or the video failed: 10 credits for the voice stay and the voice is saved. Video failed: the 240 held credits return. Unknown video outcome: charged and flagged. The 50-videos-a-day limit exists in development and testing only (D-046). Contact and refund route for unknown outcomes needs your decision."
+    },
+    {
+      "section": "Library, wallet and account",
+      "text": "Video detail, delete-script confirmation and empty states for a new customer. The video detail page shows what the video cost from the server: voice 10 credits plus video 240 credits in the example."
+    }
+  ]
+}

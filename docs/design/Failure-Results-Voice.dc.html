@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Voice failures</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700&display=swap">
+<style>
+body{margin:0}
+a{color:#3626D9}a:hover{color:#14182B}
+</style>
+</helmet>
+<div style="min-height: 100vh; box-sizing: border-box; background: #F4F5FA; color: #14182B; font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5; padding: 40px 48px; display: flex; flex-direction: column; gap: 24px">
+<header style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 28px; line-height: 1.2">When the voice cannot be made or used: three endings</h1>
+<p style="margin: 0; color: #4B5169">Shown on the Create page in place of the progress card, and on the video's detail page. Each says what happened, what was or was not charged, and what to do next. Amounts use 10 credits per voice. A voice that failed or never arrived cannot be reused.</p>
+</header>
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px 32px; justify-content: center; align-items: start">
+<section aria-label="1 · The voice could not be made (or came out empty)" style="display: flex; flex-direction: column; gap: 8px; min-width: 0">
+<span style="font-size: 13px; font-weight: 600; color: #4B5169; text-transform: uppercase; letter-spacing: .04em">1 · The voice could not be made (or came out empty)</span>
+<section aria-labelledby="f1" style="background: #FFFFFF; border: 1px solid #DFE2EC; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px; min-width: 0; box-sizing: border-box">
+<div style="display: flex; align-items: flex-start; gap: 12px"><span aria-hidden="true" style="width: 40px; height: 40px; flex: none; border-radius: 50%; background: #FDE8E7; color: #C7322F; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg></span><h2 id="f1" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 18px">We could not make your voice</h2></div>
+<div role="alert" style="display: flex; flex-direction: column; gap: 12px"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">What happened</span><span style="color: #4B5169">Something went wrong while making the voice from your script.</span></div><div style="display: flex; flex-direction: column; gap: 2px; padding: 12px 16px; border-radius: 12px; background: #F4F5FA"><span style="font-weight: 600">Your credits</span><span>The 10 credits for the voice were returned to your wallet.</span></div><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">What you can do</span><span style="color: #4B5169">Start over. Making a new voice costs 10 credits again.</span></div></div><div style="display: flex; flex-wrap: wrap; gap: 12px"><a href="Create-1-Details.dc.html" style="display: inline-flex; align-items: center; justify-content: center; min-height: 48px; box-sizing: border-box; padding: 12px 24px; border-radius: 8px; background: #4A3AFF; color: #FFFFFF; font-weight: 600; font-size: 16px; text-decoration: none">Start over</a><a href="Videos.dc.html" style="display: inline-flex; align-items: center; justify-content: center; min-height: 44px; box-sizing: border-box; padding: 8px 16px; border: 1px solid #DFE2EC; border-radius: 8px; background: #FFFFFF; color: #14182B; font-weight: 600; text-decoration: none">Go to Videos</a></div>
+</section>
+</section>
+<section aria-label="2 · We cannot tell if the voice was made" style="display: flex; flex-direction: column; gap: 8px; min-width: 0">
+<span style="font-size: 13px; font-weight: 600; color: #4B5169; text-transform: uppercase; letter-spacing: .04em">2 · We cannot tell if the voice was made</span>
+<section aria-labelledby="f3" style="background: #FFFFFF; border: 1px solid #DFE2EC; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px; min-width: 0; box-sizing: border-box">
+<div style="display: flex; align-items: flex-start; gap: 12px"><span aria-hidden="true" style="width: 40px; height: 40px; flex: none; border-radius: 50%; background: #FDE8E7; color: #C7322F; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg></span><h2 id="f3" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 18px">We could not confirm your voice</h2></div>
+<div role="alert" style="display: flex; flex-direction: column; gap: 12px"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">What happened</span><span style="color: #4B5169">Something unexpected happened while making your voice, and no voice reached you.</span></div><div style="display: flex; flex-direction: column; gap: 2px; padding: 12px 16px; border-radius: 12px; background: #F4F5FA"><span style="font-weight: 600">Your credits</span><span>The 10 credits for the voice were returned to your wallet (D-048). Our team has been told and will check this job.</span></div><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">What you can do</span><span style="color: #4B5169">Start over. Making a new voice costs 10 credits again.</span></div></div><span style="display: inline-flex; align-self: flex-start; align-items: center; padding: 2px 10px; border-radius: 6px; background: #FFF1D6; border: 1px solid #F2D9A6; color: #9A5B00; font-size: 13px; font-weight: 600">PLACEHOLDER (needs owner decision): how the customer reaches our team, and whether a refund is offered</span><div style="display: flex; flex-wrap: wrap; gap: 12px"><a href="Create-1-Details.dc.html" style="display: inline-flex; align-items: center; justify-content: center; min-height: 48px; box-sizing: border-box; padding: 12px 24px; border-radius: 8px; background: #4A3AFF; color: #FFFFFF; font-weight: 600; font-size: 16px; text-decoration: none">Start over</a><a href="Videos.dc.html" style="display: inline-flex; align-items: center; justify-content: center; min-height: 44px; box-sizing: border-box; padding: 8px 16px; border: 1px solid #DFE2EC; border-radius: 8px; background: #FFFFFF; color: #14182B; font-weight: 600; text-decoration: none">Go to Videos</a></div>
+</section>
+</section>
+<section aria-label="3 · The voice is too long for a video" style="display: flex; flex-direction: column; gap: 8px; min-width: 0">
+<span style="font-size: 13px; font-weight: 600; color: #4B5169; text-transform: uppercase; letter-spacing: .04em">3 · The voice is too long for a video</span>
+<section aria-labelledby="f2" style="background: #FFFFFF; border: 1px solid #DFE2EC; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px; min-width: 0; box-sizing: border-box">
+<div style="display: flex; align-items: flex-start; gap: 12px"><span aria-hidden="true" style="width: 40px; height: 40px; flex: none; border-radius: 50%; background: #FFF1D6; color: #9A5B00; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg></span><h2 id="f2" style="margin: 0; font-family: 'Plus Jakarta Sans', Inter, sans-serif; font-weight: 700; font-size: 18px">Your voice is longer than a video can be</h2></div>
+<div role="alert" style="display: flex; flex-direction: column; gap: 12px"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">What happened</span><span style="color: #4B5169">The voice we made from your script is longer than the longest video we can make right now.</span></div><div style="display: flex; flex-direction: column; gap: 2px; padding: 12px 16px; border-radius: 12px; background: #F4F5FA"><span style="font-weight: 600">Your credits</span><span>The 10 credits for this voice were kept, because the voice was made. We saved the voice for you (D-040).</span></div><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">What you can do</span><span style="color: #4B5169">Make a new video with this voice. No new voice is made and no voice credits are charged. You will listen and approve the price again.</span></div></div><span style="display: inline-flex; align-self: flex-start; align-items: center; padding: 2px 10px; border-radius: 6px; background: #FFF1D6; border: 1px solid #F2D9A6; color: #9A5B00; font-size: 13px; font-weight: 600">PLACEHOLDER (D-044): offered only once the video model's maximum length is checked and recorded</span><div style="display: flex; flex-wrap: wrap; gap: 12px"><button type="button"  style="min-height: 48px; padding: 12px 24px; border: 0; border-radius: 8px; background: #4A3AFF; color: #FFFFFF; font: inherit; font-weight: 600; font-size: 16px; cursor: pointer">Make a video with this voice</button><a href="Create-1-Details.dc.html" style="display: inline-flex; align-items: center; justify-content: center; min-height: 44px; box-sizing: border-box; padding: 8px 16px; border: 1px solid #DFE2EC; border-radius: 8px; background: #FFFFFF; color: #14182B; font-weight: 600; text-decoration: none">Start over</a></div>
+</section>
+</section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
