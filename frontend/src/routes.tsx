@@ -7,6 +7,7 @@ import AccountPage from './features/account/AccountPage'
 import CreatePage from './features/create/CreatePage'
 import JobPage from './features/create/JobPage'
 import HomePage from './features/home/HomePage'
+import ScriptsPage from './features/scripts/ScriptsPage'
 import VideoDetailPage from './features/videos/VideoDetailPage'
 import VideosPage from './features/videos/VideosPage'
 import WalletPage from './features/wallet/WalletPage'
@@ -32,6 +33,7 @@ export const routes: RouteObject[] = [
       { path: 'create/:jobId', element: <JobPage /> },
       { path: 'videos', element: <VideosPage /> },
       { path: 'videos/:jobId', element: <VideoDetailPage /> },
+      { path: 'scripts', element: <ScriptsPage /> },
       { path: 'wallet', element: <WalletPage /> },
       { path: 'account', element: <AccountPage /> },
       { path: '*', element: <NotFound /> },
