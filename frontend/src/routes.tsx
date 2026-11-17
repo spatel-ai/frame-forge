@@ -7,6 +7,7 @@ import { authRoutes } from './features/auth/routes'
 import AccountPage from './features/account/AccountPage'
 import CreatePage from './features/create/CreatePage'
 import JobPage from './features/create/JobPage'
+import WalletPage from './features/wallet/WalletPage'
 
 // /verify-email and /reset-password work logged in or out; only /login and /signup send a user on.
 const SEND_ON = ['/login', '/signup']
@@ -27,6 +28,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <Navigate to="/create" replace /> },
       { path: 'create', element: <CreatePage /> },
       { path: 'create/:jobId', element: <JobPage /> },
+      { path: 'wallet', element: <WalletPage /> },
       { path: 'account', element: <AccountPage /> },
       { path: '*', element: <NotFound /> },
     ],
