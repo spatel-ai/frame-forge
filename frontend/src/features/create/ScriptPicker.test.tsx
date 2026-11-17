@@ -78,6 +78,19 @@ describe('Script picker on Create', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
+  it('R-43: Next in the picker shows the next page and focuses its list', async () => {
+    const second: SavedScript = { ...english, id: 's9', text: 'Second page script.' }
+    vi.mocked(listScripts).mockImplementation(async (p) =>
+      p?.page === 2 ? { items: [second], total: 7, page: 2, page_size: 6 } : { items: [english, hindi], total: 7, page: 1, page_size: 6 })
+    const { user } = renderForm()
+    await user.click(screen.getByRole('radio', { name: /Choose from my scripts/ }))
+    const dialog = await screen.findByRole('dialog')
+    await within(dialog).findByText(english.text)
+    await user.click(within(dialog).getByRole('button', { name: /Next/ }))
+    const item = await within(dialog).findByText('Second page script.')
+    await vi.waitFor(() => expect(document.activeElement).toBe(item.closest('ul')))
+  })
+
   it('R-43: the picker searches and filters on the server', async () => {
     const { user } = renderForm()
     await user.click(screen.getByRole('radio', { name: /Choose from my scripts/ }))
