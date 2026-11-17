@@ -775,9 +775,9 @@
     "starts_after": "T-302, T-400, T-401",
     "task": "`payment_orders` and the create-order route",
     "acceptance": "Amount in paise; purchase limits enforced",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Being built together by one Opus agent in a worktree (BE-Pay lane)."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "payment_orders (migration 0006, DB checks price=credits×100 and total=price+fee+GST), create-order and GET /payments/quote; 999 and 10,001 refused, 1,000 and 10,000 accepted; fee rounding tests. backend check 461 passed. Merged e67a75c; dev DB upgraded to 0006."
   },
   {
     "id": "T-403",
@@ -790,9 +790,9 @@
     "starts_after": "T-402",
     "task": "Verify route",
     "acceptance": "Uses our stored order id; checks `captured` and amount",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Being built together by one Opus agent in a worktree (BE-Pay lane)."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Verify signs our stored Razorpay order id (facts §F), fetches the payment server-side, credits only status captured with amount = order total (fee included) through credit_order under a row lock; repeat and 20-way race tests credit once. Merged e67a75c."
   },
   {
     "id": "T-404",
@@ -805,9 +805,9 @@
     "starts_after": "T-403",
     "task": "Webhook route",
     "acceptance": "Raw-body signature; dedupe on event id; unsigned → 400",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Being built together by one Opus agent in a worktree (BE-Pay lane)."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Webhook checks the signature on the raw body, dedupes on x-razorpay-event-id in the crediting transaction; unsigned/forged/no event id → 400 with nothing stored; 20 simultaneous duplicate deliveries store one event. Hex digest still Not verified (T-407). Merged e67a75c."
   },
   {
     "id": "T-405",
@@ -820,9 +820,9 @@
     "starts_after": "T-404",
     "task": "Reconcile stale orders",
     "acceptance": "An order paid but never confirmed is credited",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Being built together by one Opus agent in a worktree (BE-Pay lane)."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Reconciler every 5 min (30 min to 3 days, created and failed orders) plus CLI `python -m app.payments.cli reconcile`; tab-closed-and-webhook-missed test credits once. Merged e67a75c."
   },
   {
     "id": "T-406",
@@ -835,9 +835,9 @@
     "starts_after": "T-405",
     "task": "Tests with signed fixtures",
     "acceptance": "All five cases above, without network",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Being built together by one Opus agent in a worktree (BE-Pay lane)."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "tests/test_payments.py (five purchase cases, signatures, fee, limits, gateway against a fake transport) and tests/test_payments_concurrency.py (5 race tests); no network. Fable review added: mock payments refused in production (1947590)."
   },
   {
     "id": "T-407",
