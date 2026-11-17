@@ -57,6 +57,8 @@ export function FailureEnding({ job, config }: { job: Job; config: Config | null
   const t = texts(job.failure_kind ?? 'video_failed', job)
   const support = config?.support_email
   return (
+    <>
+    <h2 className={styles.srOnly}>What happened</h2>
     <ErrorState
       title={t.title}
       message={t.what}
@@ -80,5 +82,6 @@ export function FailureEnding({ job, config }: { job: Job; config: Config | null
         </div>
       }
     />
+    </>
   )
 }

@@ -45,7 +45,9 @@
   font-size: 12px; font-variant-numeric: tabular-nums;
 }
 .tileText { padding: var(--space-4); display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.skeletonRow { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4); }
+.hint { line-height: 1.4; min-height: calc(2 * 1.4em); } /* two lines reserved so a row does not change height between polls */
+.skeletonRow { min-height: 159px; } /* about a real row on a phone */
+.thumb > span { display: block; }
 
 @media (min-width: 768px) {
   .hero { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; }
@@ -55,6 +57,8 @@
   .rowIcon { width: 96px; height: 64px; }
   .rowText { flex: 1 1 0; }
   .excerpt { -webkit-line-clamp: 1; line-clamp: 1; }
+  .hint { min-height: 0; }
+  .skeletonRow { min-height: 100px; }
 }
 
 @media (max-width: 1023px) {

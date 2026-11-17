@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { FormEvent } from 'react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { ApiError, changePassword, logout, logoutAll, meKey, NetworkError, resendVerification } from '../../api/client'
 import type { User } from '../../api/client'
@@ -45,7 +45,7 @@ function Profile({ user }: { user: User }) {
         </div>
       </dl>
       {!user.email_verified && resend.isSuccess && <p className={`${styles.note} ${styles.gap}`} role="status">The link was sent again. Check your inbox.</p>}
-      {!user.email_verified && failure && <p className={`${styles.note} ${styles.gap}`} role="alert">{failure}</p>}
+      {!user.email_verified && failure && <div className={styles.gap}><Banner tone="danger" title={failure} /></div>}
     </Card>
   )
 }
@@ -127,11 +127,19 @@ function PasswordForm({ onSaved, onStart }: { onSaved: () => void; onStart: () =
 function ChangePassword() {
   const [saved, setSaved] = useState(false)
   const [formKey, setFormKey] = useState(0)
+  const savedRef = useRef<HTMLDivElement>(null)
+  // After a save the form is remounted empty; bring the confirmation into view and tell screen readers where focus went.
+  useEffect(() => {
+    if (!saved || !savedRef.current) return
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    savedRef.current.scrollIntoView?.({ block: 'center', behavior: reduce ? 'auto' : 'smooth' })
+    savedRef.current.focus({ preventScroll: true })
+  }, [saved])
   return (
     <Card>
       <h2 className={styles.heading}>Change password</h2>
       {saved && (
-        <div className={styles.gap}>
+        <div className={styles.savedBanner} ref={savedRef} tabIndex={-1}>
           <Banner tone="success" title="Password changed. Your other devices were logged out." onDismiss={() => setSaved(false)} />
         </div>
       )}
@@ -152,6 +160,7 @@ function Sessions({ user }: { user: User }) {
   const navigate = useNavigate()
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [dialogError, setDialogError] = useState<string | null>(null)
 
   // Same clearing as a 401 (lib/session.ts): forget server data and the stored job id, then log in again.
   const leave = () => {
@@ -163,7 +172,15 @@ function Sessions({ user }: { user: User }) {
     setConfirming(false)
     setError(failureMessage(err))
   }
-  const everywhere = useMutation({ mutationFn: logoutAll, onSuccess: leave, onError })
+  // A failed "log out everywhere" stays in its dialog, next to the buttons.
+  // The ref closes the gap before React re-renders the busy state (a fast double click).
+  const everywhereSent = useRef(false)
+  const everywhere = useMutation({
+    mutationFn: logoutAll,
+    onSuccess: leave,
+    onError: (err) => setDialogError(failureMessage(err)),
+    onSettled: () => { everywhereSent.current = false },
+  })
   const single = useMutation({ mutationFn: logout, onSuccess: leave, onError })
   const n = user.active_sessions
 
@@ -178,6 +195,7 @@ function Sessions({ user }: { user: User }) {
             aria-describedby="logout-all-hint"
             onClick={() => {
               setError(null)
+              setDialogError(null)
               setConfirming(true)
             }}
           >
@@ -202,9 +220,21 @@ function Sessions({ user }: { user: User }) {
       </div>
       <Dialog open={confirming} onClose={() => !everywhere.isPending && setConfirming(false)} title="Log out everywhere?">
         <p className={styles.line}>You will need to log in again on every device, including this one.</p>
+        {dialogError && <Banner tone="danger" title="We could not log you out everywhere">{dialogError}</Banner>}
         <div className={styles.actions}>
           <Button variant="secondary" onClick={() => setConfirming(false)} disabled={everywhere.isPending}>Cancel</Button>
-          <Button variant="danger" busy={everywhere.isPending} busyLabel="Logging out…" onClick={() => everywhere.mutate()}>
+          <Button
+            variant="danger"
+            busy={everywhere.isPending}
+            busyLabel="Logging out…"
+            onClick={() => {
+              if (everywhere.isPending || everywhereSent.current) return
+              everywhereSent.current = true
+              setError(null)
+              setDialogError(null)
+              everywhere.mutate()
+            }}
+          >
             Log out everywhere
           </Button>
         </div>

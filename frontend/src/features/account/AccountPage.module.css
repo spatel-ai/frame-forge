@@ -17,6 +17,8 @@
 .actions { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-4); }
 .actions button { width: 100%; min-height: var(--target-min); }
 .gap { margin-top: var(--space-3); }
+.savedBanner { margin: var(--space-3) 0 var(--space-5); scroll-margin: var(--space-5); }
+.savedBanner:focus { outline: none; }
 
 @media (min-width: 768px) {
   .page { max-width: 720px; }
@@ -24,6 +26,8 @@
   .fact dd button { width: auto; }
   .logout button { width: auto; }
   .fact dt { flex: 0 0 120px; }
+  .fact dd { flex: 1 1 0; }
+  .fact dd > span { min-width: 0; overflow-wrap: anywhere; }
   .form { align-items: flex-start; }
   .narrow { max-width: 360px; }
   .row { align-items: flex-start; }

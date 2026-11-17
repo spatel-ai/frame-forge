@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
 import { Link } from 'react-router'
 import { jobListKey, listJobs } from '../../api/client'
 import type { JobSummary } from '../../api/client'
@@ -22,17 +23,38 @@ function formatLength(seconds: number): string {
 }
 
 function InProgress() {
+  const queryClient = useQueryClient()
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: jobListKey(IN_PROGRESS),
     queryFn: () => listJobs(IN_PROGRESS),
     // Poll only while something is being made.
     refetchInterval: (q) => (q.state.data && q.state.data.items.length > 0 ? POLL_MS : false),
   })
+  // A video that leaves "In progress" has finished (or failed): refresh "Recent videos" now rather than at the next reload.
+  const seen = useRef<Set<string> | null>(null)
+  useEffect(() => {
+    if (!data) return
+    const now = new Set(data.items.map((j) => j.id))
+    const before = seen.current
+    seen.current = now
+    if (before && [...before].some((id) => !now.has(id))) {
+      void queryClient.invalidateQueries({ queryKey: jobListKey(RECENT) })
+    }
+  }, [data, queryClient])
   return (
     <section className={styles.section} aria-labelledby="h-progress">
       <h2 id="h-progress" className={styles.heading}>In progress</h2>
       {isPending && (
-        <SkeletonGroup label="Loading videos in progress"><div className={styles.skeletonRow}><Skeleton shape="line" height={64} /></div></SkeletonGroup>
+        <SkeletonGroup label="Loading videos in progress">
+          <div className={styles.list}>
+            {[0, 1].map((i) => (
+              <div key={i} className={`${styles.row} ${styles.skeletonRow}`}>
+                <span className={styles.rowIcon}><Skeleton height="100%" width="100%" /></span>
+                <span className={styles.rowText}><Skeleton shape="line" height={20} /><Skeleton shape="line" height={14} width="60%" /></span>
+              </div>
+            ))}
+          </div>
+        </SkeletonGroup>
       )}
       {isError && <ErrorState title="Could not load your videos in progress" message={`${errMsg(error)}. Nothing was charged. Try again.`} onRetry={() => void refetch()} />}
       {data && data.items.length === 0 && <p className={styles.none}>Nothing is being made right now.</p>}
@@ -52,7 +74,7 @@ function ProgressRow({ job }: { job: JobSummary }) {
       <span className={styles.rowIcon} aria-hidden="true"><VideoIcon size={28} /></span>
       <span className={styles.rowText}>
         <span className={styles.excerpt}>{job.script_excerpt}</span>
-        {hint && <span className={styles.caption}>{hint}</span>}
+        {hint && <span className={`${styles.caption} ${styles.hint}`}>{hint}</span>}
       </span>
       <Pill tone="info" icon>{jobStatusLabel(job.status)}</Pill>
     </Link>
@@ -73,7 +95,12 @@ function Recent() {
       {isPending && (
         <SkeletonGroup label="Loading recent videos">
           <div className={styles.grid}>
-            {[0, 1, 2].map((i) => <Skeleton key={i} height={200} />)}
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className={styles.tile}>
+                <span className={styles.thumb}><Skeleton height="100%" width="100%" /></span>
+                <span className={styles.tileText}><Skeleton shape="line" height={20} /><Skeleton shape="line" height={14} width="50%" /></span>
+              </div>
+            ))}
           </div>
         </SkeletonGroup>
       )}
