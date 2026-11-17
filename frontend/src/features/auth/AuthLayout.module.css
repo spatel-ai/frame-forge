@@ -37,7 +37,7 @@
 .art > svg { display: block; width: 100%; height: auto; }
 
 .pitch { position: relative; display: flex; flex-direction: column; gap: var(--space-4); max-width: 480px; min-width: 0; }
-.headline { margin: 0; font-family: var(--font-heading); font-weight: 700; font-size: 22px; line-height: 1.25; overflow-wrap: anywhere; }
+.headline { margin: 0; font-family: var(--font-heading); font-weight: 700; font-size: 22px; line-height: 1.25; overflow-wrap: anywhere; text-wrap: balance; }
 .ticks { display: none; list-style: none; margin: 0; padding: 0; flex-direction: column; gap: var(--space-3); font-size: 16px; }
 .ticks li { display: flex; align-items: center; gap: var(--space-3); }
 .ticks svg { flex: none; }
@@ -47,7 +47,7 @@
   position: relative;
   box-sizing: border-box;
   /* No clipping and no vertical centring: the page scrolls and the card top is never hidden. */
-  padding: 0 var(--space-4) var(--space-5);
+  padding: 0 var(--space-4) var(--space-6);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -72,6 +72,30 @@
 
 .note { position: relative; margin: 0; color: var(--color-ink-soft); font-size: var(--text-caption-size); text-align: center; }
 
+/* Very small phones: no small decorative shapes (they touch text). */
+@media (max-width: 359.98px) {
+  .side .backdrop path { display: none; }
+}
+
+/* Tablet: band content in the same 480 px column as the card; card centred in the space below. */
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .brand { padding: var(--space-7) var(--space-5) var(--space-6); align-items: center; gap: var(--space-5); }
+  .logo, .pitch { width: 100%; max-width: 480px; }
+  .word { font-size: var(--text-section-size); }
+  .headline { font-size: 28px; line-height: 1.2; }
+  .ticks { display: flex; font-size: 15px; }
+  .side { justify-content: center; padding-top: var(--space-6); padding-bottom: var(--space-6); }
+  .card { margin-top: 0; }
+}
+
+/* Short screens below desktop (a phone held sideways): wordmark-only band so the form starts in the first screen. */
+@media (max-height: 500px) and (max-width: 1023.98px) {
+  .brand { padding: var(--space-3) var(--space-5); gap: 0; }
+  .pitch { display: none; }
+  .side { padding-top: var(--space-4); padding-bottom: var(--space-5); justify-content: flex-start; }
+  .card { margin-top: 0; }
+}
+
 /* Desktop: the 50/50 split, unchanged. */
 @media (min-width: 1024px) {
   .page { flex-direction: row; }
@@ -91,5 +115,11 @@
     padding: var(--space-7) var(--space-5);
     justify-content: center;
   }
+  .side .backdrop path:first-of-type { display: none; }
   .card { max-width: 420px; margin-top: 0; padding: var(--space-6); }
+}
+
+/* The top-left sparkle sits under taller cards only between 1024 and 1279 px. */
+@media (min-width: 1280px) {
+  .side .backdrop path:first-of-type { display: block; }
 }

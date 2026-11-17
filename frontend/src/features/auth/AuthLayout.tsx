@@ -21,7 +21,7 @@ export function AuthLayout({ children, credit = true }: { children: ReactNode; c
         </div>
         <div className={styles.art}><BrandIllustration credit={credit} /></div>
         <div className={styles.pitch}>
-          <p className={styles.headline}>Your photo. Your script. A talking video.</p>
+          <p className={styles.headline}>{'Your photo. Your script. A\u00a0talking video.'}</p>
           <ul className={styles.ticks}>
             {TICKS.map((t) => (
               <li key={t}>
