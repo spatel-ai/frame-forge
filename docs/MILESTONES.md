@@ -1,12 +1,14 @@
 # Milestones — Frameforge
 
-Eleven milestones, each a slice that works end to end on backend and frontend. A milestone ends
+Twelve milestones, each a slice that works end to end on backend and frontend. A milestone ends
 with evidence, not with "code written".
 
 - Task **status and verification** are kept in [tracker/tasks.json](tracker/tasks.json), not here.
 - No dates are given: team size and working hours are not known. Order and dependencies are.
 - Free mock-mode tests may run. Any fal.ai call, and any Razorpay call including its free test
   mode, needs the owner's approval for that run (decision D-021).
+- Engineering never runs a real test. The whole platform is built and tested on mock data; a
+  small real test happens only when engineering explicitly asks the owner for it (decision D-076).
 
 ## How to read the task tables
 
@@ -45,6 +47,7 @@ simpler way exists, change the plan before building.
 | M4 | Razorpay payments | Customers buy credits with Razorpay in test mode | M3, Q-06, Q-10 |
 | M5 | Product completeness | Scripts, banners, history, consent: a product a customer can use unaided | M4, Q-11, Q-15, Q-17 |
 | M5.5 | First customer release (R1) | One stable real flow, deployed: sign up with a Gmail-sent link, buy credits, script, real 10–12 s voice and video, play from the fal.ai link, history, video-ready email | M5 Create flow (T-502, T-505, T-513), M3.5 before go-live (T-558), owner inputs |
+| M5.6 | Voice choice | The backend lets a customer choose a gender and a preset voice, play a sample, or record a spoken script; designs for every device, including cloning | M5.5 job code (T-553), owner answers of 2026-11-17 |
 | M6 | Admin and operations | Staff can see, correct and reconcile money, and manage templates | M5, Q-05, Q-09 |
 | M7 | Hardening and launch | Deployed, secured, verified live with real money | M6, Q-03, Q-07, Q-12, Q-13, Q-18 |
 
@@ -280,6 +283,36 @@ in history, and receives the video-ready email with the job details.
 | T-559 | OPS | Fable | Acceptance | R-26 | Deploy to the owner's server and domain; repeat the flow there | Works over HTTPS on the domain |
 | T-560 | BE | Owner | Acceptance | R-22 | Go-live: switch to live Razorpay keys, one real purchase (T-706) | Recorded in the R1 report |
 
+## M5.6 — Voice choice
+
+Plan, owner answers, provider facts and the interface sheet: [M5.6-PLAN.md](M5.6-PLAN.md).
+Backend only, plus designs. Nothing under `frontend/` is changed, not even the generated API
+types: the frontend is being rebuilt on the `responsive` branch, and integration starts only when
+the owner says so (owner, 2026-11-17). Cloning is deferred (D-075).
+
+**Testing:** mock provider only (D-076). **Gate C:** none run by engineering; the real tests the
+owner may choose to run are listed in the plan.
+
+**Exit evidence:** in mock mode, the API lists the preset voices, plays a sample for each, makes
+a voice with a chosen preset, and accepts a spoken Punjabi recording as the job's audio; old
+requests behave as before; the designs are on the canvas for desktop, tablet and phone.
+
+| ID | Area | Owner | Need | Traces to | Task | Accepted when |
+| --- | --- | --- | --- | --- | --- | --- |
+| T-570 | DOC | Fable | Correctness | R-89, R-95 | Decisions D-071 to D-076, requirements, questions and the M5.6 plan with its interface sheet | Every shared name is written down; the tracker cross-check passes |
+| T-571 | BE | Sonnet | Correctness | R-89, R-90, R-91 | Voice-choice API contract: schemas and 501 stubs. The frontend API types are not regenerated: the frontend is left untouched until the owner starts integration | Routes, bodies and error codes are in the backend's OpenAPI document; contract test passes; no file under `frontend/` changes |
+| T-572 | BE | Sonnet | Acceptance | R-89, R-92 | Settings (preset catalogue, sample sentences, voice consent, recording limits), the `jobs` voice columns and their migration, router registration | `./check.sh` passes; migration runs up and down |
+| T-573 | BE | Sonnet | Safety | R-91 | Recording intake: check and convert a recorded audio file | Wrong type, too long, too short, too big and no audio are refused; a browser recording becomes a WAV file |
+| T-574 | DOC | Sonnet | Acceptance | R-89, R-90 | Design: gender and voice dropdowns with Play sample on Create | Every state drawn at desktop width with existing tokens and components |
+| T-575 | DOC | Sonnet | Acceptance | R-91, R-92, R-93 | Design: recording states, voice consent, spoken script, and the My voices screens for the later release | Every state drawn at desktop width; later-release boards are labelled |
+| T-576 | BE | Opus | Correctness | R-89 | Provider: optional preset voice on voice generation, in fal and mock | Argument tests per language; with no preset the request is identical to today's; no network |
+| T-577 | BE | Sonnet | Correctness | R-91, R-92 | Jobs: `/config` voice options, voice-kind checks and the spoken-script path | Old requests unchanged; a spoken job starts at `audio_ready` with 10 credits and the right price; consent refusals |
+| T-578 | DOC | Sonnet | Acceptance | R-89, R-91 | Design: phone and tablet boards for the voice screens | Every desktop state has a phone and a tablet board |
+| T-579 | BE | Sonnet | Acceptance | R-90 | Preset samples: the sample route and the command that makes the clips | Mock run makes 30 clips; a second run makes none; route serves a clip and answers 404 when missing |
+| T-580 | BE | Sonnet | Correctness | R-89 | Jobs: a chosen preset voice is passed to the provider | Each preset reaches the provider with the right arguments; an unknown preset is refused |
+| T-581 | DOC | Haiku | Acceptance | R-89 | Describe the voice choice in HLD.md from the merged code | Matches the code; no new claims |
+| T-582 | BE | Fable | Correctness | R-89, R-95 | Final review of the merged milestone; Gate B and D report | Mock checks pass; report lists what stays unverified |
+
 ## M6 — Admin and operations
 
 **Gate A needs:** Q-05, Q-09 answered. **Gate C:** none.
@@ -346,7 +379,9 @@ parallel once the tasks they start after are done. Two tasks in the same lane ne
 | BE-Pay | `backend/app/payments/` | |
 | BE-Jobs | `backend/app/jobs/` (today `service.py`, `db.py`) | The job lifecycle. Strictly one task at a time: most features end here |
 | BE-Content | `backend/app/scripts/`, `backend/app/templates/` | |
-| BE-Media | `backend/app/media/` | ffmpeg joining; depends on nothing else |
+| BE-Media | `backend/app/media/` | ffmpeg joining and recording intake; depends on nothing else |
+| BE-Provider | `backend/app/providers.py` | Money-critical; one owner at a time |
+| BE-Presets | `backend/app/voice_presets/` | Preset voice samples (M5.6) |
 | BE-Admin | `backend/app/admin/` | |
 | FE-Shell | `frontend/src/routes.tsx`, `frontend/src/api/`, `frontend/src/styles/`, `frontend/package.json`, `frontend/index.html`, `frontend/vite.config.ts`, the Playwright config and `frontend/e2e/` | The frontend integrator |
 | FE-Frame | `frontend/src/components/AppShell.*`, `frontend/src/components/shell/`, `frontend/src/components/NotFound.*` | The frame around every logged-in screen (from M3.5) |
@@ -474,7 +509,7 @@ its lane free, can start.
 | T-500 | Contract | T-400 |
 | T-501 | BE-Jobs | T-304, T-500 |
 | T-502 | BE-Jobs | T-501 |
-| T-503 | BE-Jobs | T-502, T-553 |
+| T-503 | BE-Jobs | T-502, T-553, T-580 |
 | T-504 | BE-Content | T-204, T-500 |
 | T-505 | BE-Jobs | T-502, T-504 |
 | T-506 | BE-Content | T-504 |
@@ -501,7 +536,20 @@ its lane free, can start.
 | T-558 | Review | T-556, T-557, T-363 |
 | T-559 | Review | T-555, T-558 |
 | T-560 | Review | T-559 |
-| T-600 | Contract | T-500 |
+| T-570 | Docs | — |
+| T-571 | Contract | T-570, T-500 |
+| T-572 | BE-Core | T-571, T-157 |
+| T-573 | BE-Media | T-570, T-508 |
+| T-574 | Docs | T-570 |
+| T-575 | Docs | T-570 |
+| T-576 | BE-Provider | T-572 |
+| T-577 | BE-Jobs | T-571, T-572, T-573, T-553 |
+| T-578 | Docs | T-574, T-575 |
+| T-579 | BE-Presets | T-576 |
+| T-580 | BE-Jobs | T-577, T-576 |
+| T-581 | Docs | T-579, T-580 |
+| T-582 | Review | T-581 |
+| T-600 | Contract | T-500, T-571 |
 | T-601 | BE-Admin | T-202, T-600 |
 | T-602 | BE-Admin | T-601, T-302 |
 | T-603 | BE-Pay | T-406, T-600 |
@@ -513,7 +561,7 @@ its lane free, can start.
 | T-611 | FE-Admin | T-610 |
 | T-701 | Review | T-604, T-607, T-512 |
 | T-702 | Ops | T-701, T-555 |
-| T-703 | BE-Core | T-702, T-105 |
+| T-703 | BE-Core | T-702, T-105, T-572 |
 | T-704 | Ops | T-702 |
 | T-705 | Review | T-703, T-509 |
 | T-706 | Review | T-705, T-407 |

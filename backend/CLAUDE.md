@@ -50,6 +50,10 @@ list are in [docs/MILESTONES.md](../docs/MILESTONES.md), section "Parallel plan"
   including test mode; anything that sets `AVATAR_PROVIDER=fal` or starts the `backend-live`
   configuration.
 - Before asking, state what will run and the expected cost.
+- **Engineering never runs a real test (owner, 2026-11-17; decision D-076).** The whole platform
+  is built and tested on mock data. If a small real test is truly needed, ask the owner
+  explicitly for that one test; the owner decides and may run it themselves. Never plan on a real
+  run happening.
 - A passing mock test is `MOCK-VERIFIED`. Only an approved real run earns `VERIFIED` for a
   provider integration.
 

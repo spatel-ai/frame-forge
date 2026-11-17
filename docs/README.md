@@ -13,6 +13,7 @@ The parent [CLAUDE.md](../CLAUDE.md) governs the project. These documents apply 
 | [M3-PLAN.md](M3-PLAN.md) | Wallet and charging: owner's prices, discovery, API contract, phases |
 | [M4-PLAN.md](M4-PLAN.md) | Razorpay payments: owner's answers, discovery, settings, API contract, phases |
 | [M3.5-PLAN.md](M3.5-PLAN.md) | Responsive on every device: the device matrix, per-screen phone and tablet behaviour, phases and parallel work |
+| [M5.6-PLAN.md](M5.6-PLAN.md) | Voice choice: owner answers, provider facts, the interface sheet, waves and agents |
 | [RAZORPAY-FACTS.md](RAZORPAY-FACTS.md) | Razorpay facts relied on, each with its official source and date (T-401) |
 | [UX.md](UX.md) | What must every screen look and behave like? The design system and the interaction standards |
 | [tracker/](tracker/) | What is the status right now? |
