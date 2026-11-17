@@ -467,3 +467,39 @@ def test_two_holds_at_once_only_one_succeeds(engine, store, user):
     assert (refused[0].required, refused[0].available) == (60, 40)
     assert balances(store, user) == (100, 60, 40)
     assert store.invariant_holds(user)
+
+
+def test_same_hold_twice_at_once_is_written_once(engine, store, user):
+    """R-10: the same hold (same job) sent twice at the same moment, on a wallet that could
+    afford both, writes one entry; the second caller waits on the lock, then gets that entry."""
+    store.grant(user, 1000, "g1", None)
+    barrier = threading.Barrier(2, timeout=10)
+    results: list[object] = []
+
+    def attempt() -> None:
+        conn = engine.connect()
+        try:
+            tx = conn.begin()
+            barrier.wait()
+            entry = ledger.hold(conn, user, "job1", 100)
+            time.sleep(0.3)
+            tx.commit()
+            results.append(entry.id)
+        except BaseException as exc:  # surfaced in the main thread below
+            results.append(exc)
+        finally:
+            conn.close()
+
+    threads = [threading.Thread(target=attempt) for _ in range(2)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(timeout=20)
+        assert not t.is_alive(), "a hold never finished: lock wait or deadlock"
+    for r in results:
+        if isinstance(r, BaseException):
+            raise r
+    assert len(results) == 2 and results[0] == results[1]
+    assert balances(store, user) == (1000, 100, 900)
+    assert entry_count(engine, user) == 2
+    assert store.invariant_holds(user)

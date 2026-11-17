@@ -143,19 +143,24 @@ def _write(
     kind: str,
     ref_type: str,
     ref_id: str,
-    current: tuple[int, int],
     credits: int,
     reserved_delta: int,
     created_by: str | None = None,
 ) -> Entry:
-    balance, reserved = current
-    balance_after, reserved_after = balance + credits, reserved + reserved_delta
+    # Relative update: even if the row lock were ever bypassed, a stale read could not overwrite
+    # another writer's change, and the CHECK would see the true combined result.
     now = datetime.now(timezone.utc)
-    conn.execute(
+    after = conn.execute(
         update(_wallets)
         .where(_wallets.c.user_id == user_id)
-        .values(balance_credits=balance_after, reserved_credits=reserved_after, updated_at=now)
-    )
+        .values(
+            balance_credits=_wallets.c.balance_credits + credits,
+            reserved_credits=_wallets.c.reserved_credits + reserved_delta,
+            updated_at=now,
+        )
+        .returning(_wallets.c.balance_credits, _wallets.c.reserved_credits)
+    ).one()
+    balance_after, reserved_after = after.balance_credits, after.reserved_credits
     row = conn.execute(
         insert(_entries)
         .values(
@@ -191,11 +196,11 @@ def grant(
     """Add `credits` to the balance. Reference ('grant', ref_id)."""
     credits = _amount(credits)
     _require_transaction(conn)
-    current = _lock(conn, user_id)
+    _lock(conn, user_id)
     existing = _find(conn, user_id, "grant", GRANT, ref_id)
     if existing:
         return _same_or_conflict(existing, credits, 0)
-    return _write(conn, user_id, "grant", GRANT, ref_id, current, credits, 0, created_by)
+    return _write(conn, user_id, "grant", GRANT, ref_id, credits, 0, created_by)
 
 
 def voice_charge(conn: Connection, user_id: str, job_id: str, credits: int) -> Entry:
@@ -208,21 +213,21 @@ def voice_charge(conn: Connection, user_id: str, job_id: str, credits: int) -> E
     if existing:
         return _same_or_conflict(existing, -credits, 0)
     _ensure_available(current, credits)
-    return _write(conn, user_id, "voice_charge", JOB, job_id, current, -credits, 0)
+    return _write(conn, user_id, "voice_charge", JOB, job_id, -credits, 0)
 
 
 def voice_return(conn: Connection, user_id: str, job_id: str) -> Entry:
     """Return the job's voice charge, by the amount recorded on it. Raises LedgerConflict if
     the job has no voice charge."""
     _require_transaction(conn)
-    current = _lock(conn, user_id)
+    _lock(conn, user_id)
     existing = _find(conn, user_id, "voice_return", JOB, job_id)
     if existing:
         return existing
     charge = _find(conn, user_id, "voice_charge", JOB, job_id)
     if charge is None:
         raise LedgerConflict(f"no voice charge to return for job {job_id}")
-    return _write(conn, user_id, "voice_return", JOB, job_id, current, -charge.credits, 0)
+    return _write(conn, user_id, "voice_return", JOB, job_id, -charge.credits, 0)
 
 
 def hold(conn: Connection, user_id: str, job_id: str, credits: int) -> Entry:
@@ -240,12 +245,12 @@ def hold(conn: Connection, user_id: str, job_id: str, credits: int) -> Entry:
                 raise LedgerConflict(f"the hold for job {job_id} was already {settled}d")
         return _same_or_conflict(existing, 0, credits)
     _ensure_available(current, credits)
-    return _write(conn, user_id, "hold", JOB, job_id, current, 0, credits)
+    return _write(conn, user_id, "hold", JOB, job_id, 0, credits)
 
 
 def _settle(conn: Connection, user_id: str, job_id: str, kind: str, other: str) -> Entry:
     _require_transaction(conn)
-    current = _lock(conn, user_id)
+    _lock(conn, user_id)
     existing = _find(conn, user_id, kind, JOB, job_id)
     if existing:
         return existing
@@ -256,7 +261,7 @@ def _settle(conn: Connection, user_id: str, job_id: str, kind: str, other: str) 
         raise LedgerConflict(f"no hold to {kind} for job {job_id}")
     amount = held.reserved_delta
     credits = -amount if kind == "capture" else 0
-    return _write(conn, user_id, kind, JOB, job_id, current, credits, -amount)
+    return _write(conn, user_id, kind, JOB, job_id, credits, -amount)
 
 
 def capture(conn: Connection, user_id: str, job_id: str) -> Entry:
