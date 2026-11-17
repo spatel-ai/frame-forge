@@ -72,7 +72,7 @@ export function FailureEnding({ job, config }: { job: Job; config: Config | null
           )}
           <div><h3>Your credits</h3><p>{t.credits}</p></div>
           <div><h3>What you can do</h3><p>{t.next}</p></div>
-          {support && <p>Questions? Write to <a className={styles.textLink} href={`mailto:${support}`}>{support}</a>.</p>}
+          {support && <p>Questions? Write to <a className={styles.inlineLink} href={`mailto:${support}`}>{support}</a>.</p>}
           <div className={styles.actions}>
             <Link className={styles.linkButton} to="/create">Start over</Link>
             <Link className={`${styles.linkButton} ${styles.secondary}`} to="/videos">Go to Videos</Link>
