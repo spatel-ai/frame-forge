@@ -1,6 +1,10 @@
 /* Phone first: one column, bottom bar fixed. 768 px adds a 72 px icon sidebar; 1024 px a 232 px one. */
-.shell { --bottom-nav-height: 56px; min-height: 100vh; }
-.column { min-width: 0; display: flex; flex-direction: column; min-height: 100vh; }
+.shell { --bottom-nav-height: 56px; min-height: 100vh; min-height: 100dvh; }
+.column { min-width: 0; display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+/* A phone held sideways: a shorter bar leaves more room for the page. */
+@media (max-width: 767px) and (max-height: 500px) {
+  .shell { --bottom-nav-height: 48px; }
+}
 
 .content {
   flex: 1; min-width: 0; width: 100%; max-width: 1120px;
@@ -28,6 +32,10 @@
 .skip:focus { transform: none; outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
 
 .userName { font-weight: var(--text-title-weight); color: var(--color-ink-soft); }
+/* Phones keep the credits pill only (UX.md section 5). The pill links to /wallet, where credits are bought. */
+@media (max-width: 767px) {
+  .userName, .buyLink { display: none; }
+}
 .pillLink { text-decoration: none; }
 
 .buyLink {
