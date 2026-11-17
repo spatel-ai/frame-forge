@@ -217,6 +217,7 @@ describe('unconfirmed email notice', () => {
     await screen.findByRole('button', { name: 'Generate voice' })
     await user.upload(screen.getByLabelText(/upload a photo/i), new File([new Uint8Array(10)], 'f.jpg', { type: 'image/jpeg' }))
     await user.type(screen.getByLabelText('What should the person say?'), 'Hello')
+    await user.click(screen.getByRole('checkbox', { name: 'I have permission.' }))
     await user.click(screen.getByRole('button', { name: 'Generate voice' }))
     expect(await screen.findByText('Confirm your email to make videos')).toBeTruthy()
     expect(getMe).toHaveBeenCalledTimes(2)

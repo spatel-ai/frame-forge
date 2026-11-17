@@ -7,16 +7,17 @@ import { Banner } from '../../components/feedback'
 import { Button, FileDropZone, Select, SelectableCard, SelectableCardGroup, TextArea } from '../../components/form'
 import { Card } from '../../components/layout'
 import { invalidateWallet, useWallet } from '../../lib/wallet'
+import { ConsentBlock, VoiceCostBox } from './ConsentBlock'
 import { formatCredits } from './credits'
 import { NotEnoughCredits } from './NotEnoughCredits'
 import { ScriptPickerDialog } from './ScriptPickerDialog'
 import picker from './ScriptPicker.module.css'
 import styles from './JobForm.module.css'
 
-type FieldName = 'image' | 'script' | 'language'
+type FieldName = 'image' | 'script' | 'language' | 'consent'
 type FieldErrors = Partial<Record<FieldName, string>>
 
-const FIELD_ORDER: FieldName[] = ['image', 'script', 'language']
+const FIELD_ORDER: FieldName[] = ['image', 'script', 'language', 'consent']
 const BYTES_PER_MB = 1024 * 1024
 
 function isFieldName(key: string): key is FieldName {
@@ -66,6 +67,8 @@ export function JobForm({
   // The saved script the text came from, while the customer is working from one (frontend rule: script).
   const [saved, setSaved] = useState<SavedScript | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
+  // Never pre-ticked (frontend rule 6). Kept when the server answers with an error.
+  const [consent, setConsent] = useState(false)
   const unchanged = saved !== null && script === saved.text && language === saved.language
   const { data: wallet } = useWallet()
 
@@ -81,10 +84,11 @@ export function JobForm({
   const imageRef = useRef<HTMLInputElement>(null)
   const scriptRef = useRef<HTMLTextAreaElement>(null)
   const languageRef = useRef<HTMLSelectElement>(null)
+  const consentRef = useRef<HTMLInputElement>(null)
 
   const create = useMutation({
     mutationFn: (v: { file: File; text: string; language: string; scriptId?: string }) =>
-      v.scriptId ? createJob(v.file, v.text, v.language, v.scriptId) : createJob(v.file, v.text, v.language),
+      createJob(v.file, v.text, v.language, v.scriptId, { consent: true, version: config.consent_version }),
   })
   const busy = create.isPending
 
@@ -95,7 +99,7 @@ export function JobForm({
   const error = (field: FieldName) => clientErrors[field] ?? serverErrors[field]
 
   const focusFirst = (errors: FieldErrors) => {
-    const refs = { image: imageRef, script: scriptRef, language: languageRef }
+    const refs = { image: imageRef, script: scriptRef, language: languageRef, consent: consentRef }
     const first = FIELD_ORDER.find((f) => errors[f])
     if (first) refs[first].current?.focus()
   }
@@ -134,7 +138,7 @@ export function JobForm({
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
-    if (busy) return
+    if (busy || !consent) return
     setFormError(null)
     setCreditsError(null)
     const errors: FieldErrors = {
@@ -172,6 +176,13 @@ export function JobForm({
             setSaved(null)
             void queryClient.invalidateQueries({ queryKey: scriptsKey })
             setFormError('That saved script no longer exists. Your text is kept and will be saved as a new script.')
+            return
+          }
+          if (err instanceof ApiError && (err.code === 'consent_required' || err.code === 'consent_outdated')) {
+            // The wording may have changed: reload it so the customer ticks the current text.
+            if (err.code === 'consent_outdated') void queryClient.refetchQueries({ queryKey: ['config'] })
+            setServerErrors({ consent: err.fields.consent ?? err.message })
+            consentRef.current?.focus()
             return
           }
           const fields: FieldErrors = {}
@@ -306,6 +317,20 @@ export function JobForm({
         }}
       />
 
+      <Card padding="lg">
+        <ConsentBlock
+          ref={consentRef}
+          config={config}
+          checked={consent}
+          error={serverErrors.consent}
+          onChange={(v) => {
+            setConsent(v)
+            clearServer('consent')
+          }}
+        />
+      </Card>
+      <VoiceCostBox config={config} balance={wallet?.available_credits} />
+
       <div className={styles.footer}>
         {formError && (
           <Banner tone="danger" title="We could not generate the voice">
@@ -323,9 +348,10 @@ export function JobForm({
           <p className={styles.unconfirmed}>You can fill this in now. Generating needs a confirmed email.</p>
         )}
         <p className={styles.unconfirmed}>Generating the voice costs {formatCredits(config.voice_price_credits)} credits.</p>
-        <Button type="submit" size="large" busy={busy} busyLabel="Generating voice…" disabled={!canGenerate || notEnough}>
+        <Button type="submit" size="large" busy={busy} busyLabel="Generating voice…" disabled={!canGenerate || notEnough || !consent}>
           Generate voice
         </Button>
+        {!consent && <p className={styles.unconfirmed}>Tick the box above to continue.</p>}
       </div>
     </form>
   )
