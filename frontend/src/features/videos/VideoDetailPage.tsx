@@ -3,7 +3,7 @@ import type { Job } from '../../api/client'
 import type { ShellContext } from '../../components/AppShell'
 import NotFound from '../../components/NotFound'
 import { ErrorState, Pill, Skeleton, SkeletonGroup } from '../../components/feedback'
-import { DownloadIcon } from '../../components/icons'
+import { DownloadVideoButton } from '../../components/form'
 import { Card } from '../../components/layout'
 import { errMsg } from '../../lib/util'
 import { FailureEnding } from './FailureEnding'
@@ -117,10 +117,7 @@ export default function VideoDetailPage() {
           <Cost job={job} creditsPerSecond={config?.credits_per_second ?? null} />
           <div className={styles.actions}>
             {job.video_url && !job.video_expired && (
-              <a className={styles.linkButton} href={job.video_url} download>
-                <DownloadIcon size={18} />
-                Download video
-              </a>
+              <DownloadVideoButton videoPath={job.video_url} jobId={job.id} />
             )}
             <Link className={`${styles.linkButton} ${styles.secondary}`} to="/create">Create another</Link>
           </div>

@@ -195,3 +195,13 @@ export const createScript = (language: string, text: string) =>
   request<SavedScript>('/api/v1/scripts', json({ language, text }))
 export const deleteScript = (id: string) =>
   request<void>(`/api/v1/scripts/${encodeURIComponent(id)}`, { method: 'DELETE' })
+
+/** A job's video as a file, for "Download video" on the same page. Our route checks the owner and
+ * redirects to the provider's file (D-065), which allows cross-origin reads, so the browser can
+ * save it without opening a new tab. */
+export async function fetchVideoFile(videoPath: string): Promise<Blob> {
+  const res = await fetch(videoPath, { credentials: 'same-origin' })
+  if (res.status === 410) throw new ApiError(410, 'This video has expired. Videos are kept for 30 days.', 'video_expired')
+  if (!res.ok) throw new ApiError(res.status, 'We could not download the video. Please try again.', 'download_failed')
+  return res.blob()
+}

@@ -111,7 +111,7 @@ describe('job screens by status', () => {
     vi.mocked(getJob).mockResolvedValue(withStatus('completed', { video_url: 'https://example.test/v.mp4' }))
     renderAt('/create/job-1')
     expect(await screen.findByText('Your video is ready')).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Download video' }).getAttribute('href')).toBe('https://example.test/v.mp4')
+    expect(screen.getByRole('button', { name: 'Download video' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Create another' })).toBeTruthy()
   })
 
@@ -120,7 +120,7 @@ describe('job screens by status', () => {
     renderAt('/create/job-1')
     expect(await screen.findByText('This video has expired. Videos are kept for 30 days.')).toBeTruthy()
     expect(document.querySelector('video')).toBeNull()
-    expect(screen.queryByRole('link', { name: 'Download video' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Download video' })).toBeNull()
     expect(screen.getByRole('button', { name: 'Create another' })).toBeTruthy()
   })
 

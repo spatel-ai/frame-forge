@@ -1,5 +1,6 @@
 export { Button, type ButtonProps } from './Button'
 export { Checkbox, type CheckboxProps } from './Checkbox'
+export { DownloadVideoButton } from './DownloadVideoButton'
 export { PasswordField, type PasswordFieldProps } from './PasswordField'
 export { FileDropZone, type FileDropZoneProps } from './FileDropZone'
 export { type FieldProps } from './Field'

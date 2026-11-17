@@ -1,7 +1,6 @@
 import type { Job } from '../../api/client'
 import { ErrorState, Pill } from '../../components/feedback'
-import { Button } from '../../components/form'
-import { DownloadIcon } from '../../components/icons'
+import { Button, DownloadVideoButton } from '../../components/form'
 import { Card } from '../../components/layout'
 import { formatCredits } from './credits'
 import styles from './screens.module.css'
@@ -52,10 +51,7 @@ export function ResultScreen({ job, onReset }: { job: Job; onReset: () => void }
             <p className={styles.note}>Charged: {formatCredits(job.charged_credits)} credits</p>
             <div className={styles.actions}>
               {!job.video_expired && (
-                <a className={styles.linkButton} href={job.video_url} download>
-                  <DownloadIcon size={18} />
-                  Download video
-                </a>
+                <DownloadVideoButton videoPath={job.video_url} jobId={job.id} />
               )}
               <Button variant="secondary" size="large" onClick={onReset}>Create another</Button>
             </div>

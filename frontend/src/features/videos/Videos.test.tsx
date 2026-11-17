@@ -136,7 +136,7 @@ describe('Video detail', () => {
     expect(screen.getByText('Welcome <b>to</b> our offer')).toBeTruthy()
     expect(document.querySelector('b')).toBeNull()
     expect(screen.getByText(/Changing or deleting a saved script does not change it/)).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Download video' }).getAttribute('href')).toBe('https://example.test/v.mp4')
+    expect(screen.getByRole('button', { name: 'Download video' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Create another' }).getAttribute('href')).toBe('/create')
   })
 
@@ -167,7 +167,7 @@ describe('Video detail', () => {
     renderAt('/videos/job-1')
     expect(await screen.findByText('This video has expired. Videos are kept for 30 days.')).toBeTruthy()
     expect(document.querySelector('video')).toBeNull()
-    expect(screen.queryByRole('link', { name: 'Download video' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Download video' })).toBeNull()
     expect(screen.getByText('What it cost')).toBeTruthy()
   })
 
