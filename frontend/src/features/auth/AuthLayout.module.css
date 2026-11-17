@@ -88,6 +88,14 @@
   .card { margin-top: 0; }
 }
 
+/* Short screens below desktop (a phone held sideways): wordmark-only band so the form starts in the first screen. */
+@media (max-height: 500px) and (max-width: 1023.98px) {
+  .brand { padding: var(--space-3) var(--space-5); gap: 0; }
+  .pitch { display: none; }
+  .side { padding-top: var(--space-4); padding-bottom: var(--space-5); justify-content: flex-start; }
+  .card { margin-top: 0; }
+}
+
 /* Desktop: the 50/50 split, unchanged. */
 @media (min-width: 1024px) {
   .page { flex-direction: row; }
