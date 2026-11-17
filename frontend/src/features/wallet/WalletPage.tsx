@@ -82,15 +82,7 @@ function Transactions() {
   const [page, setPage] = useState(1)
   const navigate = useNavigate()
   const headingRef = useRef<HTMLHeadingElement>(null)
-  // After a page change, bring the top of the list into view and put focus on its heading.
-  const changePage = (next: number) => {
-    setPage(next)
-    const heading = headingRef.current
-    if (!heading) return
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
-    heading.scrollIntoView?.({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
-    heading.focus({ preventScroll: true })
-  }
+  // Pagination scrolls the heading to the top of the screen and focuses it once the new page has arrived.
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: transactionsKey(page, PAGE_SIZE),
     queryFn: () => getTransactions(page, PAGE_SIZE),
@@ -138,7 +130,7 @@ function Transactions() {
               ))}
             </tbody>
           </table>
-          <Pagination page={data.page} pageSize={data.page_size} total={data.total} onPageChange={changePage} />
+          <Pagination page={data.page} pageSize={data.page_size} total={data.total} onPageChange={setPage} scrollTargetRef={headingRef} />
         </>
       )}
     </Card>

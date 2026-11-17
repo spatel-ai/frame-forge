@@ -140,11 +140,13 @@ describe('wallet page', () => {
   })
 
   it('R-13 after a page change, scrolls the list into view and moves focus to the Transactions heading', async () => {
-    vi.mocked(getTransactions).mockResolvedValue(txs([entry({ id: 'a' })], { total: 45 }))
+    vi.mocked(getTransactions).mockImplementation(async (page = 1) => txs([entry({ id: 'p' + page })], { total: 45, page }))
     const scroll = vi.fn()
     Element.prototype.scrollIntoView = scroll
     renderAt()
     await userEvent.click(await screen.findByRole('button', { name: /Next/ }))
+    // The scroll and the focus wait for the new page to arrive.
+    await vi.waitFor(() => expect(scroll).toHaveBeenCalled())
     const heading = screen.getByRole('heading', { name: 'Transactions' })
     expect(document.activeElement).toBe(heading)
     expect(heading.getAttribute('tabindex')).toBe('-1')
