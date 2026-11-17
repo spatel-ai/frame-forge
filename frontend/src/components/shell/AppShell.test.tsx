@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getConfig, getMe } from '../../api/client'
 import type { Config, User } from '../../api/client'
 import AppShell from '../AppShell'
@@ -158,5 +158,55 @@ describe('AppShell', () => {
     renderAt('/nowhere')
     expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Go to Create' }).getAttribute('href')).toBe('/create')
+  })
+
+  describe('bottom-bar scroll helper (phones)', () => {
+    const original = { matchMedia: window.matchMedia, rect: HTMLElement.prototype.getBoundingClientRect, raf: window.requestAnimationFrame }
+    afterEach(() => {
+      window.matchMedia = original.matchMedia
+      HTMLElement.prototype.getBoundingClientRect = original.rect
+      window.requestAnimationFrame = original.raf
+    })
+    function phoneWithButtonUnderBar() {
+      window.matchMedia = ((q: string) => ({ matches: q.includes('max-width'), media: q, addEventListener() {}, removeEventListener() {} })) as unknown as typeof window.matchMedia
+      window.requestAnimationFrame = ((cb: FrameRequestCallback) => { cb(0); return 0 }) as typeof window.requestAnimationFrame
+      HTMLElement.prototype.getBoundingClientRect = () => ({ top: 700, bottom: 790, left: 0, right: 100, width: 100, height: 90, x: 0, y: 700, toJSON() {} }) as DOMRect
+      const scroll = vi.fn()
+      Element.prototype.scrollIntoView = scroll
+      return scroll
+    }
+
+    it('does not scroll when focus comes from a tap or click', async () => {
+      const scroll = phoneWithButtonUnderBar()
+      renderAt('/create')
+      await screen.findByText('create page')
+      const target = document.createElement('button')
+      document.body.append(target)
+      target.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+      target.focus()
+      expect(scroll).not.toHaveBeenCalled()
+      target.remove()
+    })
+
+    it('does not scroll the content region itself, even after a key press', async () => {
+      const scroll = phoneWithButtonUnderBar()
+      renderAt('/create')
+      await screen.findByText('create page')
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }))
+      screen.getByRole('main').focus()
+      expect(scroll).not.toHaveBeenCalled()
+    })
+
+    it('scrolls a keyboard-focused control that is under the bottom bar', async () => {
+      const scroll = phoneWithButtonUnderBar()
+      renderAt('/create')
+      await screen.findByText('create page')
+      const target = document.createElement('button')
+      document.body.append(target)
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }))
+      target.focus()
+      expect(scroll).toHaveBeenCalledWith({ block: 'nearest' })
+      target.remove()
+    })
   })
 })

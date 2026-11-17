@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import { useRef, useState } from 'react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
@@ -86,5 +86,51 @@ describe('Pagination', () => {
     const next = screen.getByRole('button', { name: /Next/ })
     await userEvent.click(next)
     expect(document.activeElement).toBe(next)
+  })
+
+  it('drops the request when the page never arrives, so a later change does not scroll', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const scrollIntoView = vi.fn()
+    Element.prototype.scrollIntoView = scrollIntoView
+    function Stuck() {
+      const [page, setPage] = useState(1)
+      const ref = useRef<HTMLHeadingElement>(null)
+      return (
+        <>
+          <h2 ref={ref}>List</h2>
+          <button type="button" onClick={() => setPage(2)}>Elsewhere</button>
+          <Pagination page={page} pageSize={10} total={45} onPageChange={() => {}} scrollTargetRef={ref} />
+        </>
+      )
+    }
+    render(<Stuck />)
+    await userEvent.click(screen.getByRole('button', { name: /Next/ }))
+    act(() => { vi.advanceTimersByTime(11_000) })
+    await userEvent.click(screen.getByRole('button', { name: 'Elsewhere' }))
+    expect(screen.getByText('Showing 11–20 of 45')).toBeTruthy()
+    expect(scrollIntoView).not.toHaveBeenCalled()
+    vi.useRealTimers()
+  })
+
+  it('drops the request when another page arrives first', async () => {
+    const scrollIntoView = vi.fn()
+    Element.prototype.scrollIntoView = scrollIntoView
+    function Jumpy() {
+      const [page, setPage] = useState(1)
+      const ref = useRef<HTMLHeadingElement>(null)
+      return (
+        <>
+          <h2 ref={ref}>List</h2>
+          <button type="button" onClick={() => setPage(3)}>Three</button>
+          <button type="button" onClick={() => setPage(2)}>Two</button>
+          <Pagination page={page} pageSize={10} total={45} onPageChange={() => {}} scrollTargetRef={ref} />
+        </>
+      )
+    }
+    render(<Jumpy />)
+    await userEvent.click(screen.getByRole('button', { name: /Next/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Three' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Two' }))
+    expect(scrollIntoView).not.toHaveBeenCalled()
   })
 })
