@@ -1062,7 +1062,7 @@
     "acceptance": "Balance, create, in progress, recent",
     "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "features/home/HomePage.tsx: In progress (status=in_progress, polls every 5 s only while non-empty, step label from lib/jobStatus.ts), Recent videos (status=ready, 6), empty, loading and error states; / renders Home; Home nav enabled. npm run check 419 passed (10 new R-13 tests). Real-browser check pending until T-501 merges (GET /jobs)."
+    "evidence": "features/home/HomePage.tsx: In progress (status=in_progress, polls every 5 s only while non-empty, step label from lib/jobStatus.ts), Recent videos (status=ready, 6), empty, loading and error states; / renders Home; Home nav enabled. npm run check 419 passed (10 new R-13 tests). Browser run 22/22 in mock mode at 1440 and 1024 px (scratchpad/browser/m5p1.mjs): Home empty and filled, Videos empty/filter/search/no-match, detail cost 98 = 10 + 88, in-progress link, not found, no external request. Fix at review: lengths shown to one decimal so the rate line matches the price."
   },
   {
     "id": "T-511",
@@ -1077,7 +1077,7 @@
     "acceptance": "Play, download, see what it cost",
     "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "features/videos: list (server search, status filter, paging, empty/no-match/error) and detail (player labelled AI-generated, script, cost from voice_credits/video_credits/charged_credits, failure ending per failure_kind, support email only when set). npm run check 439 passed. Merged."
+    "evidence": "features/videos: list (server search, status filter, paging, empty/no-match/error) and detail (player labelled AI-generated, script, cost from voice_credits/video_credits/charged_credits, failure ending per failure_kind, support email only when set). npm run check 439 passed. Merged. Browser run 22/22 in mock mode at 1440 and 1024 px (scratchpad/browser/m5p1.mjs): Home empty and filled, Videos empty/filter/search/no-match, detail cost 98 = 10 + 88, in-progress link, not found, no external request. Fix at review: lengths shown to one decimal so the rate line matches the price."
   },
   {
     "id": "T-512",
