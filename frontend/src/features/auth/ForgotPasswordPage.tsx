@@ -30,8 +30,10 @@ export function ForgotPasswordPage() {
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (mutation.isPending) return
-    setBanner(null)
-    if (!f.checkAll()) return
+    if (!f.checkAll()) {
+      setBanner(null)
+      return
+    }
     mutation.mutate(f.values.email.trim())
   }
 

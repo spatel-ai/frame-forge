@@ -70,8 +70,10 @@ export function ResetPasswordPage() {
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (save.isPending) return
-    setBanner(null)
-    if (!f.checkAll()) return
+    if (!f.checkAll()) {
+      setBanner(null)
+      return
+    }
     save.mutate(f.values.password)
   }
 

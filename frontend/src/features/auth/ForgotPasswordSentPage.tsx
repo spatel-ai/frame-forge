@@ -32,10 +32,12 @@ export function ForgotPasswordSentPage() {
     mutationFn: (to: string) => forgotPassword(to),
     onSuccess: () => {
       setResent(true)
+      setError(null)
       setLeft(RESEND_SECONDS)
     },
     onError: (err) => {
       setResent(false)
+      if (err instanceof ApiError && err.code === 'rate_limited') setLeft(RESEND_SECONDS)
       setError(
         err instanceof ApiError && err.code === 'rate_limited'
           ? err.message
@@ -72,7 +74,6 @@ export function ForgotPasswordSentPage() {
         busy={resend.isPending}
         busyLabel="Sending…"
         onClick={() => {
-          setError(null)
           resend.mutate(email)
         }}
       >
