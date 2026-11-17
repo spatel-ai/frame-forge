@@ -127,7 +127,12 @@ export type PaymentOrderStatus = components['schemas']['OrderStatusOut']
 export type PaymentVerified = components['schemas']['VerifyOut']
 export type PaymentProof = components['schemas']['MockCompleteOut']
 
-export const createOrder = (credits: number) => request<PaymentOrder>('/api/v1/payments/orders', json({ credits }))
+// Price, payment fee and total for an amount of credits (D-060). Shown as returned; never computed in the browser.
+export type PaymentQuote = components['schemas']['QuoteOut']
+export const quoteKey = (credits: number) => ['payment-quote', credits] as const
+export const getQuote = (credits: number) => request<PaymentQuote>(`/api/v1/payments/quote?credits=${credits}`)
+
+export const createOrder =(credits: number) => request<PaymentOrder>('/api/v1/payments/orders', json({ credits }))
 export const getOrder = (orderId: string) =>
   request<PaymentOrderStatus>(`/api/v1/payments/orders/${encodeURIComponent(orderId)}`)
 export const verifyPayment = (orderId: string, razorpayPaymentId: string, razorpaySignature: string) =>
