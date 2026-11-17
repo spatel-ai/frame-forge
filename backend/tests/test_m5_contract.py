@@ -88,7 +88,9 @@ def test_m5_shapes():
         "start_template",
         "end_template",
         "banners_applied",
+        "video_expired",  # T-553, D-065
     } <= set(job)
+    assert "video_expired" in schemas["JobSummaryOut"]["properties"]
     status = schemas["JobOut"]["properties"]["status"]
     assert "video_assembling" in str(status) or "video_assembling" in str(schemas)
     config = schemas["ConfigOut"]["properties"]

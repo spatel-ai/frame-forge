@@ -12,7 +12,7 @@ import math
 import shutil
 import uuid
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
@@ -21,7 +21,7 @@ from PIL import Image
 from sqlalchemy import Connection
 
 from ..core.config import Settings
-from ..providers import Provider, ProviderError
+from ..providers import VIDEO_LIFETIME_SECONDS, Provider, ProviderError
 from ..scripts import service as script_library
 from ..wallet import ledger
 from . import db
@@ -464,7 +464,15 @@ class JobService:
             log.exception("polling failed for %s; will retry", job_id)
             poll = None
         if poll is not None and poll.state == "done":
-            (self.job_dir(job_id) / "video.mp4").write_bytes(poll.data or b"")
+            video: dict[str, str] = {}
+            if poll.url:
+                # D-065 (R-24, R-74): keep fal's link, not the file; fal keeps it 30 days.
+                expires = datetime.now(timezone.utc) + timedelta(seconds=VIDEO_LIFETIME_SECONDS)
+                video["video_url"] = poll.url
+                video["video_expires_at"] = expires.isoformat(timespec="seconds")
+            else:
+                (self.job_dir(job_id) / "video.mp4").write_bytes(poll.data or b"")
+                video["video_file"] = "video.mp4"
             # Delivered: take the held price. A repeated or concurrent poll finds the job
             # no longer video_generating, so the capture happens once.
             self.store.transition(
@@ -472,7 +480,7 @@ class JobService:
                 db.VIDEO_GENERATING,
                 db.COMPLETED,
                 ledger=_wallet(job_id, _capture),
-                video_file="video.mp4",
+                **video,
             )
         elif poll is not None and poll.state == "failed":
             # A clear failure reported by the provider: release the hold.

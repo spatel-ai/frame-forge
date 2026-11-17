@@ -38,7 +38,7 @@ const baseJob: Job = {
   script: 'Hello',
   audio_duration_seconds: 4.2,
   price_credits: 240, charged_credits: 10,
-  voice_credits: 10, video_credits: 0, failure_kind: null, voice_reusable: false, needs_review: false,
+  voice_credits: 10, video_credits: 0, failure_kind: null, voice_reusable: false, video_expired: false, needs_review: false,
   consent_at: null, script_id: null, voice_from_job_id: null, start_template: null, end_template: null, banners_applied: null,
   audio_url: 'https://example.test/a.mp3',
   video_url: null,
@@ -112,6 +112,15 @@ describe('job screens by status', () => {
     renderAt('/create/job-1')
     expect(await screen.findByText('Your video is ready')).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Download video' }).getAttribute('href')).toBe('https://example.test/v.mp4')
+    expect(screen.getByRole('button', { name: 'Create another' })).toBeTruthy()
+  })
+
+  it('R-24, D-065: a completed but expired video shows the expiry message instead of the player and no download', async () => {
+    vi.mocked(getJob).mockResolvedValue(withStatus('completed', { video_url: '/api/v1/jobs/job-1/video', video_expired: true }))
+    renderAt('/create/job-1')
+    expect(await screen.findByText('This video has expired. Videos are kept for 30 days.')).toBeTruthy()
+    expect(document.querySelector('video')).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Download video' })).toBeNull()
     expect(screen.getByRole('button', { name: 'Create another' })).toBeTruthy()
   })
 

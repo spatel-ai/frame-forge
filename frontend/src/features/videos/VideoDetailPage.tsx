@@ -87,7 +87,10 @@ export default function VideoDetailPage() {
       <h1 id="h-video" className={styles.title}>Video</h1>
       <div className={styles.detail}>
         <div className={styles.left}>
-          {job.video_url ? (
+          {job.video_expired ? (
+            // D-065: the provider keeps the video 30 days; the route answers 410 after that.
+            <ErrorState title="This video has expired" message="This video has expired. Videos are kept for 30 days." />
+          ) : job.video_url ? (
             <>
               <video className={styles.media} controls src={job.video_url} />
               <div><Pill icon tone="info">AI-generated</Pill></div>
@@ -113,7 +116,7 @@ export default function VideoDetailPage() {
           </Card>
           <Cost job={job} creditsPerSecond={config?.credits_per_second ?? null} />
           <div className={styles.actions}>
-            {job.video_url && (
+            {job.video_url && !job.video_expired && (
               <a className={styles.linkButton} href={job.video_url} download>
                 <DownloadIcon size={18} />
                 Download video

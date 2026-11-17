@@ -2,6 +2,7 @@
 none and exists so the whole flow can be exercised without cost."""
 
 import asyncio
+import json
 import math
 import struct
 import tempfile
@@ -28,11 +29,19 @@ class Speech:
     duration_seconds: float
 
 
+# D-065 (R-24, R-74): how long fal keeps the finished video. Sent with the video submission so
+# the link the job stores stays playable this long (30 days, matching D-054). Source: fal docs
+# "Media expiration", read 2026-11-17.
+VIDEO_LIFETIME_SECONDS = 2_592_000
+FAL_LIFECYCLE_HEADER = "X-Fal-Object-Lifecycle-Preference"
+
+
 @dataclass
 class VideoPoll:
     state: str  # "pending" | "done" | "failed"
-    data: bytes | None = None
+    data: bytes | None = None  # the video itself (mock): written to our disk
     error: str | None = None
+    url: str | None = None  # the provider's link to the video (fal, D-065): never downloaded
 
 
 async def audio_duration_seconds(data: bytes) -> float:
@@ -160,6 +169,13 @@ class FalProvider:
             handle = await self._fal.submit_async(
                 self._settings.video_model,
                 arguments={"image_url": image_ref, "audio_url": audio_ref},
+                # D-065: keep the output 30 days. fal_client 1.0.3 `AsyncClient.submit` merges
+                # `headers` into the queue POST.
+                headers={
+                    FAL_LIFECYCLE_HEADER: json.dumps(
+                        {"expiration_duration_seconds": VIDEO_LIFETIME_SECONDS}
+                    )
+                },
             )
         except FalClientHTTPError as exc:
             if 400 <= exc.status_code < 500:
@@ -170,7 +186,8 @@ class FalProvider:
 
     async def poll_video(self, request_id: str) -> VideoPoll:
         """Network errors and provider 5xx responses propagate so the caller
-        retries on the next poll instead of abandoning a paid generation."""
+        retries on the next poll instead of abandoning a paid generation.
+        A finished video comes back as fal's link and is not downloaded (D-065, R-24)."""
         from fal_client.client import Completed, FalClientHTTPError
 
         status = await self._fal.status_async(self._settings.video_model, request_id)
@@ -189,7 +206,7 @@ class FalProvider:
         url = (result.get("video") or {}).get("url")
         if not url:
             return VideoPoll("failed", error="Provider returned no video.")
-        return VideoPoll("done", data=await self._download(url))
+        return VideoPoll("done", url=url)
 
 
 class MockProvider:

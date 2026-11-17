@@ -19,7 +19,7 @@ const me = { id: 'u1', name: 'Asha Verma', email: 'asha@example.com', email_veri
 const config = { provider: 'mock', max_audio_seconds: 60, max_script_chars: 100, max_image_mb: 1, languages: ['English'], credits_per_second: 20, voice_price_credits: 10 } as Config
 const job = (j: Partial<JobSummary>): JobSummary => ({
   id: 'j1', status: 'video_generating', language: 'English', script_excerpt: 'Welcome to our Diwali offer',
-  audio_duration_seconds: 18, failure_kind: null, created_at: '2026-11-12T08:30:00Z', updated_at: '2026-11-12T08:30:00Z', ...j,
+  audio_duration_seconds: 18, failure_kind: null, video_expired: false, created_at: '2026-11-12T08:30:00Z', updated_at: '2026-11-12T08:30:00Z', ...j,
 })
 const page = (items: JobSummary[]): JobsPage => ({ items, total: items.length, page: 1, page_size: 6 })
 
