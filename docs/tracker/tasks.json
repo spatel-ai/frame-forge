@@ -1285,9 +1285,9 @@
     "starts_after": "T-553, T-554",
     "task": "One live fal.ai run, 10–12 s, as the test customer; link behaviour measured",
     "acceptance": "Owner validates the video; D-065 findings recorded",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "In progress",
+    "verification": "VERIFIED",
+    "evidence": "Live run 2026-11-17 (owner-approved, provider fal, 12-s cap): 3 voices (English 9.2 s; Punjabi 13.5 s refused by the cap, voice kept; Punjabi 9.8 s), 1 video (Punjabi job da5d6ea8…): Kling v2 standard, completed in ~3 min; 848x1072, 30 fps, 9.87 s, with audio, 6.3 MB. Ledger: voice_charge -10, hold 196, capture -196 (one capture). Job stores video_url (v3b.fal.media) + video_expires_at 2026-12-17; no file. Link: 200 video/mp4, Accept-Ranges bytes, range request 206 (seeking works), Cache-Control max-age=2591980 (the 30-day lifecycle header was honoured). One video request ID stored; the duplicated log line is a logging duplicate (owner to confirm one request in the fal dashboard). Awaiting the owner's validation of quality."
   },
   {
     "id": "T-557",
