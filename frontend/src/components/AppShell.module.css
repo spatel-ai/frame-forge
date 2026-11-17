@@ -26,3 +26,5 @@
   transform: translateY(-200%);
 }
 .skip:focus { transform: none; outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
+
+.userName { font-weight: var(--text-title-weight); color: var(--color-ink-soft); }

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ApiError, approveJob } from '../../api/client'
+import { ApiError, approveJob, meKey } from '../../api/client'
 import type { Job } from '../../api/client'
 import { Banner } from '../../components/feedback'
 import { Button } from '../../components/form'
@@ -8,18 +8,24 @@ import { errMsg } from '../../lib/util'
 import { jobKey } from './jobQueries'
 import styles from './screens.module.css'
 
+const isNotVerified = (e: unknown) => e instanceof ApiError && e.status === 403 && e.code === 'email_not_verified'
+
 export function ReviewScreen({ job, onReset }: { job: Job; onReset: () => void }) {
   const queryClient = useQueryClient()
   const approveMutation = useMutation({
     mutationFn: () => approveJob(job.id),
     onSuccess: (j) => queryClient.setQueryData(jobKey(job.id), j),
     onError: (e) => {
+      if (isNotVerified(e)) {
+        void queryClient.invalidateQueries({ queryKey: meKey })
+        return
+      }
       // e.g. 409: state changed elsewhere; refresh
       if (e instanceof ApiError) void queryClient.invalidateQueries({ queryKey: jobKey(job.id) })
     },
   })
   const approving = approveMutation.isPending
-  const approveError = approveMutation.error ? errMsg(approveMutation.error) : null
+  const approveError = approveMutation.error && !isNotVerified(approveMutation.error) ? errMsg(approveMutation.error) : null
 
   const approve = () => {
     if (approving) return
