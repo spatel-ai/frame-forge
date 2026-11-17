@@ -32,7 +32,8 @@ export function DownloadVideoButton({ videoPath, jobId }: { videoPath: string; j
         <DownloadIcon size={18} />
         Download video
       </Button>
-      {error && <p role="alert">{error}</p>}
+      {/* Full-width flex item: wraps within the column even where the page's action row does not shrink its children. */}
+      {error && <p role="alert" style={{ flex: '1 1 100%', minWidth: 0 }}>{error}</p>}
     </>
   )
 }
