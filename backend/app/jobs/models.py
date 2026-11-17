@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Double, ForeignKey, Index, Text
+from sqlalchemy import Boolean, DateTime, Double, ForeignKey, Index, Integer, Text, false
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..auth import models as _auth_models  # noqa: F401  (registers `users` for the foreign key)
@@ -31,3 +31,10 @@ class Job(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     # NULL for jobs made before accounts existed (T-204); they are never shown to anyone.
     user_id: Mapped[str | None] = mapped_column(Text, ForeignKey("users.id", ondelete="SET NULL"))
+    # Migration 0005 (T-303, T-304). The video price in whole credits, fixed when the voice is
+    # ready (D-006); NULL before that.
+    price_credits: Mapped[int | None] = mapped_column(Integer)
+    # Approvals so far; the hold of attempt n has the reference `<job_id>#<n>` (D-039).
+    approve_attempt: Mapped[int] = mapped_column(Integer, server_default="0")
+    # A paid call's outcome is unknown; staff must review the job (D-005, Q-19).
+    needs_review: Mapped[bool] = mapped_column(Boolean, server_default=false())

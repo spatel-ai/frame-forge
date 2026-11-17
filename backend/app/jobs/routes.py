@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse
 from ..auth.deps import CurrentUser, current_user
 from ..core.config import Settings
 from ..core.errors import ApiError, ErrorOut
+from ..wallet import ledger
 from .schemas import ConfigOut, JobOut
 from .service import JobService
 
@@ -40,21 +41,30 @@ def _service(request: Request) -> JobService:
     return request.app.state.service
 
 
+def _paying_user(request: Request, user: ConfirmedUser) -> CurrentUser:
+    # 402 after 401 and 403, ahead of input validation (the voice charge itself happens in the
+    # job's creation transaction; this read-only check only orders the errors).
+    _service(request).check_can_afford_voice(user.id)
+    return user
+
+
+PayingUser = Annotated[CurrentUser, Depends(_paying_user)]
+
+
 def _settings(request: Request) -> Settings:
     return request.app.state.settings
 
 
-def _public(job: dict, settings: Settings) -> JobOut:
-    duration = job["audio_duration_seconds"]
+def _public(request: Request, job: dict) -> JobOut:
     return JobOut(
         id=job["id"],
         status=job["status"],
         language=job["language"],
         script=job["script"],
-        audio_duration_seconds=duration,
-        # Filled by T-303 (pricing) and T-304 (ledger); the contract is fixed here (T-300).
-        price_credits=None,
-        charged_credits=0,
+        audio_duration_seconds=job["audio_duration_seconds"],
+        # T-303: fixed when the voice was ready (D-006). T-304: what the ledger actually took.
+        price_credits=job["price_credits"],
+        charged_credits=ledger.job_charged_credits(_service(request).store.engine, job["id"]),
         audio_url=f"/api/v1/jobs/{job['id']}/audio" if job["audio_file"] else None,
         video_url=f"/api/v1/jobs/{job['id']}/video" if job["video_file"] else None,
         error=job["error"],
@@ -104,7 +114,7 @@ def get_config(request: Request) -> ConfigOut:
 )
 async def create_job(
     request: Request,
-    user: ConfirmedUser,  # 401 then 403, ahead of input validation and the upload read
+    user: PayingUser,  # 401, 403, then 402, ahead of input validation and the upload read
     image: UploadFile = File(...),
     script: str = Form(...),
     language: str = Form(...),
@@ -113,12 +123,12 @@ async def create_job(
     limit = settings.max_image_mb * 1024 * 1024
     raw = await image.read(limit + 1)  # never buffer more than the limit
     job = _service(request).create_job(user.id, raw, script, language)
-    return _public(job, settings)
+    return _public(request, job)
 
 
 @router.get("/jobs/{job_id}", response_model=JobOut, responses=_NOT_FOUND)
 def get_job(request: Request, user: User, job_id: str) -> JobOut:
-    return _public(_load(request, user, job_id), _settings(request))
+    return _public(request, _load(request, user, job_id))
 
 
 @router.post(
@@ -130,7 +140,7 @@ async def approve(request: Request, user: User, job_id: str) -> JobOut:
     _load(request, user, job_id)  # 404 first, so another user's job id is never confirmed
     _require_confirmed_email(user)
     job = _service(request).approve_audio(user.id, job_id)
-    return _public(job, _settings(request))
+    return _public(request, job)
 
 
 def _file(request: Request, user: CurrentUser, job_id: str, column: str) -> FileResponse:

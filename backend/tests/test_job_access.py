@@ -49,13 +49,17 @@ def anon(settings):
 
 
 @pytest.fixture
-def alice(anon, make_user):
-    return make_user(anon, "alice@example.com")
+def alice(anon, make_user, grant):
+    c = make_user(anon, "alice@example.com")
+    grant(anon, c.user_id, 1_000)  # creating and approving jobs costs credits (T-304)
+    return c
 
 
 @pytest.fixture
-def bob(anon, make_user):
-    return make_user(anon, "bob@example.com")
+def bob(anon, make_user, grant):
+    c = make_user(anon, "bob@example.com")
+    grant(anon, c.user_id, 1_000)
+    return c
 
 
 def post_job(c):
@@ -154,11 +158,13 @@ def test_ownerless_job_is_404_for_everyone_and_anonymous_is_401(anon, alice, bob
     assert anon.app.state.service.store.get(job_id)["status"] == db.AUDIO_READY
 
 
-def test_unconfirmed_user_gets_403_on_create_and_approve_until_confirmed(anon, make_user):
+def test_unconfirmed_user_gets_403_on_create_and_approve_until_confirmed(anon, make_user, grant):
     """D-036 (R-01): 403 email_not_verified on create and approve, and the same requests pass
     after confirming. Reading stays allowed; another user's job is 404, not 403."""
     carol = make_user(anon, "carol@example.com", confirmed=False)
     dan = make_user(anon, "dan@example.com")
+    for user in (carol, dan):
+        grant(anon, user.user_id, 1_000)  # so 403 is the only reason to refuse
     dans_job = post_job(dan).json()["id"]
 
     body = assert_error(post_job(carol), 403, "email_not_verified")
@@ -201,7 +207,9 @@ def test_openapi_documents_401_and_403_on_job_routes(settings):
     assert "401" not in paths["/api/v1/config"]["get"]["responses"]
 
 
-def test_service_approve_of_another_users_job_changes_nothing(settings, database_url, seed_user):
+def test_service_approve_of_another_users_job_changes_nothing(
+    settings, database_url, seed_user, grant
+):
     """R-12 (R-56): the service refuses a non-owner before the compare-and-set."""
 
     async def run():
@@ -210,6 +218,7 @@ def test_service_approve_of_another_users_job_changes_nothing(settings, database
             service = JobService(settings, store, MockProvider(settings))
             a = seed_user(database_url, "a@example.com")
             b = seed_user(database_url, "b@example.com")
+            grant(store.engine, a, 1_000)
             job_id = service.create_job(a, png(), "Hello there.", "English")["id"]
             while service._tasks:
                 await asyncio.gather(*list(service._tasks))
@@ -223,10 +232,10 @@ def test_service_approve_of_another_users_job_changes_nothing(settings, database
     asyncio.run(run())
 
 
-def test_poller_still_finishes_a_job_after_ownership(settings, sign_up):
+def test_poller_still_finishes_a_job_after_ownership(settings, sign_up, grant):
     """R-12: the poller (which reads jobs without an owner filter) completes an owned job."""
     with TestClient(create_app(settings), base_url="https://testserver") as c:
-        sign_up(c)
+        grant(c, sign_up(c), 1_000)
         job_id = post_job(c).json()["id"]
         deadline = time.monotonic() + 10
         while c.get(f"/api/v1/jobs/{job_id}").json()["status"] != "audio_ready":

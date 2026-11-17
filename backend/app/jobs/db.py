@@ -5,10 +5,11 @@ Every method returns plain dicts. Timestamp columns are `timestamptz` in the
 database but are handed to callers as `now_iso()` text, as they were on SQLite,
 so the job service and the HTTP layer see the same contract."""
 
+from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import Row, insert, select, update
+from sqlalchemy import Connection, Row, insert, select, update
 
 from ..core.database import make_engine
 from .models import Job
@@ -21,6 +22,11 @@ COMPLETED = "completed"
 FAILED = "failed"
 
 _jobs = Job.__table__
+# For relative updates in `transition`, e.g. `approve_attempt=jobs.c.approve_attempt + 1`.
+jobs = _jobs
+# A wallet step run inside a job's status-change transaction (HLD §5.2, backend rule 3). It must
+# not commit; raising rolls the status change back too.
+LedgerStep = Callable[[Connection], object]
 # Columns `transition` may set. `id` is the row's identity and is never rewritten.
 _SETTABLE = frozenset(_jobs.c.keys()) - {"id"}
 _TIMESTAMPS = frozenset(c.name for c in _jobs.c if c.name.endswith("_at"))
@@ -34,6 +40,12 @@ def _to_db(name: str, value: Any) -> Any:
     if name in _TIMESTAMPS and isinstance(value, str):
         return datetime.fromisoformat(value)
     return value
+
+
+def read_job(conn: Connection, job_id: str) -> dict:
+    """The job's row as seen on `conn`, inside the caller's transaction (so after an UPDATE on
+    the same connection, it shows the new values)."""
+    return _to_dict(conn.execute(select(_jobs).where(_jobs.c.id == job_id)).one())
 
 
 def _to_dict(row: Row) -> dict:
@@ -54,8 +66,16 @@ class JobStore:
         self.engine.dispose()
 
     def create(
-        self, job_id: str, user_id: str, language: str, script: str, image_file: str
+        self,
+        job_id: str,
+        user_id: str,
+        language: str,
+        script: str,
+        image_file: str,
+        ledger: LedgerStep | None = None,
     ) -> dict:
+        """Insert the job in `audio_generating`. `ledger`, if given, runs in the same transaction
+        after the insert; if it raises, no job row is written and the exception propagates."""
         ts = _to_db("created_at", now_iso())
         with self.engine.begin() as conn:
             conn.execute(
@@ -70,6 +90,8 @@ class JobStore:
                     updated_at=ts,
                 )
             )
+            if ledger is not None:
+                ledger(conn)
         return self.get(job_id)  # type: ignore[return-value]
 
     def get(self, job_id: str) -> dict | None:
@@ -93,14 +115,26 @@ class JobStore:
             ).all()
         return [_to_dict(r) for r in rows]
 
-    def transition(self, job_id: str, from_status: str, to_status: str, **fields: Any) -> bool:
+    def transition(
+        self,
+        job_id: str,
+        from_status: str,
+        to_status: str,
+        ledger: LedgerStep | None = None,
+        **fields: Any,
+    ) -> bool:
         """Move a job from one status to another and set extra columns.
         Returns False, changing nothing, if the job is not in `from_status`.
 
         This is one `UPDATE ... WHERE id = ? AND status = ?`. Under PostgreSQL's
         READ COMMITTED, a concurrent caller blocks on the row lock and then
         re-checks the WHERE clause against the committed row, so only one caller
-        can match a given `from_status`."""
+        can match a given `from_status`.
+
+        `ledger`, if given, is the status change's wallet step (HLD §5.2). It runs in the SAME
+        transaction, only after the UPDATE matched exactly one row, so the status and the ledger
+        entry commit together or not at all (backend rule 3). If the UPDATE matched no row it is
+        never called. If it raises, everything rolls back and the exception propagates."""
         unknown = set(fields) - _SETTABLE
         if unknown:
             raise ValueError(f"Not a settable jobs column: {', '.join(sorted(unknown))}")
@@ -113,4 +147,7 @@ class JobStore:
                 .where(_jobs.c.id == job_id, _jobs.c.status == from_status)
                 .values(**values)
             )
-        return result.rowcount == 1
+            matched = result.rowcount == 1
+            if matched and ledger is not None:
+                ledger(conn)
+        return matched

@@ -169,6 +169,82 @@ def test_timestamps_round_trip_as_now_iso_text(database_url, owner):
             "created_at",
             "updated_at",
             "user_id",
+            "price_credits",  # 0005 (T-303, T-304)
+            "approve_attempt",
+            "needs_review",
         ]
+        assert (job["price_credits"], job["approve_attempt"], job["needs_review"]) == (
+            None,
+            0,
+            False,
+        )
     finally:
         store.close()
+
+
+# ---- the ledger step runs in the status change's own transaction (T-304) -----------------
+
+
+def test_ledger_step_commits_with_the_status(store, owner):
+    """R-56, R-10: the ledger callable runs on the same connection, after the compare-and-set
+    matched, and sees the new row; both commit together."""
+    job_id = ready_job(store, owner)
+    seen: list[dict] = []
+
+    def step(conn):
+        seen.append(db.read_job(conn, job_id))
+        conn.execute(text("CREATE TABLE step_marker (id int)"))
+
+    assert store.transition(
+        job_id,
+        db.AUDIO_READY,
+        db.VIDEO_SUBMITTING,
+        ledger=step,
+        approve_attempt=db.jobs.c.approve_attempt + 1,
+    )
+    assert [(s["status"], s["approve_attempt"]) for s in seen] == [(db.VIDEO_SUBMITTING, 1)]
+    with store.engine.connect() as conn:
+        assert conn.execute(text("SELECT count(*) FROM step_marker")).scalar_one() == 0
+    assert store.get(job_id)["approve_attempt"] == 1
+
+
+def test_ledger_step_is_not_called_when_the_compare_and_set_misses(store, owner):
+    """R-56: a transition that matches no row never runs its ledger step."""
+    job_id = ready_job(store, owner)
+    calls: list[object] = []
+    assert not store.transition(job_id, db.VIDEO_GENERATING, db.COMPLETED, ledger=calls.append)
+    assert not store.transition("missing", db.AUDIO_READY, db.FAILED, ledger=calls.append)
+    assert calls == []
+
+
+def test_ledger_step_failure_rolls_back_the_status(store, owner):
+    """R-56, R-10: if the ledger step raises, the status change rolls back too and the
+    exception reaches the caller."""
+    job_id = ready_job(store, owner)
+    before = store.get(job_id)
+
+    def boom(conn):
+        raise RuntimeError("ledger down")
+
+    with pytest.raises(RuntimeError, match="ledger down"):
+        store.transition(
+            job_id,
+            db.AUDIO_READY,
+            db.VIDEO_SUBMITTING,
+            ledger=boom,
+            approve_attempt=db.jobs.c.approve_attempt + 1,
+        )
+    assert store.get(job_id) == before
+
+
+def test_create_with_a_failing_ledger_step_writes_no_job(store, owner):
+    """R-10: the job row and its voice charge are one transaction; a failing step leaves no
+    row."""
+
+    def boom(conn):
+        raise RuntimeError("no credits")
+
+    job_id = uuid.uuid4().hex
+    with pytest.raises(RuntimeError):
+        store.create(job_id, owner, "English", "hi", "image.png", ledger=boom)
+    assert store.get(job_id) is None

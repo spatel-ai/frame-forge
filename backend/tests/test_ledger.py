@@ -141,10 +141,10 @@ def test_voice_charge_and_return(store, user):
 def test_hold_then_capture(store, user):
     """R-10: hold moves reserved only; capture takes the held amount from both."""
     store.grant(user, 1000, "g1", None)
-    h = store.hold(user, "job1", 600)
+    h = store.hold(user, "job1", 600, 1)
     assert (h.credits, h.reserved_delta, h.balance_after, h.reserved_after) == (0, 600, 1000, 600)
     assert balances(store, user) == (1000, 600, 400)
-    c = store.capture(user, "job1")
+    c = store.capture(user, "job1", 1)
     assert (c.credits, c.reserved_delta, c.balance_after, c.reserved_after) == (-600, -600, 400, 0)
     assert balances(store, user) == (400, 0, 400)
 
@@ -152,8 +152,8 @@ def test_hold_then_capture(store, user):
 def test_hold_then_release(store, user):
     """R-10: release returns the held amount to available; the balance never moved."""
     store.grant(user, 1000, "g1", None)
-    store.hold(user, "job1", 600)
-    r = store.release(user, "job1")
+    store.hold(user, "job1", 600, 1)
+    r = store.release(user, "job1", 1)
     assert (r.credits, r.reserved_delta, r.balance_after, r.reserved_after) == (0, -600, 1000, 0)
     assert balances(store, user) == (1000, 0, 1000)
 
@@ -163,13 +163,14 @@ def test_capture_uses_the_hold_amount(engine, store, user):
     after the wallet has moved for other reasons."""
     import inspect
 
-    assert list(inspect.signature(ledger.capture).parameters) == ["conn", "user_id", "job_id"]
-    assert list(inspect.signature(ledger.release).parameters) == ["conn", "user_id", "job_id"]
+    params = ["conn", "user_id", "job_id", "attempt"]  # no amount; the attempt names the hold
+    assert list(inspect.signature(ledger.capture).parameters) == params
+    assert list(inspect.signature(ledger.release).parameters) == params
     store.grant(user, 1000, "g1", None)
-    store.hold(user, "job1", 240)
-    store.hold(user, "job2", 300)
+    store.hold(user, "job1", 240, 1)
+    store.hold(user, "job2", 300, 1)
     store.grant(user, 77, "g2", None)
-    c = store.capture(user, "job1")
+    c = store.capture(user, "job1", 1)
     assert (c.credits, c.reserved_delta) == (-240, -240)
     assert balances(store, user) == (837, 300, 537)
 
@@ -183,9 +184,9 @@ def test_capture_uses_the_hold_amount(engine, store, user):
         [("grant", (500, "g1", None))],
         [("grant", (500, "g0", None)), ("voice_charge", ("job1", 10))],
         [("grant", (500, "g0", None)), ("voice_charge", ("job1", 10)), ("voice_return", ("job1",))],
-        [("grant", (500, "g0", None)), ("hold", ("job1", 200))],
-        [("grant", (500, "g0", None)), ("hold", ("job1", 200)), ("capture", ("job1",))],
-        [("grant", (500, "g0", None)), ("hold", ("job1", 200)), ("release", ("job1",))],
+        [("grant", (500, "g0", None)), ("hold", ("job1", 200, 1))],
+        [("grant", (500, "g0", None)), ("hold", ("job1", 200, 1)), ("capture", ("job1", 1))],
+        [("grant", (500, "g0", None)), ("hold", ("job1", 200, 1)), ("release", ("job1", 1))],
     ],
     ids=["grant", "voice_charge", "voice_return", "hold", "capture", "release"],
 )
@@ -206,12 +207,12 @@ def test_repeat_is_a_no_op(engine, store, user, steps):
 def test_repeat_with_another_amount_is_refused(store, user):
     """R-10: the same reference with a different amount is a caller bug, refused, not hidden."""
     store.grant(user, 500, "g1", None)
-    store.hold(user, "job1", 200)
+    store.hold(user, "job1", 200, 1)
     store.voice_charge(user, "job2", 10)
     with pytest.raises(LedgerConflict):
         store.grant(user, 600, "g1", None)
     with pytest.raises(LedgerConflict):
-        store.hold(user, "job1", 201)
+        store.hold(user, "job1", 201, 1)
     with pytest.raises(LedgerConflict):
         store.voice_charge(user, "job2", 11)
     assert balances(store, user) == (490, 200, 290)
@@ -223,11 +224,11 @@ def test_reference_of_another_user_is_refused(database_url, seed_user, engine, s
     other = seed_user(database_url, "other@example.com")
     store.grant(user, 500, "g1", None)
     store.grant(other, 500, "g2", None)
-    store.hold(user, "job1", 100)
+    store.hold(user, "job1", 100, 1)
     with pytest.raises(LedgerConflict):
-        store.hold(other, "job1", 100)
+        store.hold(other, "job1", 100, 1)
     with pytest.raises(LedgerConflict):
-        store.capture(other, "job1")
+        store.capture(other, "job1", 1)
     with pytest.raises(LedgerConflict):
         store.grant(other, 500, "g1", None)
     assert balances(store, user) == (500, 100, 400)
@@ -242,13 +243,14 @@ def test_insufficient_credits_writes_nothing(engine, store, user, op):
     """R-04: voice_charge and hold refuse more than the available credits (balance − reserved),
     report required and available, and write nothing."""
     store.grant(user, 100, "g1", None)
-    store.hold(user, "held", 70)
+    store.hold(user, "held", 70, 1)
+    extra = (1,) if op == "hold" else ()  # a hold names its approval attempt (D-039)
     with pytest.raises(InsufficientCredits) as err:
-        getattr(store, op)(user, "job1", 31)
+        getattr(store, op)(user, "job1", 31, *extra)
     assert (err.value.required, err.value.available) == (31, 30)
     assert balances(store, user) == (100, 70, 30)
     assert entry_count(engine, user) == 2
-    getattr(store, op)(user, "job1", 30)  # exactly the available amount is allowed
+    getattr(store, op)(user, "job1", 30, *extra)  # exactly the available amount is allowed
     assert balances(store, user)[2] == 0
 
 
@@ -258,10 +260,10 @@ def test_refusal_leaves_the_callers_transaction_usable(engine, user):
     with engine.begin() as conn:
         ledger.grant(conn, user, 50, "g1", None)
         with pytest.raises(InsufficientCredits):
-            ledger.hold(conn, user, "job1", 51)
+            ledger.hold(conn, user, "job1", 51, 1)
         with pytest.raises(LedgerConflict):
-            ledger.capture(conn, user, "job1")
-        ledger.hold(conn, user, "job1", 50)
+            ledger.capture(conn, user, "job1", 1)
+        ledger.hold(conn, user, "job1", 50, 1)
     assert WalletStore(engine).get_wallet(user).available_credits == 0
     assert entry_count(engine, user) == 2
 
@@ -271,7 +273,7 @@ def test_capture_or_release_without_a_hold_is_refused(engine, store, user):
     store.grant(user, 100, "g1", None)
     for op in (store.capture, store.release):
         with pytest.raises(LedgerConflict):
-            op(user, "job1")
+            op(user, "job1", 1)
     assert entry_count(engine, user) == 1
     assert balances(store, user) == (100, 0, 100)
 
@@ -279,26 +281,27 @@ def test_capture_or_release_without_a_hold_is_refused(engine, store, user):
 def test_capture_and_release_exclude_each_other(engine, store, user):
     """R-10: once a hold is captured it cannot be released, and the reverse."""
     store.grant(user, 1000, "g1", None)
-    store.hold(user, "job1", 100)
-    store.capture(user, "job1")
+    store.hold(user, "job1", 100, 1)
+    store.capture(user, "job1", 1)
     with pytest.raises(LedgerConflict):
-        store.release(user, "job1")
-    store.hold(user, "job2", 100)
-    store.release(user, "job2")
+        store.release(user, "job1", 1)
+    store.hold(user, "job2", 100, 1)
+    store.release(user, "job2", 1)
     with pytest.raises(LedgerConflict):
-        store.capture(user, "job2")
+        store.capture(user, "job2", 1)
     assert balances(store, user) == (900, 0, 900)
     assert entry_count(engine, user) == 5
 
 
 def test_hold_again_after_settlement_is_refused(store, user):
-    """R-10: a hold that was captured or released cannot be reused for a new approval of the
-    same job; returning the old entry would pretend credits are reserved."""
+    """R-10: a hold that was captured or released cannot be reused for the same approval
+    attempt; returning the old entry would pretend credits are reserved. (A new approval uses a
+    new attempt, D-039.)"""
     store.grant(user, 1000, "g1", None)
-    store.hold(user, "job1", 100)
-    store.release(user, "job1")
+    store.hold(user, "job1", 100, 1)
+    store.release(user, "job1", 1)
     with pytest.raises(LedgerConflict):
-        store.hold(user, "job1", 100)
+        store.hold(user, "job1", 100, 1)
     assert balances(store, user) == (1000, 0, 1000)
 
 
@@ -316,7 +319,7 @@ def test_amounts_must_be_ints(store, user, bad):
     for call in (
         lambda: store.grant(user, bad, "g1", None),
         lambda: store.voice_charge(user, "job1", bad),
-        lambda: store.hold(user, "job1", bad),
+        lambda: store.hold(user, "job1", bad, 1),
     ):
         with pytest.raises(TypeError):
             call()
@@ -328,7 +331,7 @@ def test_amounts_must_be_positive(engine, store, user, bad):
     for call in (
         lambda: store.grant(user, bad, "g1", None),
         lambda: store.voice_charge(user, "job1", bad),
-        lambda: store.hold(user, "job1", bad),
+        lambda: store.hold(user, "job1", bad, 1),
     ):
         with pytest.raises(ValueError):
             call()
@@ -355,12 +358,12 @@ def test_failure_after_the_ledger_call_rolls_back_both(engine, store, user):
 
     with pytest.raises(JobUpdateFailed):
         with engine.begin() as conn:
-            ledger.hold(conn, user, "job1", 60)
+            ledger.hold(conn, user, "job1", 60, 1)
             assert ledger.get_wallet(conn, user).reserved_credits == 60
             raise JobUpdateFailed
     assert balances(store, user) == (100, 0, 100)
     assert entry_count(engine, user) == 1
-    store.hold(user, "job1", 60)  # the reference is still free
+    store.hold(user, "job1", 60, 1)  # the reference is still free
     assert balances(store, user) == (100, 60, 40)
 
 
@@ -374,13 +377,13 @@ def test_invariant_after_a_mixed_sequence(engine, store, user):
     store.voice_charge(user, "a", 10)
     store.voice_charge(user, "b", 10)
     store.voice_return(user, "b")
-    store.hold(user, "a", 600)
-    store.hold(user, "c", 300)
+    store.hold(user, "a", 600, 1)
+    store.hold(user, "c", 300, 1)
     with pytest.raises(InsufficientCredits):
-        store.hold(user, "d", 200)
-    store.capture(user, "a")
-    store.capture(user, "a")
-    store.release(user, "c")
+        store.hold(user, "d", 200, 1)
+    store.capture(user, "a", 1)
+    store.capture(user, "a", 1)
+    store.release(user, "c", 1)
     store.grant(user, 50, "g2", None)
     assert balances(store, user) == (440, 0, 440)
     assert store.invariant_holds(user)
@@ -438,7 +441,7 @@ def test_two_holds_at_once_only_one_succeeds(engine, store, user):
             tx = conn.begin()
             barrier.wait()
             try:
-                ledger.hold(conn, user, job_id, 60)
+                ledger.hold(conn, user, job_id, 60, 1)
                 time.sleep(0.3)
                 tx.commit()
                 results[job_id] = "ok"
@@ -481,7 +484,7 @@ def test_same_hold_twice_at_once_is_written_once(engine, store, user):
         try:
             tx = conn.begin()
             barrier.wait()
-            entry = ledger.hold(conn, user, "job1", 100)
+            entry = ledger.hold(conn, user, "job1", 100, 1)
             time.sleep(0.3)
             tx.commit()
             results.append(entry.id)
@@ -503,3 +506,87 @@ def test_same_hold_twice_at_once_is_written_once(engine, store, user):
     assert balances(store, user) == (1000, 100, 900)
     assert entry_count(engine, user) == 2
     assert store.invariant_holds(user)
+
+
+# ---- approval attempts (D-039) and credits taken per job ---------------------------------
+
+
+def test_each_attempt_has_its_own_hold_reference(engine, store, user):
+    """R-10 (D-039): approve, clean failure (release), approve again (a new hold under the next
+    attempt), capture. Each attempt has exactly one hold and one settlement, the references are
+    `<job>#<n>`, and `Entry.job_id` gives back the bare job id."""
+    store.grant(user, 1000, "g1", None)
+    store.voice_charge(user, "job1", 10)
+    h1 = store.hold(user, "job1", 300, 1)
+    r1 = store.release(user, "job1", 1)
+    h2 = store.hold(user, "job1", 300, 2)
+    c2 = store.capture(user, "job1", 2)
+    assert [e.ref_id for e in (h1, r1, h2, c2)] == ["job1#1", "job1#1", "job1#2", "job1#2"]
+    assert {e.job_id for e in (h1, r1, h2, c2)} == {"job1"}
+    assert balances(store, user) == (690, 0, 690)
+    # Repeating any step of either attempt is a no-op that returns the same entry (rule 9).
+    assert store.release(user, "job1", 1) == r1
+    assert store.capture(user, "job1", 2) == c2
+    # Attempt 1 was released: it can be neither captured nor held again.
+    with pytest.raises(LedgerConflict):
+        store.capture(user, "job1", 1)
+    with pytest.raises(LedgerConflict):
+        store.hold(user, "job1", 300, 1)
+    assert entry_count(engine, user) == 6
+    assert store.invariant_holds(user)
+
+
+def test_voice_entries_keep_the_bare_job_reference(store, user):
+    """R-10 (D-039): a job has one voice, so its charge and return use the job id itself."""
+    store.grant(user, 100, "g1", None)
+    assert store.voice_charge(user, "job1", 10).ref_id == "job1"
+    assert store.voice_return(user, "job1").ref_id == "job1"
+
+
+@pytest.mark.parametrize("bad", [0, -1, True, 1.0, "1", None])
+def test_attempt_must_be_a_positive_int(engine, store, user, bad):
+    """R-10 (D-039): the attempt is a whole number from 1; anything else is refused, unwritten."""
+    store.grant(user, 1000, "g1", None)
+    for call in (
+        lambda: store.hold(user, "job1", 100, bad),
+        lambda: store.capture(user, "job1", bad),
+        lambda: store.release(user, "job1", bad),
+    ):
+        with pytest.raises((TypeError, ValueError)):
+            call()
+    assert entry_count(engine, user) == 1
+
+
+def test_job_id_with_the_separator_is_refused(store, user):
+    """R-10 (D-039): a job id containing '#' could alias another job's attempt; refused."""
+    store.grant(user, 1000, "g1", None)
+    with pytest.raises(ValueError):
+        store.hold(user, "job1#2", 100, 1)
+
+
+def test_job_charged_credits(database_url, seed_user, store, user):
+    """R-10: credits taken for a job = voice charge − voice return + every captured hold, over
+    all attempts. Holds and releases take nothing. Another job's entries, including a job whose
+    id starts with this one's, are not counted."""
+    other = seed_user(database_url, "other@example.com")
+    store.grant(user, 5000, "g1", None)
+    store.grant(other, 5000, "g2", None)
+    assert store.job_charged_credits("job1") == 0
+    store.voice_charge(user, "job1", 10)
+    assert store.job_charged_credits("job1") == 10
+    store.hold(user, "job1", 300, 1)
+    assert store.job_charged_credits("job1") == 10
+    store.release(user, "job1", 1)
+    store.hold(user, "job1", 300, 2)
+    store.capture(user, "job1", 2)
+    assert store.job_charged_credits("job1") == 310
+    store.voice_charge(user, "job10", 10)
+    store.hold(user, "job10", 40, 1)
+    store.capture(user, "job10", 1)
+    store.voice_charge(other, "job2", 10)
+    store.voice_return(other, "job2")
+    assert store.job_charged_credits("job1") == 310
+    assert store.job_charged_credits("job10") == 50
+    assert store.job_charged_credits("job2") == 0
+    with store.engine.begin() as conn:  # also inside a caller's transaction
+        assert ledger.job_charged_credits(conn, "job1") == 310

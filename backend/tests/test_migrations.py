@@ -27,6 +27,9 @@ EXPECTED_COLUMNS = {
     "video_started_at",
     "created_at",
     "updated_at",
+    "price_credits",
+    "approve_attempt",
+    "needs_review",
 }
 
 
@@ -39,7 +42,7 @@ def test_upgrade_and_downgrade_in_throwaway_schema(empty_schema, admin_engine):
     assert insp.has_table("jobs", schema=schema)
     columns = insp.get_columns("jobs", schema=schema)
     assert {c["name"] for c in columns} == EXPECTED_COLUMNS
-    assert len(columns) == 14
+    assert len(columns) == 17
     assert insp.get_pk_constraint("jobs", schema=schema)["constrained_columns"] == ["id"]
     assert any(i["column_names"] == ["status"] for i in insp.get_indexes("jobs", schema=schema))
 
@@ -138,5 +141,36 @@ def test_0003_keeps_a_job_made_before_accounts_with_no_owner(empty_schema):
         assert any(i["column_names"] == ["user_id"] for i in inspect(engine).get_indexes("jobs"))
         command.downgrade(cfg, "0002")
         assert "user_id" not in {c["name"] for c in inspect(engine).get_columns("jobs")}
+    finally:
+        engine.dispose()
+
+
+def test_0005_adds_the_charging_columns_with_safe_defaults(empty_schema):
+    """T-303, T-304 (R-09, R-10): 0005 adds price_credits (NULL), approve_attempt (0) and
+    needs_review (false) to jobs, keeping existing rows; downgrade to 0004 removes them."""
+    cfg = empty_schema.alembic_config()
+    command.upgrade(cfg, "0004")
+    engine = create_engine(empty_schema.url, poolclass=NullPool)
+    try:
+        with engine.begin() as conn:
+            conn.execute(
+                text(
+                    "INSERT INTO jobs (id, status, language, script, image_file, created_at, "
+                    "updated_at) VALUES ('old', 'audio_ready', 'English', 'hi', 'image.png', "
+                    "now(), now())"
+                )
+            )
+        command.upgrade(cfg, "0005")
+        with engine.begin() as conn:
+            row = conn.execute(
+                text("SELECT price_credits, approve_attempt, needs_review FROM jobs")
+            ).one()
+        assert tuple(row) == (None, 0, False)
+        types = {c["name"]: str(c["type"]) for c in inspect(engine).get_columns("jobs")}
+        assert (types["price_credits"], types["approve_attempt"]) == ("INTEGER", "INTEGER")
+        assert types["needs_review"] == "BOOLEAN"
+        command.downgrade(cfg, "0004")
+        names = {c["name"] for c in inspect(engine).get_columns("jobs")}
+        assert not names & {"price_credits", "approve_attempt", "needs_review"}
     finally:
         engine.dispose()

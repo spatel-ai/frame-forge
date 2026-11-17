@@ -89,6 +89,31 @@ def confirm_email(engine: Engine, email: str) -> None:
         )
 
 
+def grant_credits(
+    target: Engine | str | TestClient, user_id: str, credits: int, ref: str = "test-grant"
+) -> None:
+    """Give a user credits through the ledger (T-304: creating a job charges the voice, approving
+    holds the price). Opt-in: new users start at 0. `target` is an engine, a database URL or a
+    started TestClient. A repeat with the same `ref` is a no-op (rule 9)."""
+    from app.wallet import ledger
+
+    if isinstance(target, TestClient):
+        target = target.app.state.service.store.engine  # type: ignore[attr-defined]
+    engine = create_engine(target, poolclass=NullPool) if isinstance(target, str) else target
+    try:
+        with engine.begin() as conn:
+            ledger.grant(conn, user_id, credits, f"{ref}-{user_id}", None)
+    finally:
+        if isinstance(target, str):
+            engine.dispose()
+
+
+@pytest.fixture
+def grant():
+    """`grant(engine_or_url_or_client, user_id, credits, ref=...)`: see `grant_credits`."""
+    return grant_credits
+
+
 class UserClient(TestClient):
     """An https client (the session cookie is Secure) that carries one user's cookie."""
 
