@@ -775,9 +775,9 @@
     "starts_after": "T-302, T-400, T-401",
     "task": "`payment_orders` and the create-order route",
     "acceptance": "Amount in paise; purchase limits enforced",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Being built together by one Opus agent in a worktree (BE-Pay lane)."
   },
   {
     "id": "T-403",
@@ -790,9 +790,9 @@
     "starts_after": "T-402",
     "task": "Verify route",
     "acceptance": "Uses our stored order id; checks `captured` and amount",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Being built together by one Opus agent in a worktree (BE-Pay lane)."
   },
   {
     "id": "T-404",
@@ -805,9 +805,9 @@
     "starts_after": "T-403",
     "task": "Webhook route",
     "acceptance": "Raw-body signature; dedupe on event id; unsigned → 400",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Being built together by one Opus agent in a worktree (BE-Pay lane)."
   },
   {
     "id": "T-405",
@@ -820,9 +820,9 @@
     "starts_after": "T-404",
     "task": "Reconcile stale orders",
     "acceptance": "An order paid but never confirmed is credited",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Being built together by one Opus agent in a worktree (BE-Pay lane)."
   },
   {
     "id": "T-406",
@@ -835,9 +835,9 @@
     "starts_after": "T-405",
     "task": "Tests with signed fixtures",
     "acceptance": "All five cases above, without network",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Being built together by one Opus agent in a worktree (BE-Pay lane)."
   },
   {
     "id": "T-407",
@@ -865,9 +865,9 @@
     "starts_after": "T-310, T-400",
     "task": "Buy-credits screen with Razorpay Checkout",
     "acceptance": "Amount entry in whole credits, 500 to 10,000 (D-047); shows the rupees to pay (₹1 = 1 credit)",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "In progress",
+    "verification": "IMPLEMENTED, UNVERIFIED",
+    "evidence": "Merged. BuyCreditsDialog on the wallet page: amount in credits (500–10,000, quick picks), validation, server fields.credits errors, one order per click, 403 email_not_verified with a link; Checkout loader (lib/checkout.ts) only in razorpay mode, options only from RAZORPAY-FACTS §E; mock Pay/Fail/Cancel calls the mock route then the real verify. npm run check 372 passed. Not yet seen in a browser against the real backend (waits for T-402–T-406)."
   },
   {
     "id": "T-411",
@@ -880,9 +880,9 @@
     "starts_after": "T-410",
     "task": "After-payment states",
     "acceptance": "Success, still confirming, failed, cancelled",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "In progress",
+    "verification": "IMPLEMENTED, UNVERIFIED",
+    "evidence": "Merged. Success with the server balance (wallet refetched), confirming (polls the order every 2 s, after 60 s \"taking longer than usual\"), failed, cancelled with Try again; network or 5xx on verify shows confirming, never \"no credits were added\". Tests in BuyCredits.test.tsx (20, R-02). Browser check pending."
   },
   {
     "id": "T-500",
