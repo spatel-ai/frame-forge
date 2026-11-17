@@ -58,8 +58,9 @@ Two files, both git-ignored.
 | `RAZORPAY_WEBHOOK_SECRET` | yes | optional (D-064); empty means polling every minute |
 | `AVATAR_PAYMENT_FEE_BPS`, `AVATAR_PAYMENT_FEE_GST_BPS` | no | `200`, `1800` |
 | `AVATAR_SUPPORT_EMAIL` | no | shown to customers on failure screens |
-| `AVATAR_SMTP_HOST`, `AVATAR_SMTP_PORT`, `AVATAR_SMTP_USERNAME` | no | email sender (task T-550) |
-| `AVATAR_SMTP_PASSWORD` | yes | Gmail App Password |
+| `USER_EMAIL` | no | the Gmail address that sends (also the From address) |
+| `AVATAR_SMTP_HOST`, `AVATAR_SMTP_PORT`, `AVATAR_MAIL_FROM_NAME` | no | defaults smtp.gmail.com, 587, Frameforge |
+| `USER_EMAIL_PASSWORD` | yes | Gmail App Password (2-Step Verification on, then App passwords), not the normal password |
 | `AVATAR_MAIL_FROM_NAME` | no | sender display name |
 
 Set by Compose, do not put in `backend/.env`: `DATABASE_URL` (points at the `db` service) and

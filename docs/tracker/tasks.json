@@ -1195,9 +1195,9 @@
     "starts_after": "T-502, T-206",
     "task": "Gmail sender over SMTP (App Password; stdlib smtplib; never logs the password)",
     "acceptance": "Patched-SMTP tests; production starts only with SMTP set",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "SmtpEmailSender (smtplib, smtp.gmail.com:587 STARTTLS + login, 15 s), login from USER_EMAIL / USER_EMAIL_PASSWORD (owner's names), password never logged or in repr; send failure swallowed; `python -m app.auth.mailcheck <to>` sends one test email. Mock-tested (smtplib patched); live Gmail check is T-557."
   },
   {
     "id": "T-551",
@@ -1210,9 +1210,9 @@
     "starts_after": "T-550",
     "task": "HTML and plain-text email templates: confirm link, password reset, video ready",
     "acceptance": "Rendering tests; customer text escaped",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "app/core/mail_templates.py: HTML + text for confirm link, reset, video ready, test email; escaped, inline CSS, no images."
   },
   {
     "id": "T-552",
@@ -1225,9 +1225,9 @@
     "starts_after": "T-551, T-505",
     "task": "Video-ready email after the completed transition, once, outside the money transaction",
     "acceptance": "One mail per completed job; a mail failure changes nothing else",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Video-ready email in a daemon thread after the completed transition (only the CAS winner); job ID, made on (IST), language, length, script, credits from the ledger, link to /videos/<id>; failure changes nothing."
   },
   {
     "id": "T-553",
@@ -1270,9 +1270,9 @@
     "starts_after": "T-505",
     "task": "Docker images, `docker-compose.prod.yml` with Caddy (HTTPS), `docs/DEPLOY.md`, nightly backup",
     "acceptance": "The stack runs locally in mock mode; browser flow passes",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "backend/frontend Dockerfiles, docker-compose.prod.yml (+ local), Caddy (HTTPS, SPA fallback, security headers), docs/DEPLOY.md; local stack ran in mock mode (config, /, deep link, healthz); pg_dump + pg_restore tested. Real domain HTTPS not verified yet."
   },
   {
     "id": "T-556",
