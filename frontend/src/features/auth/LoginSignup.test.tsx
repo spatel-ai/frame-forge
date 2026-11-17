@@ -18,6 +18,13 @@ const emailBox = () => screen.getByLabelText('Email') as HTMLInputElement
 const passwordBox = () => screen.getByLabelText('Password') as HTMLInputElement
 
 describe('Log in (R-01)', () => {
+  it('R-01 names the browser tab "Log in · Frameforge" and "Sign up · Frameforge"', async () => {
+    renderAuth('/login')
+    await waitFor(() => expect(document.title).toBe('Log in · Frameforge'))
+    renderAuth('/signup')
+    await waitFor(() => expect(document.title).toBe('Sign up · Frameforge'))
+  })
+
   it('R-01 logs in, puts the user in the cache under meKey and goes to /create', async () => {
     vi.mocked(login).mockResolvedValue(testUser)
     const { u, router, queryClient } = renderAuth('/login')

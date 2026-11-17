@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { CheckIcon, PlayIcon } from '../../components/icons'
+import { usePageTitle } from '../../components/shell'
 import { BrandBackdrop, BrandIllustration, CardBackdrop } from './AuthIllustration'
 import styles from './AuthLayout.module.css'
 
@@ -11,6 +12,7 @@ const TICKS = [
 
 /** The split screen shared by every auth screen: brand panel left, card on a decorated background right. No app shell. */
 export function AuthLayout({ children, credit = true }: { children: ReactNode; credit?: boolean }) {
+  usePageTitle()
   return (
     <div className={styles.page}>
       <aside className={styles.brand} aria-label="About Frameforge">

@@ -17,6 +17,15 @@ describe('page titles (keyboard tester finding 5)', () => {
     expect(pageTitle('/nope')).toBe('Page not found · Frameforge')
   })
 
+  it('names each log-in screen', () => {
+    expect(pageTitle('/login')).toBe('Log in · Frameforge')
+    expect(pageTitle('/signup')).toBe('Sign up · Frameforge')
+    expect(pageTitle('/forgot-password/sent')).toBe('Check your email · Frameforge')
+    expect(pageTitle('/forgot-password')).toBe('Forgot password · Frameforge')
+    expect(pageTitle('/reset-password')).toBe('Reset password · Frameforge')
+    expect(pageTitle('/verify-email')).toBe('Confirm your email · Frameforge')
+  })
+
   it('sets document.title from the route', () => {
     render(<MemoryRouter initialEntries={['/wallet']}><Probe /></MemoryRouter>)
     expect(document.title).toBe('Wallet · Frameforge')
