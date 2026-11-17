@@ -175,10 +175,13 @@ export function JobForm({
           if (err instanceof ApiError && err.status === 403 && err.code === 'email_not_verified') {
             // Confirmed or unconfirmed elsewhere: reload who we are; the notice follows from that.
             const me = queryClient.getQueryData<User | null>(meKey)
-            void queryClient.invalidateQueries({ queryKey: meKey })
-            // The page already shows the "Confirm your email" notice when it knows the account is
-            // unverified; when it believes the account is verified, say what the server said.
-            if (me?.email_verified) setFormError(err.message)
+            // The page shows the "Confirm your email" notice once it knows the account is unverified; when
+            // it believed the account was verified, say what the server said until the reload settles that.
+            if (me?.email_verified) {
+              void queryClient.invalidateQueries({ queryKey: meKey }).then(() => {
+                if (queryClient.getQueryData<User | null>(meKey)?.email_verified) setFormError(err.message)
+              })
+            } else void queryClient.invalidateQueries({ queryKey: meKey })
             return
           }
           if (err instanceof ApiError && err.code === 'insufficient_credits') {
