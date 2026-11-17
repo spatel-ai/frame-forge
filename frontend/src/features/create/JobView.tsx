@@ -1,6 +1,7 @@
 import type { Job } from '../../api/client'
 import { Button } from '../../components/form'
 import { ErrorState } from '../../components/feedback'
+import styles from './screens.module.css'
 import { formatCredits } from './credits'
 import { ProgressScreen } from './ProgressScreen'
 import { ResultScreen } from './ResultScreen'
@@ -12,7 +13,18 @@ function FailedScreen({ job, onReset }: { job: Job; onReset: () => void }) {
     <ErrorState
       title={voiceFailed ? 'We could not make the voice' : 'We could not make this video'}
       message={`${job.error ?? 'Something went wrong on our side.'} ${job.charged_credits === 0 ? 'Nothing was charged.' : `Charged: ${formatCredits(job.charged_credits)} credits.`} Start over to try again.`}
-      action={<Button onClick={onReset}>Start over</Button>}
+      action={
+        <div className={styles.actions}>
+          {job.audio_url && (
+            <>
+              <p>The voice you paid for is saved. You can listen to it or download it.</p>
+              <audio className={styles.media} controls src={job.audio_url} aria-label="Your voice" />
+              <a className={styles.linkButton} href={job.audio_url} download>Download voice</a>
+            </>
+          )}
+          <Button onClick={onReset}>Start over</Button>
+        </div>
+      }
     />
   )
 }

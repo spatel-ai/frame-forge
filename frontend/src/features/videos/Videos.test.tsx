@@ -213,6 +213,23 @@ describe('Video detail', () => {
     expect(screen.queryByRole('link', { name: /@/ })).toBeNull()
   })
 
+  it('R-13: a paid voice that could not become a video can still be played and downloaded', async () => {
+    vi.mocked(getJob).mockResolvedValue(failed('voice_too_long', { audio_url: '/api/v1/jobs/job-1/audio' }))
+    renderAt('/videos/job-1')
+    expect(await screen.findByText(/The voice you paid for is saved/)).toBeTruthy()
+    expect(screen.getByLabelText('Your voice').getAttribute('src')).toBe('/api/v1/jobs/job-1/audio')
+    const download = screen.getByRole('link', { name: 'Download voice' })
+    expect(download.getAttribute('href')).toBe('/api/v1/jobs/job-1/audio')
+    expect(download.hasAttribute('download')).toBe(true)
+  })
+
+  it('R-13: without a voice (it failed) there is no player', async () => {
+    vi.mocked(getJob).mockResolvedValue(failed('voice_failed', { audio_url: null }))
+    renderAt('/videos/job-1')
+    await screen.findByText('We could not make your voice')
+    expect(screen.queryByText('Download voice')).toBeNull()
+  })
+
   it('R-13: a missing amount is worded without a number, never computed', async () => {
     vi.mocked(getJob).mockResolvedValue(failed('video_failed', { price_credits: null }))
     renderAt('/videos/job-1')

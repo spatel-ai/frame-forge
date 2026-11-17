@@ -62,6 +62,14 @@ export function FailureEnding({ job, config }: { job: Job; config: Config | null
       message={t.what}
       action={
         <div className={styles.ending}>
+          {job.audio_url && (
+            <div>
+              <h3>Your voice</h3>
+              <p>The voice you paid for is saved with this video. You can listen to it or download it.</p>
+              <audio className={styles.voice} controls src={job.audio_url} aria-label="Your voice" />
+              <a className={`${styles.linkButton} ${styles.secondary}`} href={job.audio_url} download>Download voice</a>
+            </div>
+          )}
           <div><h3>Your credits</h3><p>{t.credits}</p></div>
           <div><h3>What you can do</h3><p>{t.next}</p></div>
           {support && <p>Questions? Write to <a className={styles.textLink} href={`mailto:${support}`}>{support}</a>.</p>}
