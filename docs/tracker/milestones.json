@@ -29,7 +29,7 @@
     "milestone": "Accounts and login",
     "outcome": "Only logged-in users can use the product; each sees only their own work",
     "depends_on": "M1.5, Q-02",
-    "status": "Planned"
+    "status": "Done"
   },
   {
     "id": "M3",

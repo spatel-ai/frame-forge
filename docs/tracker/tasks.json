@@ -551,8 +551,8 @@
     "task": "Sign-up, log-in, confirm-email, forgot and reset screens, built from their designs",
     "acceptance": "Matches the desktop designs (including the four password-reset screens and the T-207 boards); meets UX.md section 8",
     "status": "Done",
-    "verification": "IMPLEMENTED, UNVERIFIED",
-    "evidence": "features/auth: log in, sign up (no Terms checkbox, owner), forgot, check-your-email (60 s resend), set new password (token removed from the address bar, check called once), reset link expired, email confirmed / link expired (verify called once under StrictMode); shared AuthLayout with a token-coloured SVG brand panel; PasswordField added to the library; safe `next` redirects. 43 tests; npm run check 285 passed; build passes; no hex colours. Review fix: one flaky test (read the new screen before it rendered). Not mounted in routes.tsx yet (T-211). Layout and match to the designs unverified until the browser review."
+    "verification": "MOCK-VERIFIED",
+    "evidence": "features/auth: log in, sign up (no Terms checkbox, owner), forgot, check-your-email (60 s resend), set new password (token removed from the address bar, check called once), reset link expired, email confirmed / link expired (verify called once under StrictMode); shared AuthLayout with a token-coloured SVG brand panel; PasswordField added to the library; safe `next` redirects. 43 tests; npm run check 285 passed; build passes; no hex colours. Review fix: one flaky test (read the new screen before it rendered). Not mounted in routes.tsx yet (T-211). Layout and match to the designs unverified until the browser review. Browser review in mock mode (M2-PLAN.md): 32 checks passed at 1440 and 1024 px."
   },
   {
     "id": "T-211",
@@ -566,8 +566,8 @@
     "task": "Session bootstrap, guarded routes, handling of 401",
     "acceptance": "Expired session returns the user to log in, then back",
     "status": "Done",
-    "verification": "IMPLEMENTED, UNVERIFIED",
-    "evidence": "Auth screens mounted outside the shell; useMe (401 means logged out, refetch on focus); RequireAuth guard with skeleton and redirect to /login?next=; global 401 handler clears the cache and stored job id, no loop on /login; name in the top bar; confirm-email notice on all create screens with resend (busy, sent, 429) and Generate disabled; 403 email_not_verified refetches me. 17 tests; npm run check 302 passed; build passes. Not yet run against the real backend or seen in a browser."
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Auth screens mounted outside the shell; useMe (401 means logged out, refetch on focus); RequireAuth guard with skeleton and redirect to /login?next=; global 401 handler clears the cache and stored job id, no loop on /login; name in the top bar; confirm-email notice on all create screens with resend (busy, sent, 429) and Generate disabled; 403 email_not_verified refetches me. 17 tests; npm run check 302 passed; build passes. Not yet run against the real backend or seen in a browser. Browser review in mock mode (M2-PLAN.md): 32 checks passed at 1440 and 1024 px."
   },
   {
     "id": "T-212",
@@ -580,9 +580,9 @@
     "starts_after": "T-211",
     "task": "Account page",
     "acceptance": "Change password; log out everywhere",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent building in a worktree."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Account page from the design: profile with Verified / Not confirmed and resend; change password (PasswordField, mismatch wording, server fields, success banner, me refetched); sessions count; log out everywhere behind a confirmation Dialog; log out clears cache and stored job. Account nav enabled. 19 tests; npm run check 321 passed. Browser review in mock mode (M2-PLAN.md): 32 checks passed at 1440 and 1024 px."
   },
   {
     "id": "T-300",

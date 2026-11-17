@@ -126,3 +126,61 @@ only by Fable at merge.
 | Secure cookie on `http://localhost` | A test server set `Secure; HttpOnly; SameSite=Lax`; Chromium (Playwright 1.65.1) loaded it at `localhost` and `127.0.0.1` | Cookie kept and sent back on both; page scripts cannot read it. No development-only setting needed. Other browsers not checked |
 | Confirm-email screens (T-207) | Three desktop boards drawn on the canvas: notice on Create, email confirmed, link expired; copies in `design/` | Approved by the owner, 2026-11-17 |
 | `argon2-cffi` | PyPI | 25.1.0, MIT, Python 3.8 or newer |
+
+## Browser review and Gates B and D (2026-11-17)
+
+Run in Chromium (Playwright 1.65.1, scratchpad only) against the real app: backend started with
+`AVATAR_PROVIDER=mock` (and `backend/.env` now says mock, owner's instruction), `/api/v1/config`
+confirmed `"provider":"mock"` first. Emails read from the server log (D-037). 32 checks, all passed:
+
+| Area | Checked |
+| --- | --- |
+| Guard | Anonymous `/create` goes to `/login?next=%2Fcreate`; after log out the job API answers 401 |
+| Sign up | Lands on Create, logged in; name in the top bar; confirm-email notice; Generate disabled |
+| Session cookie | HttpOnly, Secure, SameSite=Lax; page scripts cannot read it |
+| Confirm email | Link from the log confirms; token removed from the address bar; the same link again shows "expired"; notice gone |
+| Create | Confirmed owner makes a video end to end (mock) |
+| Isolation | A second user gets 404 on the first user's job, audio and video; opening the job address returns to Create |
+| Forgot and reset | Check-your-email screen; reset page shows the email and strips the token; old password refused, new one works; used link shows "expired" |
+| Account | Verified pill; change password keeps this session; log out everywhere asks first, then logs out |
+| Widths | No sideways scroll at 1440 and 1024 px on log in, sign up, forgot, account |
+| Privacy | No request left the machine |
+
+Screens compared with the approved designs: log in, sign up, confirm-email notice, email confirmed,
+reset, account. They match, apart from these:
+
+| Difference | Why |
+| --- | --- |
+| Disabled "Generate voice" is pale purple, the design draws it grey | Shared Button's disabled style; minor |
+| "Log out everywhere" asks for confirmation | Added for a destructive action; the design has no dialog |
+| Sign up has no Terms checkbox | Owner decision; returns before launch (T-707) |
+| No credits pill or "Buy credits" | M3 |
+| After a reset the log-in page shows no "password changed" message | No design for it; offered to the owner |
+
+Gate B: `backend/check.sh` 230 passed (ruff, format, mypy); `npm run check` 321 passed; build passes.
+
+## Milestone report
+
+```text
+Milestone:            M2 Accounts and login
+What was implemented: email + password accounts (Argon2id), server-side sessions in an HttpOnly
+                      Secure SameSite=Lax cookie, log out and log out everywhere, change password,
+                      email confirmation (24 h links) and password reset (30 min links), rate limits
+                      and an origin check, jobs owned by users with every job and media route
+                      protected, the auth screens, the session guard and 401 handling, the
+                      confirm-email notice, the Account page
+Why it was necessary: R-01, R-12; wallets and payments (M3, M4) attach to these accounts
+What was verified:    access-control matrix over every route x anonymous/owner/other/admin/
+                      unconfirmed (mutation-checked: removing the owner filter fails 15 rows);
+                      the whole flow in a real browser in mock mode (32 checks)
+Which tests were executed: backend 230 (PostgreSQL, mock provider), frontend 321 (mocked API),
+                      browser review script (mock backend)
+What remains unverified: real email delivery (no provider, Q-04); browsers other than Chromium;
+                      rate limits behind a real proxy or with more than one process; live fal.ai
+Known risks or limitations: in development every request shares one address, so per-address
+                      limits are shared; limits reset on restart; the forgot route takes slightly
+                      longer for real accounts than unknown ones; confirmation links only reach
+                      someone with server-log access until an email provider is chosen
+Next justified action: M3 (wallet and charging), which needs Q-01 (price per second) answered
+Status:               MOCK-VERIFIED
+```
