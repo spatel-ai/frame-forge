@@ -14,7 +14,7 @@ export type NavItem = {
 export const navItems: NavItem[] = [
   { to: '/home', label: 'Home', icon: HomeIcon, enabled: false },
   { to: '/create', label: 'Create', icon: PlusCircleIcon, enabled: true },
-  { to: '/videos', label: 'Videos', icon: VideoIcon, enabled: false },
+  { to: '/videos', label: 'Videos', icon: VideoIcon, enabled: true },
   { to: '/scripts', label: 'Scripts', icon: ScriptIcon, enabled: false },
   { to: '/wallet', label: 'Wallet', icon: WalletIcon, enabled: true },
   { to: '/account', label: 'Account', icon: UserIcon, enabled: true },
