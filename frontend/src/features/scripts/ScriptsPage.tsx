@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useOutletContext } from 'react-router'
 import { ApiError, createScript, deleteScript, scriptsKey } from '../../api/client'
 import type { SavedScript } from '../../api/client'
@@ -10,8 +10,10 @@ import { ScriptIcon } from '../../components/icons'
 import { Pagination } from '../../components/layout'
 import { errMsg } from '../../lib/util'
 import { scriptMeta, useScriptFilters, useScripts } from '../../lib/scripts'
+import { capSearch, countChars, HEADING_QUERY_CHARS, MAX_SEARCH_CHARS, shortQuery, validateScriptText } from './scriptText'
 import styles from './scripts.module.css'
 
+const SKELETON_ROWS = 3
 const PAGE_SIZE = 10
 const INTRO = 'Every script you use is saved here automatically. Deleting a script never changes a video you already made.'
 
@@ -25,6 +27,7 @@ function NewScriptDialog({ open, onClose, languages, maxChars }: {
   const [language, setLanguage] = useState(languages[0] ?? '')
   const [text, setText] = useState('')
   const [errors, setErrors] = useState<{ script?: string; language?: string; other?: string }>({})
+  const textRef = useRef<HTMLTextAreaElement>(null)
   useEffect(() => {
     if (!language && languages[0]) setLanguage(languages[0])
   }, [language, languages])
@@ -44,8 +47,10 @@ function NewScriptDialog({ open, onClose, languages, maxChars }: {
   })
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!text.trim()) {
-      setErrors({ script: 'Type what the person should say.' })
+    const problem = validateScriptText(text, maxChars)
+    if (problem) {
+      setErrors({ script: problem })
+      textRef.current?.focus()
       return
     }
     save.mutate()
@@ -62,8 +67,13 @@ function NewScriptDialog({ open, onClose, languages, maxChars }: {
           hint={maxChars ? `Up to ${maxChars} characters.` : undefined}
           max={maxChars}
           rows={6}
+          ref={textRef}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value)
+            // After a first error the field is checked on every change and the message clears when it is fixed.
+            if (errors.script) setErrors((prev) => ({ ...prev, script: validateScriptText(e.target.value, maxChars) }))
+          }}
           error={errors.script}
         />
         {errors.other && <Banner tone="danger" title="We could not save the script">{errors.other}</Banner>}
@@ -136,6 +146,36 @@ export default function ScriptsPage() {
   const query = useScripts(f.params)
   const [toDelete, setToDelete] = useState<SavedScript | null>(null)
   const data = query.data
+  const resultsRef = useRef<HTMLDivElement>(null)
+  // 'page': the customer changed page (scroll to the list and move focus). 'filter': a search or filter
+  // replaced the list (scroll only if the list top is above the screen; focus stays in the search box).
+  const pending = useRef<'page' | 'filter' | null>(null)
+  const goToPage = (p: number) => {
+    pending.current = 'page'
+    f.setPage(p)
+  }
+  const filterKey = `${f.q}\u0000${f.language}`
+  const lastFilterKey = useRef(filterKey)
+  useEffect(() => {
+    if (lastFilterKey.current === filterKey) return
+    lastFilterKey.current = filterKey
+    if (pending.current !== 'page') pending.current = 'filter'
+  }, [filterKey])
+  const settled = !!data && !query.isPlaceholderData
+  useEffect(() => {
+    const el = resultsRef.current
+    const kind = pending.current
+    if (!settled || !el || !kind) return
+    pending.current = null
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const behavior: ScrollBehavior = reduce ? 'auto' : 'smooth'
+    if (kind === 'page') {
+      el.scrollIntoView?.({ block: 'start', behavior })
+      el.focus({ preventScroll: true })
+    } else if (el.getBoundingClientRect().top < 0) {
+      el.scrollIntoView?.({ block: 'start', behavior })
+    }
+  }, [settled, data])
 
   // After deleting the last row of a page, step back to the last page that still has rows.
   const { setPage } = f
@@ -152,9 +192,9 @@ export default function ScriptsPage() {
   if (query.isPending) {
     body = (
       <SkeletonGroup label="Loading your scripts">
-        <Skeleton height={96} />
-        <Skeleton height={96} />
-        <Skeleton height={96} />
+        {Array.from({ length: SKELETON_ROWS }, (_, i) => (
+          <div key={i} className={styles.skeletonRow}><Skeleton height="100%" /></div>
+        ))}
       </SkeletonGroup>
     )
   } else if (query.isError && !data) {
@@ -167,7 +207,8 @@ export default function ScriptsPage() {
     )
   } else if (data && data.items.length === 0) {
     body = (
-      <EmptyState icon={<ScriptIcon size={32} />} title={f.q ? `No script matches "${f.q}"` : 'No script matches your filter'}>
+      <EmptyState icon={<ScriptIcon size={32} />} title={f.q ? `No script matches "${shortQuery(f.q)}"` : 'No script matches your filter'}>
+        {f.q && countChars(f.q) > HEADING_QUERY_CHARS && <span className={styles.srOnly}>You searched for "{f.q}". </span>}
         Check the spelling, or clear the search and the language filter to see all your scripts.
       </EmptyState>
     )
@@ -189,12 +230,13 @@ export default function ScriptsPage() {
             </li>
           ))}
         </ul>
-        <Pagination page={data.page} pageSize={data.page_size} total={data.total} onPageChange={f.setPage} />
+        <Pagination page={data.page} pageSize={data.page_size} total={data.total} onPageChange={goToPage} />
       </>
     )
   }
 
-  const showControls = !query.isPending && !emptyAll && !(query.isError && !data)
+  // Shown while the first load runs (disabled) and after an error, so the customer can always change the search.
+  const showControls = !emptyAll
 
   return (
     <section className={styles.page} aria-labelledby="h-scripts">
@@ -205,8 +247,15 @@ export default function ScriptsPage() {
       <p className={styles.intro}>{INTRO}</p>
       {showControls && (
         <div className={styles.controls}>
-          <TextField label="Search scripts" type="search" value={f.search} onChange={(e) => f.setSearch(e.target.value)} />
-          <Select label="Language" value={f.language} onChange={(e) => f.setLanguage(e.target.value)}>
+          <TextField
+            label="Search scripts"
+            type="search"
+            maxLength={MAX_SEARCH_CHARS}
+            disabled={query.isPending}
+            value={f.search}
+            onChange={(e) => f.setSearch(capSearch(e.target.value))}
+          />
+          <Select label="Language" disabled={query.isPending} value={f.language} onChange={(e) => f.setLanguage(e.target.value)}>
             <option value="">All</option>
             {languages.map((l) => <option key={l} value={l}>{l}</option>)}
           </Select>
@@ -217,7 +266,9 @@ export default function ScriptsPage() {
           {errMsg(query.error)} <button type="button" className={styles.textButton} onClick={() => void query.refetch()}>Try again</button>
         </Banner>
       )}
-      {body}
+      <div ref={resultsRef} role="region" aria-label="Your scripts" tabIndex={-1} className={styles.results}>
+        {body}
+      </div>
       <DeleteDialog script={toDelete} onClose={() => setToDelete(null)} />
       <NewScriptDialog
         open={creating}

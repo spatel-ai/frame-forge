@@ -5,6 +5,13 @@
 .intro { margin: 0; color: var(--color-ink-soft); }
 .controls { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: flex-end; }
 .controls > * { flex: 1 1 240px; max-width: 360px; }
+.results { min-width: 0; overflow-wrap: anywhere; scroll-margin-top: calc(64px + var(--space-3)); }
+.results:focus { outline: none; }
+.srOnly {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+.skeletonRow { height: 174px; }  /* about as tall as a real row: 174 phone, 103 tablet, 80 desktop */
 .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
 .row {
   display: flex; flex-direction: column; align-items: stretch; gap: var(--space-3); padding: var(--space-4);
@@ -59,6 +66,7 @@
 @media (min-width: 768px) {
   .head { flex-direction: row; align-items: center; justify-content: space-between; gap: var(--space-4); }
   .head > button { width: auto; }
+  .skeletonRow { height: 103px; }
   .row { flex-direction: row; align-items: center; gap: var(--space-4); }
   .row > :nth-child(2) { align-self: auto; }
   .text { -webkit-line-clamp: 2; }
@@ -67,4 +75,7 @@
   .confirm textarea { max-height: none; }
   .actions { flex-direction: row; justify-content: flex-end; }
   .actions > * { width: auto; }
+}
+@media (min-width: 1024px) {
+  .skeletonRow { height: 80px; }
 }

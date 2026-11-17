@@ -205,4 +205,69 @@ describe('new script', () => {
     expect(await d.findByText('The script is written in Hindi.')).toBeTruthy()
     expect((d.getByLabelText('What should the person say?') as HTMLTextAreaElement).value).toBe('नमस्ते')
   })
+
+  it('R-43 after an empty Save, focus goes to the text box; the message clears as soon as text is typed', async () => {
+    vi.mocked(listScripts).mockResolvedValue(page([]))
+    renderAt('/scripts')
+    await userEvent.click(await screen.findByRole('button', { name: 'New script' }))
+    const d = within(await screen.findByRole('dialog'))
+    const box = d.getByLabelText('What should the person say?')
+    await userEvent.click(d.getByRole('button', { name: 'Save script' }))
+    expect(await d.findByText('Type what the person should say.')).toBeTruthy()
+    expect(document.activeElement).toBe(box)
+    await userEvent.type(box, 'a')
+    expect(d.queryByText('Type what the person should say.')).toBeNull()
+  })
+
+  it('R-43 an over-limit message appears on Save and goes away live once the text is shortened', async () => {
+    vi.mocked(listScripts).mockResolvedValue(page([]))
+    renderAt('/scripts')
+    await userEvent.click(await screen.findByRole('button', { name: 'New script' }))
+    const d = within(await screen.findByRole('dialog'))
+    const box = d.getByLabelText('What should the person say?')
+    await userEvent.click(box)
+    await userEvent.paste('x'.repeat(801))
+    await userEvent.click(d.getByRole('button', { name: 'Save script' }))
+    expect(await d.findByText(/longer than 800 characters/)).toBeTruthy()
+    expect(createScript).not.toHaveBeenCalled()
+    await userEvent.type(box, '{Backspace}')
+    expect(d.queryByText(/longer than 800 characters/)).toBeNull()
+  })
+
+  it('R-43 the limit counts characters like the server: 500 emoji (1000 UTF-16 units) are accepted', async () => {
+    vi.mocked(listScripts).mockResolvedValue(page([]))
+    vi.mocked(createScript).mockResolvedValue(script(1))
+    renderAt('/scripts')
+    await userEvent.click(await screen.findByRole('button', { name: 'New script' }))
+    const d = within(await screen.findByRole('dialog'))
+    await userEvent.click(d.getByLabelText('What should the person say?'))
+    await userEvent.paste('😀'.repeat(500))
+    await userEvent.click(d.getByRole('button', { name: 'Save script' }))
+    expect(createScript).toHaveBeenCalledTimes(1)
+    expect(d.queryByText(/longer than 800 characters/)).toBeNull()
+  })
+})
+
+describe('search box', () => {
+  it('R-43 the search is capped at 200 characters and a long query is shortened in the heading', async () => {
+    vi.mocked(listScripts).mockImplementation(async (p) => (p?.q ? page([]) : page([script(1)])))
+    renderAt('/scripts')
+    await screen.findByText('Saved script number 1')
+    const box = screen.getByLabelText('Search scripts') as HTMLInputElement
+    expect(box.maxLength).toBe(200)
+    await userEvent.click(box)
+    await userEvent.paste('y'.repeat(300))
+    expect(box.value.length).toBe(200)
+    expect(await screen.findByText(`No script matches "${'y'.repeat(40)}…"`)).toBeTruthy()
+    const sent = vi.mocked(listScripts).mock.calls.at(-1)![0]!.q as string
+    expect(sent.length).toBe(200)
+  })
+
+  it('R-43 when the list fails, the search and language controls stay so the query can be changed', async () => {
+    vi.mocked(listScripts).mockRejectedValue(new ApiError(422, 'The request is not valid.', 'validation_error'))
+    renderAt('/scripts')
+    await screen.findByText('We could not load your scripts')
+    expect(screen.getByLabelText('Search scripts')).toBeTruthy()
+    expect(screen.getByLabelText('Language')).toBeTruthy()
+  })
 })
