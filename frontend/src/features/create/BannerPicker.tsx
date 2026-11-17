@@ -34,12 +34,13 @@ export function BannerPicker({
     body = (
       <Notice tone="warning" title="No banners yet">
         You have no banners yet. Upload one to make this video.{' '}
-        <Link className={screens.textLink} to="/banners">Upload a banner</Link>
+        <Link className={screens.sentenceLink} to="/banners">Upload a banner</Link>
       </Notice>
     )
   } else if (data) {
     body = (
       <>
+        <div className={styles.grid}>
         <SelectableCardGroup legend="Banner for this video" required error={error ?? undefined} name="banner">
           {data.map((b) => (
             <SelectableCard
@@ -53,6 +54,7 @@ export function BannerPicker({
             />
           ))}
         </SelectableCardGroup>
+        </div>
         <Link className={`${screens.textLink} ${styles.manage}`} to="/banners">Manage banners</Link>
       </>
     )

@@ -1,2 +1,2 @@
-.line { margin: 0; }
+.line { margin: 0; overflow-wrap: anywhere; }
 .line + .line { margin-top: var(--space-1); }
