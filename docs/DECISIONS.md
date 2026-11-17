@@ -1028,3 +1028,19 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 
 **Validation:** Tests: the add command refuses a landscape clip and accepts a 720×1280 one; the starter-clip script makes 720×1280 clips.
 
+---
+
+## D-064 — The Razorpay webhook is optional; without it, reconciliation polls every minute
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: backend
+
+**Choice:** `RAZORPAY_WEBHOOK_SECRET` is optional. Without it, the app still starts in razorpay mode, every webhook delivery is refused (400), and payments are confirmed through Razorpay's API only: the browser's verify fetches the payment by id, and reconciliation polls unpaid orders every minute once they are 2 minutes old (instead of every 5 minutes after 30 minutes). With a secret, the webhook works as before and the slower schedule applies.
+
+**Alternatives:** Keep the webhook required (needs a public URL, a tunnel in development).
+
+**Why:** Owner's question: "can we poll using API and transaction ID instead of the webhook?" The webhook was only a faster backup for a closed tab; polling covers it within about 3 minutes.
+
+**Trade-off:** More API calls to Razorpay (one per unpaid order per minute, for up to 3 days); a closed-tab payment appears within about 3 minutes rather than seconds. The webhook signature's encoding stays unverified until a webhook is set up.
+
+**Validation:** Tests: razorpay mode starts without a webhook secret; with none, a paid but unverified order is not touched at 1 minute and is credited at 3 minutes; a webhook is refused with 400.
+

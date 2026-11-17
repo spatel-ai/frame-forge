@@ -200,7 +200,9 @@ Rules, each traced to Razorpay's documentation (checked 2026-11-17):
   amount. The browser's word is never enough.
 - If the customer closes the tab before `/payments/verify` runs, the webhook still credits them. If
   the webhook is also missed, a reconciliation task asks Razorpay about orders still marked
-  `created` or `failed` after 30 minutes (every 5 minutes, for up to 3 days; M4-PLAN).
+  `created` or `failed` after 30 minutes (every 5 minutes, for up to 3 days; M4-PLAN). The webhook
+  is optional (D-064): without its secret, reconciliation polls every minute for orders older
+  than 2 minutes.
 
 ### 5.2 Generating a video and charging for it
 

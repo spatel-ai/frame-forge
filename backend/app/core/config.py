@@ -150,7 +150,6 @@ class Settings:
                 for name, value in (
                     ("RAZORPAY_KEY_ID", self.razorpay_key_id),
                     ("RAZORPAY_KEY_SECRET", self.razorpay_key_secret),
-                    ("RAZORPAY_WEBHOOK_SECRET", self.razorpay_webhook_secret),
                 )
                 if not value
             ]

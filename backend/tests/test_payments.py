@@ -664,6 +664,29 @@ def test_reconcile_window_and_failed_orders(client):
     assert len(purchases(client)) == 1 and invariant(client)
 
 
+def test_without_a_webhook_secret_reconciliation_polls_sooner(settings, make_user):
+    """R-03, D-064: with no webhook secret, every webhook is refused and reconciliation credits a
+    paid order after 2 minutes instead of 30."""
+    s = replace(settings, razorpay_webhook_secret="")
+    with TestClient(create_app(s, start_poller=False), base_url=HTTPS) as anon:
+        c = make_user(anon, "nohook@example.com")
+        c.anon = anon  # type: ignore[attr-defined]
+        service = anon.app.state.payments  # type: ignore[attr-defined]
+        assert service.webhooks_enabled is False
+        order = buy(c)
+        pay(c, order["order_id"])  # paid at the gateway; the browser never verified (tab closed)
+        now = datetime.now(timezone.utc)
+        assert service.reconcile_once(now + timedelta(minutes=1)) == 0
+        assert service.reconcile_once(now + timedelta(minutes=3)) == 1
+        assert order_status(c, order["order_id"]) == "paid"
+        r = anon.post(
+            "/api/v1/webhooks/razorpay",
+            content=b'{"event": "payment.captured"}',
+            headers={"x-razorpay-signature": "0" * 64, "x-razorpay-event-id": "evt_1"},
+        )
+        assert r.status_code == 400
+
+
 def test_reconcile_survives_a_gateway_error(client):
     """R-02: one order's gateway error is logged and the run carries on with the next."""
     service = client.app.state.payments  # type: ignore[attr-defined]

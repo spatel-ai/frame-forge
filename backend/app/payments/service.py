@@ -49,6 +49,10 @@ _events: Table = WebhookEvent.__table__  # type: ignore[assignment]
 # than 3 days (a payment left `authorized` is refunded after 3 days, facts §D).
 RECONCILE_EVERY_SECONDS = 300
 RECONCILE_MIN_AGE = timedelta(minutes=30)
+# D-064: without a webhook secret no webhook is accepted, so reconciliation is the only backup to
+# the browser's verify and polls Razorpay's API sooner and more often.
+RECONCILE_EVERY_SECONDS_NO_WEBHOOK = 60
+RECONCILE_MIN_AGE_NO_WEBHOOK = timedelta(minutes=2)
 RECONCILE_MAX_AGE = timedelta(days=3)
 RECONCILE_BATCH = 200
 
@@ -211,6 +215,12 @@ class PaymentService:
         self.engine = engine
         self.gateway = gateway
 
+    @property
+    def webhooks_enabled(self) -> bool:
+        """D-064: the webhook is optional. Without its secret every delivery is refused (400) and
+        reconciliation polls Razorpay every minute for orders older than 2 minutes."""
+        return bool(self.settings.razorpay_webhook_secret)
+
     # -- orders (T-402) --
 
     def quote(self, credits: object) -> Quote:
@@ -368,12 +378,13 @@ class PaymentService:
         failure can be followed by a capture (HLD §5.1). Returns how many orders were credited.
         One order's error never stops the others."""
         now = now or _now()
+        min_age = RECONCILE_MIN_AGE if self.webhooks_enabled else RECONCILE_MIN_AGE_NO_WEBHOOK
         with self.engine.connect() as conn:
             due = conn.execute(
                 select(_orders.c.id, _orders.c.razorpay_order_id)
                 .where(
                     _orders.c.status.in_((CREATED, FAILED)),
-                    _orders.c.created_at <= now - RECONCILE_MIN_AGE,
+                    _orders.c.created_at <= now - min_age,
                     _orders.c.created_at >= now - RECONCILE_MAX_AGE,
                 )
                 .order_by(_orders.c.created_at)
@@ -417,7 +428,11 @@ class PaymentService:
                 await asyncio.to_thread(self.reconcile_once)
             except Exception:
                 log.exception("reconciliation run failed")
-            await asyncio.sleep(RECONCILE_EVERY_SECONDS)
+            await asyncio.sleep(
+                RECONCILE_EVERY_SECONDS
+                if self.webhooks_enabled
+                else RECONCILE_EVERY_SECONDS_NO_WEBHOOK
+            )
 
     # -- the mock Checkout (D-042) --
 
