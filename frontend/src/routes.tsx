@@ -4,6 +4,7 @@ import AppShell from './components/AppShell'
 import NotFound from './components/NotFound'
 import { RedirectIfLoggedIn, RequireAuth } from './components/shell/RequireAuth'
 import { authRoutes } from './features/auth/routes'
+import AccountPage from './features/account/AccountPage'
 import CreatePage from './features/create/CreatePage'
 import JobPage from './features/create/JobPage'
 
@@ -26,6 +27,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <Navigate to="/create" replace /> },
       { path: 'create', element: <CreatePage /> },
       { path: 'create/:jobId', element: <JobPage /> },
+      { path: 'account', element: <AccountPage /> },
       { path: '*', element: <NotFound /> },
     ],
   },
