@@ -623,4 +623,24 @@ describe('buy-credits fix round 4', () => {
     await userEvent.tab()
     expect((await d.findByRole('alert')).textContent).toBe('Buy at least 1,000 credits.')
   })
+
+  it('R-47 the reserved gap of a failed price request is gone when the dialog is reopened', async () => {
+    let fail = true
+    vi.mocked(getQuote).mockImplementation(async (c) => {
+      if (fail) throw new TypeError('Failed to fetch')
+      return quote(c)
+    })
+    renderWallet()
+    let d = within(await openDialog())
+    await d.findByRole('button', { name: 'Try again' })
+    fail = false
+    await userEvent.click(d.getByRole('button', { name: 'Try again' }))
+    await d.findByRole('button', { name: 'Pay ₹1,020' })
+    expect(d.queryByText(/Nothing was charged/)).not.toBeNull() // retry: space still reserved
+    await userEvent.click(d.getAllByRole('button', { name: 'Close' })[0])
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    d = within(await openDialog())
+    await d.findByRole('button', { name: 'Pay ₹1,020' })
+    expect(d.queryByText(/Nothing was charged/)).toBeNull()
+  })
 })

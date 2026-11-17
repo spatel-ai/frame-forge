@@ -154,6 +154,7 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
   // when the retry brings the price.
   const [quoteFailedBefore, setQuoteFailedBefore] = useState(false)
   if (quoteFailed && !quoteFailedBefore) setQuoteFailedBefore(true)
+  if (!open && quoteFailedBefore) setQuoteFailedBefore(false) // the page keeps this mounted while closed
   const quoteOtherError = quoteFailed ? (quoteError ? errMsg(quoteError) : 'We could not get the price.') : null
   const error = serverError ?? localError ?? quoteFieldError
   // A price for the amount in the field is on its way (debounce or request in flight).
@@ -162,6 +163,7 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
   const showGst = quote ? quote.fee_gst_paise > 0 : (config?.payment_fee_gst_bps ?? 0) > 0
 
   const changeAmount = (value: string) => {
+    if (value.trim() !== amount.trim()) setQuoteFailedBefore(false) // a different amount: no reserved gap
     setTyped(value)
     setServerError(undefined)
     setNotVerified(null)
