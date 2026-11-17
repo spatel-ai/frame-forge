@@ -12,7 +12,9 @@ describe('page titles (keyboard tester finding 5)', () => {
   it('names each logged-in page', () => {
     expect(pageTitle('/')).toBe('Home · Frameforge')
     expect(pageTitle('/create/abc')).toBe('Create a video · Frameforge')
-    expect(pageTitle('/videos/7')).toBe('Videos · Frameforge')
+    expect(pageTitle('/videos')).toBe('Videos · Frameforge')
+    expect(pageTitle('/videos/7')).toBe('Video · Frameforge')
+    expect(pageTitle('/videos/7/extra')).toBe('Page not found · Frameforge')
     expect(pageTitle('/account')).toBe('Account · Frameforge')
     expect(pageTitle('/nope')).toBe('Page not found · Frameforge')
   })

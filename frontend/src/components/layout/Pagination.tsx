@@ -31,6 +31,9 @@ function topBarHeight(): number {
   return bottom
 }
 
+/** How long a requested page may take to arrive before the request is dropped, in ms. */
+const REQUEST_TIMEOUT_MS = 10_000
+
 /** Room left above the target after scrolling, in px. */
 const TARGET_GAP = 8
 
@@ -52,16 +55,26 @@ export function Pagination({ page, pageSize, total, onPageChange, scrollTargetRe
   const to = Math.min(page * pageSize, total)
   // Set only by this component's own buttons, so other page changes never move scroll or focus.
   const requested = useRef<number | null>(null)
+  const expiry = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   useEffect(() => {
-    if (requested.current === null || requested.current !== page) return
+    if (requested.current === null) return
+    const arrived = requested.current === page
+    // Any other page showing up means the request was superseded: forget it.
     requested.current = null
+    if (!arrived) return
     const target = scrollTargetRef?.current
     if (target) bringToTop(target)
   }, [page, scrollTargetRef])
 
+  // A page that never arrives (the request failed) must not scroll on some later, unrelated change.
+  useEffect(() => () => clearTimeout(expiry.current), [])
   function go(next: number) {
-    if (scrollTargetRef) requested.current = next
+    if (scrollTargetRef) {
+      requested.current = next
+      clearTimeout(expiry.current)
+      expiry.current = setTimeout(() => { requested.current = null }, REQUEST_TIMEOUT_MS)
+    }
     onPageChange(next)
   }
 

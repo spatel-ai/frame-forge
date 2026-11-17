@@ -17,17 +17,32 @@ export type ShellContext = { config: Config | null; configError: string | null }
 export default function AppShell() {
   usePageTitle()
 
-  // Phones: a focused control that is partly under the fixed bottom bar is scrolled clear of it. The
-  // browser only does this when the control is wholly hidden; scroll-margin (base.css) sets the gap.
+  // Phones: with the keyboard, a focused control that is partly under the fixed bottom bar is scrolled clear of it.
+  // The browser only does this when the control is wholly hidden; scroll-margin (base.css) sets the gap. Taps,
+  // clicks, the content region itself, controls outside the tab order and controls already clear are left alone.
   useEffect(() => {
+    let keyboard = false
+    const onKey = (e: KeyboardEvent) => {
+      if (!['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) keyboard = true
+    }
+    const onPointer = () => { keyboard = false }
     const onFocusIn = (e: FocusEvent) => {
       const el = e.target
-      if (!(el instanceof HTMLElement) || typeof window.matchMedia !== 'function') return
-      if (!window.matchMedia('(max-width: 767px)').matches || el.closest('nav, dialog')) return
-      requestAnimationFrame(() => el.scrollIntoView?.({ block: 'nearest' }))
+      if (!keyboard || !(el instanceof HTMLElement) || typeof window.matchMedia !== 'function') return
+      if (el.tabIndex < 0 || !window.matchMedia('(max-width: 767px)').matches || el.closest('nav, dialog')) return
+      requestAnimationFrame(() => {
+        const limit = window.innerHeight - (parseFloat(getComputedStyle(el).scrollMarginBottom) || 0)
+        if (el.getBoundingClientRect().bottom > limit) el.scrollIntoView?.({ block: 'nearest' })
+      })
     }
+    document.addEventListener('keydown', onKey, true)
+    document.addEventListener('pointerdown', onPointer, true)
     document.addEventListener('focusin', onFocusIn)
-    return () => document.removeEventListener('focusin', onFocusIn)
+    return () => {
+      document.removeEventListener('keydown', onKey, true)
+      document.removeEventListener('pointerdown', onPointer, true)
+      document.removeEventListener('focusin', onFocusIn)
+    }
   }, [])
   const query = useQuery({
     queryKey: ['config'],

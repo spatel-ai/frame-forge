@@ -4,7 +4,9 @@ import { matchPath, useLocation } from 'react-router'
 const TITLES: { path: string; title: string; end?: boolean }[] = [
   { path: '/', title: 'Home', end: true },
   { path: '/create', title: 'Create a video' },
-  { path: '/videos', title: 'Videos' },
+  // Exact matches: an address below these (/videos/a/b) is not a page and falls through to "Page not found".
+  { path: '/videos/:jobId', title: 'Video', end: true },
+  { path: '/videos', title: 'Videos', end: true },
   { path: '/scripts', title: 'Scripts' },
   { path: '/banners', title: 'Banners' },
   { path: '/wallet', title: 'Wallet' },

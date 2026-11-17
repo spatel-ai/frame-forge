@@ -9,6 +9,7 @@ import { errMsg } from '../../lib/util'
 import { loginPath, useMe } from '../../lib/session'
 import { Banner, Skeleton, SkeletonGroup } from '../feedback'
 import { Button } from '../form'
+import { usePageTitle } from './usePageTitle'
 import styles from './RequireAuth.module.css'
 
 type Problem = { error: unknown; retry: () => void; retrying: boolean; loginTo: string }
@@ -46,6 +47,7 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   const { data: me, error, refetch, isFetching } = useMe()
   const location = useLocation()
   const queryClient = useQueryClient()
+  usePageTitle() // the session-error screen shows instead of the shell, which sets the title otherwise
   const loggedOut = me === null
 
   // Do not leak the previous user's data: drop everything cached except the (null) user.
