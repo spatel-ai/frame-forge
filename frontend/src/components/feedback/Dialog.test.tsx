@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
-import { Dialog } from './Dialog'
+import { Dialog, DialogActions } from './Dialog'
 
 function Harness({ dismissable, onClose }: { dismissable?: boolean; onClose?: () => void }) {
   const [open, setOpen] = useState(false)
@@ -100,5 +100,38 @@ describe('Dialog', () => {
     fireEvent.click(getDialog())
     expect(onClose).not.toHaveBeenCalled()
     expect(getDialog().hasAttribute('open')).toBe(true)
+  })
+
+  it('shows the bottom fade only while more content is below the fold', async () => {
+    render(<Harness />)
+    await userEvent.click(screen.getByRole('button', { name: 'Open' }))
+    const body = screen.getByText('Past videos are not affected.').parentElement!.parentElement!
+    const scroller = body.parentElement!
+    // jsdom has no layout: content fits, so no fade.
+    expect(scroller.hasAttribute('data-more-below')).toBe(false)
+    Object.defineProperty(body, 'scrollHeight', { configurable: true, value: 900 })
+    Object.defineProperty(body, 'clientHeight', { configurable: true, value: 300 })
+    fireEvent.scroll(body)
+    expect(scroller.hasAttribute('data-more-below')).toBe(true)
+    body.scrollTop = 600
+    fireEvent.scroll(body)
+    expect(scroller.hasAttribute('data-more-below')).toBe(false)
+  })
+
+  it('DialogActions keeps its buttons inside the form so they still submit it', async () => {
+    const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault())
+    render(
+      <Dialog open onClose={() => {}} title="New script">
+        <form onSubmit={onSubmit}>
+          <DialogActions>
+            <button type="submit">Save script</button>
+          </DialogActions>
+        </form>
+      </Dialog>,
+    )
+    const save = screen.getByRole('button', { name: 'Save script' })
+    expect(save.closest('form')).not.toBeNull()
+    await userEvent.click(save)
+    expect(onSubmit).toHaveBeenCalledOnce()
   })
 })
