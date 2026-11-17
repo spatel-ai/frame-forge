@@ -39,7 +39,7 @@ browser's call, failed then successful payment.
 | 6 | `payment.failed` may not be sent for the first failed attempt | §G | Never depend on it. Reconciliation fetches the payment |
 | 7 | Key prefixes `rzp_test_` / `rzp_live_` not stated in the docs read | §H | D-042 check fails closed; confirmed in T-407 |
 | 8 | Whether `GET /orders/{id}/payments` lists captured payments is unclear | §B | Reconciliation also reads the order's `status` and `amount_paid`; confirmed in T-407 |
-| 9 | The design's ₹100 and ₹250 picks were below the new minimum | `docs/design/Buy-Credits.dc.html` | Board changed to ₹500 / ₹1,000 / ₹2,500 / ₹5,000. After-payment states drawn (`Payment-States.dc.html`). **Waiting on the owner's approval** |
+| 9 | The design's ₹100 and ₹250 picks were below the new minimum | `docs/design/Buy-Credits.dc.html` | Board changed to ₹500 / ₹1,000 / ₹2,500 / ₹5,000. After-payment states drawn (`Payment-States.dc.html`). Approved by the owner on 2026-11-17 |
 | 10 | The design says "Credits do not expire" | Buy-Credits board | Depends on Q-05 (M6). Kept, flagged |
 
 ### Classified register
@@ -87,7 +87,7 @@ definite failure, and a later capture still credits.
 
 | Phase | Tasks (owner) | What happens | Done when |
 | --- | --- | --- | --- |
-| 0 | T-401 (done), T-400, design (Fable) | Facts with sources; the contract as schemas, 501 stubs and settings; frontend types regenerated; boards updated | The contract test passes; **the owner approves the two boards** |
+| 0 | T-401 (done), T-400, design (Fable) | Facts with sources; the contract as schemas, 501 stubs and settings; frontend types regenerated; boards updated | The contract test passes; the owner approved the two boards (2026-11-17) |
 | 1 | T-402 (Sonnet, BE-Payments) ∥ T-410 (Sonnet, FE-Wallet) | Migration 0006 (`payment_orders`, `webhook_events`); the gateway (httpx plus mock); create-order. Buy-credits dialog against the mocked API | Limits enforced; the gateway is the only Razorpay caller; frontend checks pass |
 | 2 | T-403 (Opus) ∥ T-411 (Sonnet) | The crediting routine and the verify route. After-payment states | Credits once; signature checked with our stored order id; status `captured` and the amount checked by fetching the payment |
 | 3 | T-404 (Opus) | Webhook | Raw-body signature; event-id dedupe; the same crediting routine |
