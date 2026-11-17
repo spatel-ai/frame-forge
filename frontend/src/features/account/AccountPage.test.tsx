@@ -21,7 +21,7 @@ vi.mock('../../api/client', async (importOriginal) => ({
 const KEY = 'talking-avatar-job-id'
 const asha = (extra: Partial<User> = {}) =>
   ({ id: 'u1', name: 'Asha Verma', email: 'asha@example.com', email_verified: true, role: 'user', active_sessions: 1, ...extra }) as User
-const config = { provider: 'mock', max_audio_seconds: 60, max_script_chars: 100, max_image_mb: 1, languages: ['English'], video_price_per_second_usd: 0.1 } as Config
+const config = { provider: 'mock', max_audio_seconds: 60, max_script_chars: 100, max_image_mb: 1, languages: ['English'], credits_per_second: 20, voice_price_credits: 10 } as Config
 
 let router: ReturnType<typeof createMemoryRouter>
 function renderAccount(me: User | null = asha(), path = '/account') {

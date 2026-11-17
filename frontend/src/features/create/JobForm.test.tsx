@@ -17,7 +17,7 @@ const config: Config = {
   max_script_chars: 10,
   max_image_mb: 1,
   languages: ['English', 'Hindi'],
-  video_price_per_second_usd: 0.1,
+  credits_per_second: 20, voice_price_credits: 10,
 }
 
 const job: Job = {
@@ -26,7 +26,7 @@ const job: Job = {
   language: 'Hindi',
   script: 'Hello',
   audio_duration_seconds: null,
-  estimated_video_cost_usd: null,
+  price_credits: null, charged_credits: 0,
   audio_url: null,
   video_url: null,
   error: null,

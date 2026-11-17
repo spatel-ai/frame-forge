@@ -137,7 +137,8 @@ refuses anonymous users and refuses other users' resources.
 
 ## M3 — Wallet and charging
 
-**Gate A needs:** Q-01, Q-08, Q-19 answered. **Gate C:** none; credits are granted by a
+**Gate A needs:** Q-01, Q-08, Q-19 answered (done 2026-11-17: 20 credits per second, 10 credits per
+voice, unknown outcome charged; [M3-PLAN.md](M3-PLAN.md)). **Gate C:** none; credits are granted by a
 developer-only command.
 
 **Exit evidence:** A concurrency test fires many approvals and credits at one wallet and shows no

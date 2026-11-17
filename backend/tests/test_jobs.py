@@ -393,7 +393,8 @@ def test_http_flow_end_to_end(settings, sign_up):
         job_id = created.json()["id"]
 
         job = wait_for(client, job_id, "audio_ready")
-        assert job["estimated_video_cost_usd"] == round(job["audio_duration_seconds"] * 0.0562, 2)
+        # T-300: the company's fal.ai cost is never sent; the credit price arrives with T-303.
+        assert "estimated_video_cost_usd" not in job
         assert client.get(job["audio_url"]).status_code == 200
         assert client.get(f"/api/v1/jobs/{job_id}/video").status_code == 404
 

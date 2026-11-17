@@ -83,15 +83,15 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 ## D-005 — Hold at approval, capture on completion, release on failure
 
-**Status:** Needs owner (Q-19) · 2026-11-17 · Area: backend
+**Status:** Confirmed (owner answered Q-19, 2026-11-17) · 2026-11-17 · Area: backend
 
-**Choice:** Credits are reserved when the customer approves the audio, taken when the video is delivered, and returned if it is not. The job status change and the ledger entry are written in one transaction. When a paid request's outcome is unknown, the customer's credits are returned and the job is flagged.
+**Choice:** Credits are reserved when the customer approves the audio, taken when the video is delivered, and returned when it clearly fails (fal.ai refuses it, errors, or times out). The job status change and the ledger entry are written in one transaction. **When a paid request's outcome is unknown** (the request to fal.ai was cut off and we cannot tell whether it was accepted), **the held credits are captured** (the customer is charged), the job is marked failed and flagged for staff. Owner's decision, 2026-11-17.
 
 **Alternatives:** Charge at approval and refund on failure: the balance visibly drops and returns, and a crash between the two leaves the customer out of pocket. Charge on completion only: two jobs approved together could each pass the balance check and overspend.
 
 **Why:** A hold stops overspending at once without taking credits for something not yet delivered. It maps one-to-one onto status changes the POC already has.
 
-**Trade-off:** In the unknown-outcome case the company may be billed by fal.ai for a video nobody received. This is why the decision waits for the owner (Q-19).
+**Trade-off:** In the unknown-outcome case the customer pays for a video they did not receive. This is rare (a cut-off request), but it will cause complaints; staff can review flagged jobs and return credits by an audited adjustment (M6).
 
 **Validation:** One test per row of the charging table in HLD §5.2, each asserting the job status and the ledger together.
 
@@ -99,9 +99,9 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 ## D-006 — Price is credits per second of AI audio, fixed before approval
 
-**Status:** Needs owner (Q-01) · 2026-11-17 · Area: both
+**Status:** Confirmed (owner answered Q-01, 2026-11-17: 20 credits per second, so 600 credits for a 30-second video) · 2026-11-17 · Area: both
 
-**Choice:** `price = ceil(audio seconds × credits_per_second)`. The price is computed once when the voice is ready, stored on the job, shown to the customer, and that stored value is what is held and captured.
+**Choice:** `price = ceil(audio seconds × credits_per_second)`, with `credits_per_second = 20` as a setting. The price is computed once when the voice is ready, stored on the job, shown to the customer, and that stored value is what is held and captured.
 
 **Alternatives:** A flat price per video (a 5-second video would cost the same as a 30-second one while the fal.ai cost differs sixfold). Price tiers by length.
 
@@ -243,7 +243,7 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 ## D-015 — Voice generation is not charged separately
 
-**Status:** Needs owner (Q-08) · 2026-11-17 · Area: both
+**Status:** Superseded by D-038 (owner answered Q-08, 2026-11-17: charge for each voice) · 2026-11-17 · Area: both
 
 **Choice:** The video price covers the voice. A job can only be started when the wallet covers its estimated price, and each user has a daily cap on voice generations.
 
@@ -606,3 +606,19 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 **Trade-off:** Confirmation and reset links appear in development logs. Those logs must never be shared outside the team.
 
 **Validation:** Tests capture the sent messages through a test sender and read the link from them.
+
+---
+
+## D-038 — Each voice generation costs 10 credits
+
+**Status:** Confirmed (owner, 2026-11-17, answering Q-08) · 2026-11-17 · Area: both
+
+**Choice:** Generating a voice costs 10 credits (a setting), taken when the customer submits the photo and script, in the same transaction that creates the job. It is kept even if the customer never makes the video. If the voice itself fails to generate (a clear failure, no voice delivered), the 10 credits are returned, following the owner's rule that clear failures cost the customer nothing. A customer with fewer than 10 available credits cannot start a job (HTTP 402 `insufficient_credits`). The video price (D-006) is separate and is held at approval. The daily cap on free voices that D-015 needed is dropped: charging replaces it.
+
+**Alternatives:** Free voices with a cap (D-015). Free voices without a limit.
+
+**Why:** The owner chose it. Every voice costs the company money even when no video follows.
+
+**Trade-off:** Customers pay for every retry of a script. Two new ledger kinds are needed: `voice_charge` and `voice_return`.
+
+**Validation:** Tests: submit takes 10 credits with the job in one transaction; a failed voice returns them once; fewer than 10 credits gives 402 and creates no job.

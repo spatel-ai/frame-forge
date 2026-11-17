@@ -140,6 +140,9 @@ Available credits = `balance_credits − reserved_credits`.
 | `release` | — | −N | The AI video fails, times out, or is refused |
 | `adjustment` | ±N | — | An admin corrects a balance (audited, reason required) |
 | `refund` | −N | — | A Razorpay payment is refunded |
+| `grant` | +N | — | The developer-only command, development environment only (M3, T-306) |
+| `voice_charge` | −N | — | The customer submits a job (D-038) |
+| `voice_return` | +N | — | The voice fails to generate |
 
 The uniqueness rule on `(kind, ref_type, ref_id)` means a payment can be credited once and a job
 can be held, captured or released once, even if the request, the webhook, or the poller runs twice.
@@ -188,11 +191,12 @@ Rules, each traced to Razorpay's documentation (checked 2026-11-17):
 
 | Step | Job status change | Wallet action | One database transaction? |
 | --- | --- | --- | --- |
-| Customer submits photo, script and banner choice | → `audio_generating` | Check available credits cover the estimated price. No hold | — |
+| Customer submits photo, script and banner choice | → `audio_generating` | `voice_charge` 10 credits (D-038). Refuse with HTTP 402 if fewer than 10 available | Yes |
+| Voice generation fails | → `failed` | `voice_return` the 10 credits | Yes |
 | Voice is ready | → `audio_ready` | Price fixed: `ceil(audio seconds × rate)`, shown to the customer | — |
 | Customer approves | `audio_ready` → `video_submitting` | `hold` the price. Refuse with HTTP 402 if not enough credits | Yes |
 | Upload to fal.ai fails, or fal.ai definitely refuses | → `audio_ready` | `release` | Yes |
-| Submission outcome unknown (timeout, crash mid-call) | → `failed`, flagged for review | `release` (the customer got nothing; see Q-19) | Yes |
+| Submission outcome unknown (timeout, crash mid-call) | → `failed`, flagged for review | `capture` (owner's decision on Q-19, D-005) | Yes |
 | fal.ai accepts | → `video_generating` | Hold stays | — |
 | AI video downloaded, no banners chosen | → `completed` | `capture` | Yes |
 | AI video downloaded, banners chosen | → `video_assembling` | Hold stays | — |
@@ -202,8 +206,8 @@ Rules, each traced to Razorpay's documentation (checked 2026-11-17):
 
 The invariant: **a job's status change and its ledger entry commit together or not at all.**
 
-Voice generation is not charged separately (D-015). A job can only be started when the wallet
-covers the estimated price, and each user has a daily cap on voice generations.
+Each voice generation costs 10 credits (D-038, replacing D-015). The video price is 20 credits per
+second of voice (D-006), fixed when the voice is ready and held at approval.
 
 ### 5.3 Script library
 

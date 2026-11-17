@@ -21,6 +21,9 @@ _NOT_FOUND: dict[int | str, dict[str, Any]] = {
     **_INVALID,
 }
 _UNCONFIRMED: dict[int | str, dict[str, Any]] = {403: {"model": ErrorOut}}
+# 402 insufficient_credits: fewer credits available than the voice price (create) or the video
+# price (approve). D-006, D-038; the detail states the amounts.
+_CREDITS: dict[int | str, dict[str, Any]] = {402: {"model": ErrorOut}}
 
 User = Annotated[CurrentUser, Depends(current_user)]
 
@@ -49,9 +52,9 @@ def _public(job: dict, settings: Settings) -> JobOut:
         language=job["language"],
         script=job["script"],
         audio_duration_seconds=duration,
-        estimated_video_cost_usd=(
-            None if duration is None else round(duration * settings.video_price_per_second_usd, 2)
-        ),
+        # Filled by T-303 (pricing) and T-304 (ledger); the contract is fixed here (T-300).
+        price_credits=None,
+        charged_credits=0,
         audio_url=f"/api/v1/jobs/{job['id']}/audio" if job["audio_file"] else None,
         video_url=f"/api/v1/jobs/{job['id']}/video" if job["video_file"] else None,
         error=job["error"],
@@ -88,7 +91,8 @@ def get_config(request: Request) -> ConfigOut:
         max_script_chars=settings.max_script_chars,
         max_image_mb=settings.max_image_mb,
         languages=list(settings.languages),
-        video_price_per_second_usd=settings.video_price_per_second_usd,
+        credits_per_second=settings.credits_per_second,
+        voice_price_credits=settings.voice_price_credits,
     )
 
 
@@ -96,7 +100,7 @@ def get_config(request: Request) -> ConfigOut:
     "/jobs",
     status_code=201,
     response_model=JobOut,
-    responses={**_UNAUTHENTICATED, **_UNCONFIRMED, **_INVALID},
+    responses={**_UNAUTHENTICATED, **_CREDITS, **_UNCONFIRMED, **_INVALID},
 )
 async def create_job(
     request: Request,
@@ -120,7 +124,7 @@ def get_job(request: Request, user: User, job_id: str) -> JobOut:
 @router.post(
     "/jobs/{job_id}/approve",
     response_model=JobOut,
-    responses={**_NOT_FOUND, **_UNCONFIRMED, 409: {"model": ErrorOut}},
+    responses={**_NOT_FOUND, **_CREDITS, **_UNCONFIRMED, 409: {"model": ErrorOut}},
 )
 async def approve(request: Request, user: User, job_id: str) -> JobOut:
     _load(request, user, job_id)  # 404 first, so another user's job id is never confirmed

@@ -45,6 +45,10 @@
       },
       "ConfigOut": {
         "properties": {
+          "credits_per_second": {
+            "title": "Credits Per Second",
+            "type": "integer"
+          },
           "languages": {
             "items": {
               "type": "string"
@@ -72,9 +76,9 @@
             "title": "Provider",
             "type": "string"
           },
-          "video_price_per_second_usd": {
-            "title": "Video Price Per Second Usd",
-            "type": "number"
+          "voice_price_credits": {
+            "title": "Voice Price Credits",
+            "type": "integer"
           }
         },
         "required": [
@@ -83,7 +87,8 @@
           "max_script_chars",
           "max_image_mb",
           "languages",
-          "video_price_per_second_usd"
+          "credits_per_second",
+          "voice_price_credits"
         ],
         "title": "ConfigOut",
         "type": "object"
@@ -170,6 +175,10 @@
             ],
             "title": "Audio Url"
           },
+          "charged_credits": {
+            "title": "Charged Credits",
+            "type": "integer"
+          },
           "created_at": {
             "title": "Created At",
             "type": "string"
@@ -185,17 +194,6 @@
             ],
             "title": "Error"
           },
-          "estimated_video_cost_usd": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Estimated Video Cost Usd"
-          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -203,6 +201,17 @@
           "language": {
             "title": "Language",
             "type": "string"
+          },
+          "price_credits": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Credits"
           },
           "script": {
             "title": "Script",
@@ -242,7 +251,8 @@
           "language",
           "script",
           "audio_duration_seconds",
-          "estimated_video_cost_usd",
+          "price_credits",
+          "charged_credits",
           "audio_url",
           "video_url",
           "error",
@@ -250,6 +260,67 @@
           "updated_at"
         ],
         "title": "JobOut",
+        "type": "object"
+      },
+      "LedgerEntryOut": {
+        "properties": {
+          "balance_after": {
+            "title": "Balance After",
+            "type": "integer"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "credits": {
+            "title": "Credits",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "kind": {
+            "enum": [
+              "purchase",
+              "grant",
+              "voice_charge",
+              "voice_return",
+              "hold",
+              "capture",
+              "release",
+              "adjustment",
+              "refund"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "reserved_after": {
+            "title": "Reserved After",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "credits",
+          "balance_after",
+          "reserved_after",
+          "job_id",
+          "created_at"
+        ],
+        "title": "LedgerEntryOut",
         "type": "object"
       },
       "LoginIn": {
@@ -339,6 +410,37 @@
         "title": "TokenIn",
         "type": "object"
       },
+      "TransactionsOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LedgerEntryOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "TransactionsOut",
+        "type": "object"
+      },
       "UserOut": {
         "properties": {
           "active_sessions": {
@@ -379,6 +481,29 @@
           "active_sessions"
         ],
         "title": "UserOut",
+        "type": "object"
+      },
+      "WalletOut": {
+        "properties": {
+          "available_credits": {
+            "title": "Available Credits",
+            "type": "integer"
+          },
+          "balance_credits": {
+            "title": "Balance Credits",
+            "type": "integer"
+          },
+          "reserved_credits": {
+            "title": "Reserved Credits",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "balance_credits",
+          "reserved_credits",
+          "available_credits"
+        ],
+        "title": "WalletOut",
         "type": "object"
       }
     }
@@ -898,6 +1023,16 @@
             },
             "description": "Unauthorized"
           },
+          "402": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Payment Required"
+          },
           "403": {
             "content": {
               "application/json": {
@@ -1015,6 +1150,16 @@
               }
             },
             "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Payment Required"
           },
           "403": {
             "content": {
@@ -1162,6 +1307,103 @@
           }
         },
         "summary": "Get Video"
+      }
+    },
+    "/api/v1/wallet": {
+      "get": {
+        "operationId": "get_wallet_api_v1_wallet_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          }
+        },
+        "summary": "The caller's balance",
+        "tags": [
+          "wallet"
+        ]
+      }
+    },
+    "/api/v1/wallet/transactions": {
+      "get": {
+        "operationId": "list_transactions_api_v1_wallet_transactions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "The caller's ledger, newest first",
+        "tags": [
+          "wallet"
+        ]
       }
     },
     "/healthz": {

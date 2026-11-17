@@ -21,6 +21,7 @@ from .jobs.db import JobStore
 from .jobs.errors import register_job_error_handlers
 from .jobs.service import JobService
 from .providers import Provider, build_provider
+from .wallet import routes as wallet_routes
 
 configure_logging()
 
@@ -66,5 +67,6 @@ def create_app(
     app.add_middleware(RequestIdMiddleware)
     app.include_router(auth_routes.router)
     app.include_router(job_routes.router)
+    app.include_router(wallet_routes.router)
     app.include_router(health.router)
     return app

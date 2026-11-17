@@ -75,7 +75,11 @@ class Settings:
         default_factory=lambda: {"Punjabi": ("Punjabi (India)", "Charon")}
     )
     video_model: str = "fal-ai/kling-video/ai-avatar/v2/standard"
+    # fal.ai's charge to the company (internal; never sent to the browser).
     video_price_per_second_usd: float = 0.0562
+    # What the customer pays, in whole credits (D-014). Owner, 2026-11-17: D-006, D-038.
+    credits_per_second: int = 20
+    voice_price_credits: int = 10
 
     def __post_init__(self) -> None:
         if self.voice not in ("minimax", "kokoro"):

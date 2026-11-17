@@ -123,6 +123,10 @@ ROWS: list[Row] = [
     Row("GET", "/api/v1/jobs/{job_id}/video", "owner", 404, "not_available_yet", job="owner"),
     Row("GET", "/api/v1/jobs/{job_id}/video", "other", 404, "job_not_found", job="owner"),
     Row("GET", "/api/v1/jobs/{job_id}/video", "admin", 404, "job_not_found", job="owner"),
+    # M3 wallet (T-300 contract). Owner and other-user rows arrive with T-306, when the routes
+    # stop answering 501.
+    Row("GET", "/api/v1/wallet", "anonymous", 401, "not_authenticated"),
+    Row("GET", "/api/v1/wallet/transactions", "anonymous", 401, "not_authenticated"),
     # A job with no owner (made before accounts) is shown to nobody who is logged in (R-12).
     *[
         Row(method, path, actor, 404, "job_not_found", job="ownerless")

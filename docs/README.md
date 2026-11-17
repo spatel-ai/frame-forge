@@ -10,6 +10,7 @@ The parent [CLAUDE.md](../CLAUDE.md) governs the project. These documents apply 
 | [M1-PLAN.md](M1-PLAN.md) | The phases, steps and discovery findings for milestone 1 |
 | [M1.5-PLAN.md](M1.5-PLAN.md) | The build plan for the approved designs: phases, parallel work, discovery findings |
 | [M2-PLAN.md](M2-PLAN.md) | Accounts and login: owner answers, discovery, API contract, phases |
+| [M3-PLAN.md](M3-PLAN.md) | Wallet and charging: owner's prices, discovery, API contract, phases |
 | [UX.md](UX.md) | What must every screen look and behave like? The design system and the interaction standards |
 | [tracker/](tracker/) | What is the status right now? |
 | [../backend/CLAUDE.md](../backend/CLAUDE.md) | Rules for backend work |

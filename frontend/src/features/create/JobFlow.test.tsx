@@ -24,7 +24,7 @@ const config: Config = {
   max_script_chars: 100,
   max_image_mb: 1,
   languages: ['English'],
-  video_price_per_second_usd: 0.1,
+  credits_per_second: 20, voice_price_credits: 10,
 }
 
 const baseJob: Job = {
@@ -33,7 +33,7 @@ const baseJob: Job = {
   language: 'English',
   script: 'Hello',
   audio_duration_seconds: 4.2,
-  estimated_video_cost_usd: 0.42,
+  price_credits: 240, charged_credits: 10,
   audio_url: 'https://example.test/a.mp3',
   video_url: null,
   error: null,
@@ -382,7 +382,7 @@ describe('waiting and failure states', () => {
   })
 
   it('R-08: the review screen shows no price or cost', async () => {
-    vi.mocked(getJob).mockResolvedValue(withStatus('audio_ready', { estimated_video_cost_usd: 0.42 }))
+    vi.mocked(getJob).mockResolvedValue(withStatus('audio_ready', { price_credits: 240, charged_credits: 10 }))
     renderAt('/create/job-1')
     await screen.findByText('Listen to the voice')
     const text = screen.getByRole('heading', { level: 1 }).parentElement?.textContent ?? ''

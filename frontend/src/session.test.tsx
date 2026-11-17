@@ -29,7 +29,7 @@ const config: Config = {
   max_script_chars: 100,
   max_image_mb: 1,
   languages: ['English'],
-  video_price_per_second_usd: 0.1,
+  credits_per_second: 20, voice_price_credits: 10,
 }
 const job = (extra: Partial<Job> = {}): Job => ({
   id: 'job-1',
@@ -37,7 +37,7 @@ const job = (extra: Partial<Job> = {}): Job => ({
   language: 'English',
   script: 'Hello',
   audio_duration_seconds: null,
-  estimated_video_cost_usd: null,
+  price_credits: null, charged_credits: 0,
   audio_url: null,
   video_url: null,
   error: null,

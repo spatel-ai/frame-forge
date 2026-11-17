@@ -595,9 +595,9 @@
     "starts_after": "T-200",
     "task": "Agree the wallet API contract before building",
     "acceptance": "Routes, bodies and error codes written into the OpenAPI document",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "VERIFIED",
+    "evidence": "Wallet routes (GET /wallet, GET /wallet/transactions with paging) as login-protected 501 stubs in app/wallet; WalletOut, LedgerEntryOut (kinds incl. grant, voice_charge, voice_return), TransactionsOut; ConfigOut gains credits_per_second and voice_price_credits; JobOut gains price_credits and charged_credits; both USD cost fields removed; 402 insufficient_credits documented on create and approve. tests/test_wallet_contract.py; access-matrix rows for anonymous wallet access. backend 236, frontend 321 passed; frontend types regenerated."
   },
   {
     "id": "T-301",

@@ -293,6 +293,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/wallet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The caller's balance */
+        get: operations["get_wallet_api_v1_wallet_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/wallet/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The caller's ledger, newest first */
+        get: operations["list_transactions_api_v1_wallet_transactions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/healthz": {
         parameters: {
             query?: never;
@@ -332,6 +366,8 @@ export interface components {
         };
         /** ConfigOut */
         ConfigOut: {
+            /** Credits Per Second */
+            credits_per_second: number;
             /** Languages */
             languages: string[];
             /** Max Audio Seconds */
@@ -345,8 +381,8 @@ export interface components {
              * @enum {string}
              */
             provider: "mock" | "fal";
-            /** Video Price Per Second Usd */
-            video_price_per_second_usd: number;
+            /** Voice Price Credits */
+            voice_price_credits: number;
         };
         /** ErrorOut */
         ErrorOut: {
@@ -375,16 +411,18 @@ export interface components {
             audio_duration_seconds: number | null;
             /** Audio Url */
             audio_url: string | null;
+            /** Charged Credits */
+            charged_credits: number;
             /** Created At */
             created_at: string;
             /** Error */
             error: string | null;
-            /** Estimated Video Cost Usd */
-            estimated_video_cost_usd: number | null;
             /** Id */
             id: string;
             /** Language */
             language: string;
+            /** Price Credits */
+            price_credits: number | null;
             /** Script */
             script: string;
             /**
@@ -396,6 +434,26 @@ export interface components {
             updated_at: string;
             /** Video Url */
             video_url: string | null;
+        };
+        /** LedgerEntryOut */
+        LedgerEntryOut: {
+            /** Balance After */
+            balance_after: number;
+            /** Created At */
+            created_at: string;
+            /** Credits */
+            credits: number;
+            /** Id */
+            id: string;
+            /** Job Id */
+            job_id: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "purchase" | "grant" | "voice_charge" | "voice_return" | "hold" | "capture" | "release" | "adjustment" | "refund";
+            /** Reserved After */
+            reserved_after: number;
         };
         /** LoginIn */
         LoginIn: {
@@ -436,6 +494,17 @@ export interface components {
             /** Token */
             token: string;
         };
+        /** TransactionsOut */
+        TransactionsOut: {
+            /** Items */
+            items: components["schemas"]["LedgerEntryOut"][];
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Total */
+            total: number;
+        };
         /** UserOut */
         UserOut: {
             /** Active Sessions */
@@ -453,6 +522,15 @@ export interface components {
              * @enum {string}
              */
             role: "user" | "admin";
+        };
+        /** WalletOut */
+        WalletOut: {
+            /** Available Credits */
+            available_credits: number;
+            /** Balance Credits */
+            balance_credits: number;
+            /** Reserved Credits */
+            reserved_credits: number;
         };
     };
     responses: never;
@@ -930,6 +1008,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorOut"];
                 };
             };
+            /** @description Payment Required */
+            402: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
             /** @description Forbidden */
             403: {
                 headers: {
@@ -1021,6 +1108,15 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Payment Required */
+            402: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1142,6 +1238,76 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    get_wallet_api_v1_wallet_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WalletOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    list_transactions_api_v1_wallet_transactions_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionsOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -7,7 +7,8 @@
     "escalation": "Cost",
     "handling": "Needs your answer",
     "blocks": "M3",
-    "status": "Open"
+    "status": "Answered",
+    "answer": "20 credits per second of voice (600 credits for a 30-second video), D-006. Owner, 2026-11-17."
   },
   {
     "id": "Q-02",
@@ -78,7 +79,8 @@
     "escalation": "Cost",
     "handling": "Needs your answer",
     "blocks": "M3",
-    "status": "Open"
+    "status": "Answered",
+    "answer": "Charge 10 credits for each voice generation, kept if no video is made, returned if the voice itself fails (D-038). Owner, 2026-11-17."
   },
   {
     "id": "Q-09",
@@ -188,7 +190,8 @@
     "escalation": "Cost",
     "handling": "Needs your answer",
     "blocks": "M3",
-    "status": "Open"
+    "status": "Answered",
+    "answer": "The customer is charged (the hold is captured) when a paid request's outcome is unknown; the job is flagged. Clear failures still return credits (D-005). Owner, 2026-11-17."
   },
   {
     "id": "Q-20",

@@ -23,7 +23,7 @@ const config = (provider: string): Config => ({
   max_script_chars: 100,
   max_image_mb: 1,
   languages: ['English'],
-  video_price_per_second_usd: 0.1,
+  credits_per_second: 20, voice_price_credits: 10,
 }) as Config
 
 function renderAt(path: string, provider = 'mock') {

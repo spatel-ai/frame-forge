@@ -98,7 +98,8 @@ Breaking one of these can charge a customer wrongly or pay fal.ai twice.
    HLD §5.2. If you add a status change, decide its wallet effect in the same change.
 4. **Status changes stay compare-and-set.** `UPDATE … WHERE id = ? AND status = ?`, and act only
    if one row changed.
-5. **Never retry a paid call whose outcome is unknown.** Fail the job, release the hold, flag it.
+5. **Never retry a paid call whose outcome is unknown.** Fail the job, capture the hold (the owner's
+   decision on Q-19, D-005: the customer is charged), and flag it for staff. A clear failure releases.
 6. **Credits and paise are integers.** No `float` for money, in code, JSON or the database.
 7. **Credits are granted only by the one crediting routine**, after signature, `captured` status
    and amount have all been checked. Never from a value the browser sent.
