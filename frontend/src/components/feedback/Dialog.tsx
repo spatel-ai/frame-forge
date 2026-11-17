@@ -18,13 +18,12 @@ export interface DialogProps {
  * On very short screens (max-height 420px, e.g. a phone held sideways with the keyboard open) the
  * row is not pinned, so it does not cover half the screen; the fade then shows there is more below.
  *
- * Space for a pinned footer: the Dialog measures the pinned footer inside its body (DialogActions
- * is one) while it is `position: sticky`, and sets
- * `--dialog-footer-space` on the scroll container to its height. The scroll container uses it as
- * `scroll-padding-bottom`, so a focused field is scrolled clear of the footer instead of sitting
- * under it, and the Dialog re-checks the focused field when the body shrinks (keyboard opening).
- * A feature's own button bar pinned with `position: sticky; bottom: 0` is found the same way; mark
- * it `data-dialog-footer` if it is pinned some other way.
+ * Space for a pinned footer: the Dialog finds the pinned footer inside its body (DialogActions, or
+ * a feature's own bar with `position: sticky; bottom: 0`; mark a bar pinned another way with
+ * `data-dialog-footer`), sets `--dialog-footer-space` on the scroll container to its height plus a
+ * small gap (0 when nothing is pinned), and scrolls a focused field clear of it: on focus, and when
+ * the body shrinks (the on-screen keyboard opening, rotation). Features need no change to benefit;
+ * they may read the property (e.g. for padding) but should not set it.
  */
 export function DialogActions({ children }: { children: ReactNode }) {
   return <div className={styles.actions} data-dialog-footer="">{children}</div>
@@ -36,18 +35,15 @@ function hasMoreBelow(el: HTMLElement) {
 }
 
 /**
- * Height of the pinned footer(s) in the body, or 0 when none is pinned. A footer is an element
+ * The pinned footers in the body. A footer is an element
  * marked `data-dialog-footer`, or any element pinned with `position: sticky; bottom: 0` (so a
  * feature's own sticky button bar counts without changes).
  */
-function footerSpace(body: HTMLElement) {
-  let space = 0
-  for (const el of body.querySelectorAll<HTMLElement>('*')) {
+function findFooters(body: HTMLElement): HTMLElement[] {
+  return [...body.querySelectorAll<HTMLElement>('*')].filter((el) => {
     const style = getComputedStyle(el)
-    if (style.position !== 'sticky') continue
-    if (el.hasAttribute('data-dialog-footer') || style.bottom === '0px') space = Math.max(space, el.offsetHeight)
-  }
-  return space
+    return style.position === 'sticky' && (el.hasAttribute('data-dialog-footer') || style.bottom === '0px')
+  })
 }
 
 /** Extra room kept between a focused field and the pinned footer, in px. */
@@ -102,19 +98,25 @@ export function Dialog({ open, onClose, title, children, dismissable = true }: D
     // Keep the scroll padding equal to the pinned footer, and when the body shrinks (the on-screen
     // keyboard opening, rotation) bring the focused field back above the footer.
     let space = 0
+    let footers: HTMLElement[] = []
     // Engines differ in whether focus scrolling honours scroll-padding, so check it ourselves too.
     const keepFocusedClear = () => {
       const focused = document.activeElement
       if (!space || !(focused instanceof HTMLElement) || !body.contains(focused)) return
-      if (getComputedStyle(focused).position === 'sticky' || focused.closest('[data-dialog-footer]')) return
+      // A button in the footer is always in view; moving the body for it would jump the content.
+      if (footers.some((footer) => footer.contains(focused))) return
+      // A visually hidden control (the file input of a drop zone) is shown by its label.
+      const labels = focused instanceof HTMLInputElement ? focused.labels : null
+      const shown = focused.offsetHeight <= 2 && labels && labels.length > 0 ? labels[labels.length - 1] : focused
       const box = body.getBoundingClientRect()
-      const field = focused.getBoundingClientRect()
+      const field = shown.getBoundingClientRect()
       // Bring its bottom above the footer, but never push its top out of view (a tall textarea).
       const overlap = Math.min(field.bottom - (box.bottom - space - FOOTER_GAP), field.top - box.top)
       if (overlap > 0) body.scrollTop += overlap
     }
     const relayout = () => {
-      space = footerSpace(body)
+      footers = findFooters(body)
+      space = footers.reduce((max, footer) => Math.max(max, footer.offsetHeight), 0)
       body.style.setProperty('--dialog-footer-space', `${space ? space + FOOTER_GAP : 0}px`)
       keepFocusedClear()
       update()
