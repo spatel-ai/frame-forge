@@ -46,6 +46,6 @@
   margin-inline: calc(-1 * var(--space-1)) calc(-1 * (var(--space-1) + var(--scrollbar, 0px)));
 }
 .capped[data-more-below] fieldset > div {
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--space-6)), transparent);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - var(--space-6)), transparent);
+  -webkit-mask-image: linear-gradient(to bottom, var(--color-ink) calc(100% - var(--space-6)), transparent);
+  mask-image: linear-gradient(to bottom, var(--color-ink) calc(100% - var(--space-6)), transparent);
 }
