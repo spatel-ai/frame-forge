@@ -685,6 +685,72 @@ def test_ledger_failure_rolls_the_status_change_back(charging, monkeypatch):
     asyncio.run(run())
 
 
+@pytest.mark.parametrize(
+    "row, provider_cls, poll, broken, stays",
+    [
+        ("voice fails", VoiceRefused, None, "voice_return", db.AUDIO_GENERATING),
+        ("upload fails", FlakyUpload, None, "release", db.VIDEO_SUBMITTING),
+        ("submission refused", RefusedSubmit, None, "release", db.VIDEO_SUBMITTING),
+        ("submission unknown", UnknownSubmit, None, "capture", db.VIDEO_SUBMITTING),
+        ("video delivered", ScriptedPolls, DONE, "capture", db.VIDEO_GENERATING),
+        ("video failed", ScriptedPolls, VideoPoll("failed", error="x"), "release", None),
+        ("video timeout", ScriptedPolls, VideoPoll("pending"), "release", None),
+        ("restart mid-submission", MockProvider, None, "capture", db.VIDEO_SUBMITTING),
+    ],
+    ids=[
+        "voice-fails",
+        "upload-fails",
+        "submission-refused",
+        "submission-unknown",
+        "video-delivered",
+        "video-failed",
+        "video-timeout",
+        "restart-mid-submission",
+    ],
+)
+def test_each_row_rolls_back_when_its_ledger_step_fails(
+    charging, settings, monkeypatch, row, provider_cls, poll, broken, stays
+):
+    """R-10, R-56: for every §5.2 row with a wallet action, a failure of that action rolls the
+    status change back too: the job keeps its previous status and no entry is written. This
+    shows each row's status and ledger entry are one transaction."""
+    stays = stays or db.VIDEO_GENERATING
+    cfg = replace(settings, video_timeout_seconds=-1) if row == "video timeout" else settings
+    provider = provider_cls(cfg, poll) if poll is not None else provider_cls(cfg)
+
+    def fail(*args, **kwargs):
+        raise RuntimeError(f"{broken} unavailable")
+
+    monkeypatch.setattr(ledger, broken, fail)
+
+    async def run():
+        c = charging(credits=100, provider=provider, cfg=cfg)
+        job = c.service.create_job(c.owner, png(), SCRIPT, "English")
+        job_id = job["id"]
+        await c.drain()  # background failures stay in their task; drain does not raise
+        if stays != db.AUDIO_GENERATING:
+            if row == "restart mid-submission":
+                c.service.approve_audio(c.owner, job_id)
+                for task in list(c.service._tasks):
+                    task.cancel()
+                await c.drain()
+                with pytest.raises(RuntimeError):
+                    c.service.recover_interrupted()
+            else:
+                c.service.approve_audio(c.owner, job_id)
+                await c.drain()
+                if stays == db.VIDEO_GENERATING:
+                    with pytest.raises(RuntimeError):
+                        await c.service.poll_once()
+        before = without_grants(c.entries())
+        job = c.job(job_id)
+        assert (job["status"], job["needs_review"]) == (stays, False)
+        assert not [e for e in before if e[0] == broken]
+        assert c.invariant()
+
+    asyncio.run(run())
+
+
 # ---- jobs without an owner, and the price ---------------------------------------------------
 
 
