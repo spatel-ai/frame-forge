@@ -10,7 +10,26 @@ a.pill:active { background: var(--color-primary-soft); }
 a.pill:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
 .low { background: var(--color-warning-soft); color: var(--color-warning); border-color: var(--color-warning); }
 .coin { display: inline-flex; color: var(--color-credit); }
-.amount { font-variant-numeric: tabular-nums; }
+.pill { max-width: 100%; min-width: 0; }
+.amount { font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.full::before, .short::before, .word::before { content: attr(data-v); white-space: pre; }
+.short { display: none; }
+/* The word goes first, then (very large balances on narrow screens) the figure is shortened. The exact
+   number stays in the accessible name and the title. */
+@media (max-width: 479px) {
+  .word { display: none; }
+}
+@media (max-width: 1023px) {
+  .huge .word { display: none; }
+}
+@media (max-width: 399px) {
+  .long .full { display: none; }
+  .long .short { display: inline; }
+}
+@media (max-width: 479px) {
+  .huge .full { display: none; }
+  .huge .short { display: inline; }
+}
 .srOnly {
   position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
   clip-path: inset(50%); white-space: nowrap; border: 0;

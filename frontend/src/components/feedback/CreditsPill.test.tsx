@@ -11,7 +11,7 @@ describe('CreditsPill', () => {
 
   it('uses tabular figures', () => {
     render(<CreditsPill balance={500} />)
-    expect(screen.getByText('500 credits').className).toMatch(/amount/)
+    expect(screen.getByText('500 credits').parentElement?.className).toMatch(/amount/)
   })
 
   it('shows a labelled skeleton while loading, no balance', () => {
