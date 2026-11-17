@@ -1139,3 +1139,19 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 **Trade-off:** One more agent per phase and its cost. The lead no longer sees every conflict first-hand, so it must read the merged diff, not the merger's summary.
 
 **Validation:** After every merge the frontend check and the backend mock tests pass, and the tracker cross-check passes; the lead's review of the merged diff is recorded in the milestone report.
+
+---
+
+## D-071 — Browser layout checks use Playwright as a development dependency
+
+**Status:** Confirmed (owner approved the M3.5 plan, 2026-11-17) · 2026-11-17 · Area: frontend
+
+**Choice:** `@playwright/test` 1.65.1 pinned as a dev dependency; `npm run e2e` runs the device matrix against a mock-mode backend started with `npm run e2e:backend -- up`; it never starts servers itself and aborts unless the backend reports the mock provider.
+
+**Alternatives:** Scratchpad-only Playwright scripts as in earlier milestones; visual snapshot testing service; no browser checks.
+
+**Why:** Unit tests run in jsdom with no layout, so nothing in the repository could detect a responsive fault (D-069).
+
+**Trade-off:** One more dev dependency and about 7 minutes per full run; emulated engines are not real devices.
+
+**Validation:** The suite's mock-mode guard was shown to abort on a non-mock backend; the full matrix reports per-check fault counts.

@@ -768,5 +768,16 @@
     "trade_off": "One more agent per phase and its cost. The lead no longer sees every conflict first-hand, so it must read the merged diff, not the merger's summary.",
     "validation": "After every merge the frontend check and the backend mock tests pass, and the tracker cross-check passes; the lead's review of the merged diff is recorded in the milestone report.",
     "date": "2026-11-17"
+  },
+  {
+    "id": "D-071",
+    "decision": "Browser layout checks use Playwright as a development dependency",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Frontend",
+    "choice": "`@playwright/test` 1.65.1 pinned as a dev dependency; `npm run e2e` runs the device matrix against a mock-mode backend started with `npm run e2e:backend -- up`; it never starts servers itself and aborts unless the backend reports the mock provider.",
+    "trade_off": "One more dev dependency and about 7 minutes per full run; emulated engines are not real devices.",
+    "validation": "The suite's mock-mode guard was shown to abort on a non-mock backend; the full matrix reports per-check fault counts.",
+    "date": "2026-11-17"
   }
 ]

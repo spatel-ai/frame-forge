@@ -67,6 +67,8 @@ npm run dev      # http://localhost:5173, proxies /api to the backend on :8000
 npm run check    # lint + type check + tests (mocked API, free)
 npm run build    # type check + production build
 npm run gen:api  # regenerate src/api/openapi.json and src/api/schema.d.ts from the backend
+npm run e2e      # browser layout checks over the device matrix (mock backend; see e2e/README.md)
+npm run e2e:backend -- up   # start and seed the mock test backend on :8010
 ```
 
 Run `npm run gen:api` after any backend change to a route or response, and commit both files. The
