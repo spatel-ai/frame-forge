@@ -71,9 +71,3 @@
   .pick { padding-inline: var(--space-2); }
 }
 
-/* A sideways phone at 768 px or wider gets the centred dialog, whose 480 px width is too narrow for two columns
-   in about 260 px of height: while this form is showing, the dialog widens to 720 px (both columns as wide as the
-   phone sheet's) so the field, the full summary and Pay fit without scrolling. */
-@media (max-height: 500px) and (min-width: 768px) {
-  dialog:has(form.stack) { width: min(calc(100vw - 2 * var(--space-4)), 720px); }
-}

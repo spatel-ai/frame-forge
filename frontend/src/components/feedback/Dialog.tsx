@@ -9,6 +9,11 @@ export interface DialogProps {
   children: ReactNode
   /** Backdrop click closes the dialog. Default true. */
   dismissable?: boolean
+  /**
+   * On a short landscape screen (at most 500 px tall, at least 768 px wide) the centred dialog widens
+   * from 480 px to --dialog-width-wide, for content laid out in two columns there. Default false.
+   */
+  wideWhenShort?: boolean
 }
 
 /**
@@ -67,7 +72,7 @@ const recordPress = (event: PointerEvent) => {
   if (event.isTrusted) lastPagePress = { x: event.clientX, y: event.clientY, time: performance.now() }
 }
 
-export function Dialog({ open, onClose, title, children, dismissable = true }: DialogProps) {
+export function Dialog({ open, onClose, title, children, dismissable = true, wideWhenShort = false }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const opener = useRef<HTMLElement | null>(null)
@@ -182,6 +187,7 @@ export function Dialog({ open, onClose, title, children, dismissable = true }: D
     <dialog
       ref={ref}
       className={styles.dialog}
+      data-wide-when-short={wideWhenShort ? '' : undefined}
       aria-labelledby={titleId}
       onPointerDownCapture={(event) => {
         const inGuard = performance.now() - openedAt.current < OPEN_GUARD_MS

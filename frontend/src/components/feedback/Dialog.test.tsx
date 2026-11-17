@@ -37,6 +37,13 @@ describe('Dialog', () => {
     expect(dialog.contains(document.activeElement)).toBe(true)
   })
 
+  it('marks the dialog for the wide short-screen width only when wideWhenShort is set', () => {
+    const { rerender } = render(<Dialog open={false} onClose={() => {}} title="T">x</Dialog>)
+    expect(getDialog().hasAttribute('data-wide-when-short')).toBe(false)
+    rerender(<Dialog open={false} onClose={() => {}} title="T" wideWhenShort>x</Dialog>)
+    expect(getDialog().hasAttribute('data-wide-when-short')).toBe(true)
+  })
+
   it('is closed and empty until opened', () => {
     render(<Harness />)
     expect(getDialog().hasAttribute('open')).toBe(false)

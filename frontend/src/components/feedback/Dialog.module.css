@@ -85,6 +85,11 @@
   .panel { padding: var(--space-5); }
   .close { margin-inline-end: calc(-1 * var(--space-2)); }
 }
+/* Opt-in (wideWhenShort): a sideways phone or tablet at 768 px or wider has about 260 px of height, so
+   a two-column body needs more than 480 px of width. */
+@media (max-height: 500px) and (min-width: 768px) {
+  .dialog[data-wide-when-short] { width: min(calc(100vw - 2 * var(--space-4)), var(--dialog-width-wide)); }
+}
 @media (prefers-reduced-motion: reduce) {
   .dialog[open] { animation: none; }
   .fade { transition: none; }

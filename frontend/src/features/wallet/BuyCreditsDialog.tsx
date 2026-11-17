@@ -344,7 +344,7 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
   ) : null
 
   return (
-    <Dialog open={open && stage.kind !== 'checkout'} onClose={close} title={title} dismissable={stage.kind === 'form'}>
+    <Dialog open={open && stage.kind !== 'checkout'} onClose={close} title={title} dismissable={stage.kind === 'form'} wideWhenShort={stage.kind === 'form'}>
       {stage.kind === 'form' && (
         <form className={styles.stack} onSubmit={(e) => void pay(e)} noValidate>
           <div className={styles.choose}>

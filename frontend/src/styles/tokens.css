@@ -52,6 +52,9 @@
   --radius-dialog: 16px;
   --radius-pill: 999px;
 
+  /* Dialog widths */
+  --dialog-width-wide: 720px;  /* opt-in wide dialog on short landscape screens (Dialog wideWhenShort) */
+
   /* Misc */
   --target-min: 44px;
   --line-width: 1px;
