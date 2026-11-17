@@ -565,9 +565,9 @@
     "starts_after": "T-210, T-154",
     "task": "Session bootstrap, guarded routes, handling of 401",
     "acceptance": "Expired session returns the user to log in, then back",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent building in a worktree (T-206 backend tests and T-211 frontend run in parallel)."
+    "status": "Done",
+    "verification": "IMPLEMENTED, UNVERIFIED",
+    "evidence": "Auth screens mounted outside the shell; useMe (401 means logged out, refetch on focus); RequireAuth guard with skeleton and redirect to /login?next=; global 401 handler clears the cache and stored job id, no loop on /login; name in the top bar; confirm-email notice on all create screens with resend (busy, sent, 429) and Generate disabled; 403 email_not_verified refetches me. 17 tests; npm run check 302 passed; build passes. Not yet run against the real backend or seen in a browser."
   },
   {
     "id": "T-212",
