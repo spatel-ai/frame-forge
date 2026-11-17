@@ -159,6 +159,42 @@ def test_verify_webhook_and_reconcile_at_once_credit_once(service, user):
     assert_one_purchase(service, user, payment.id)
 
 
+def test_two_captured_payments_on_one_order_credit_once(service, user):
+    """R-02 (race): two DIFFERENT captured payments are reported for one order at the same
+    moment (Razorpay permits none after the first, facts §A, but the routine must not rely on
+    it). The ledger key differs per payment, so only the order row lock and the paid check stop
+    a second credit: exactly one purchase entry, for whichever payment won."""
+    order, first, first_sig = paid_order(service, user)
+    gateway: MockGateway = service.gateway  # type: ignore[assignment]
+    second = gateway.complete(order.razorpay_order_id, order.amount_paise, "captured")
+    second_sig = hmac.new(
+        MOCK_CHECKOUT_SECRET.encode(),
+        f"{order.razorpay_order_id}|{second.id}".encode(),
+        hashlib.sha256,
+    ).hexdigest()
+    bodies = [signed_event("payment.captured", p) for p in (first, second)]
+    n = 12
+
+    def work(i: int):
+        kind = i % 4
+        if kind == 0:
+            return service.verify(user, order.id, first.id, first_sig)[0].status
+        if kind == 1:
+            return service.verify(user, order.id, second.id, second_sig)[0].status
+        body, sig = bodies[kind - 2]
+        return service.handle_webhook(body, sig, f"evt_{i}")
+
+    results = run_together(n, work)
+    unexpected(results)
+    rows = purchase_rows(service)
+    assert len(rows) == 1, rows
+    assert rows[0][2] in (first.id, second.id)
+    with service.engine.connect() as conn:
+        paid_by = conn.execute(text("SELECT razorpay_payment_id FROM payment_orders")).scalar_one()
+    assert paid_by == rows[0][2]
+    check_invariants(service.engine)
+
+
 def test_many_verifies_at_once_credit_once(service, user):
     """R-02 (repeat + race): the same verify sent twenty times at once credits once."""
     order, payment, signature = paid_order(service, user)

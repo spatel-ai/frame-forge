@@ -274,8 +274,17 @@ class PaymentService:
             with self.engine.begin() as conn:
                 result = credit_order(conn, payment, order_id=order.id)
             if result.outcome not in (Outcome.CREDITED, Outcome.ALREADY_PAID):
-                if payment.status == "failed":
-                    message = "The payment did not go through. No money was taken; try again."
+                if result.outcome is Outcome.MISMATCH:
+                    # Logged for staff; no promise that credits will appear on their own.
+                    message = (
+                        "We could not match this payment to your order, so no credits were "
+                        "added. Please contact us and we will sort it out."
+                    )
+                elif payment.status == "failed":
+                    message = (
+                        "The payment did not go through and no credits were added. If money "
+                        "left your account, your bank normally returns it. You can try again."
+                    )
                 else:
                     message = (
                         "Your payment is not confirmed yet. If money left your account, your "
@@ -330,7 +339,8 @@ class PaymentService:
             return "ignored"
         # Facts §G: payload.payment.entity for payment.* and order.paid. Status is read from the
         # entity's `status`, never its `captured` boolean.
-        entity = (data.get("payload") or {}).get("payment", {})
+        payload = data.get("payload")
+        entity = payload.get("payment") if isinstance(payload, dict) else None
         entity = entity.get("entity") if isinstance(entity, dict) else None
         try:
             payment = parse_payment(entity)

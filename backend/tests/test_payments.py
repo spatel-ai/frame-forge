@@ -309,7 +309,8 @@ def test_verify_refuses_a_bad_signature_and_credits_nothing(client):
             client, order["order_id"], {"razorpay_payment_id": pid, "razorpay_signature": sig}
         )
         assert r.status_code == 400 and r.json()["code"] == "payment_signature_invalid", r.text
-    # A lone surrogate, sent as a JSON escape (valid JSON, not encodable): 400, never 500.
+    # A lone surrogate, sent as a JSON escape (valid JSON, not encodable): refused by input
+    # validation before the signature check (whose own guard is defence in depth), never a 500.
     raw = '{"order_id": "%s", "razorpay_payment_id": "%s", "razorpay_signature": "\\ud800"}' % (
         order["order_id"],
         pid,
@@ -317,7 +318,8 @@ def test_verify_refuses_a_bad_signature_and_credits_nothing(client):
     r = client.post(
         "/api/v1/payments/verify", content=raw, headers={"Content-Type": "application/json"}
     )
-    assert r.status_code in (400, 422) and r.status_code != 500, r.text
+    assert r.status_code == 422 and r.json()["code"] == "validation_error", r.text
+    assert "razorpay_signature" in r.json()["fields"]
     # A valid signature for another order's id does not verify this order.
     other = buy(client)
     other_handler = pay(client, other["order_id"])
@@ -351,11 +353,33 @@ def test_verify_refuses_an_amount_without_the_fee(client):
     gateway._payments[pid] = replace(gateway._payments[pid], amount=order["price_paise"])
     r = verify(client, order["order_id"], handler)
     assert r.status_code == 409 and r.json()["code"] == "payment_not_captured", r.text
+    # No promise that credits will appear by themselves: the mismatch needs staff.
+    assert "contact us" in r.json()["detail"] and "will appear" not in r.json()["detail"]
     body = event_body(
         "payment.captured", pid, order["razorpay_order_id"], order["price_paise"], "captured"
     )
     assert webhook(client, body).status_code == 200
     assert purchases(client) == [] and order_status(client, order["order_id"]) == "created"
+
+
+def test_mock_secret_is_refused_in_razorpay_mode(client):
+    """R-03, D-042: with the real gateway (its key secret is not the mock one), a handler signed
+    with the public mock secret is 400 payment_signature_invalid, before any Razorpay call."""
+    order = buy(client)
+    handler = pay(client, order["order_id"])
+    calls: list[httpx.Request] = []
+
+    def record(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        return httpx.Response(500)
+
+    payments = client.app.state.payments  # type: ignore[attr-defined]
+    payments.gateway = RazorpayGateway(
+        "rzp_test_x", "a-real-key-secret", transport=httpx.MockTransport(record)
+    )
+    r = verify(client, order["order_id"], handler)
+    assert r.status_code == 400 and r.json()["code"] == "payment_signature_invalid", r.text
+    assert calls == [] and purchases(client) == []
 
 
 def test_verify_before_capture_is_409(client):
@@ -421,7 +445,7 @@ def test_non_integer_credits_are_refused(client):
 
 
 def test_quote_equals_the_order_amounts(client):
-    """D-060: the quote the browser shows equals the order's amounts; the Razorpay order is
+    """R-02, D-060: the quote the browser shows equals the order's amounts; the Razorpay order is
     created for the total; credits stay the credits."""
     q = client.get("/api/v1/payments/quote", params={"credits": 2500}).json()
     assert q == {
@@ -440,8 +464,9 @@ def test_quote_equals_the_order_amounts(client):
 
 
 def test_fee_rounds_up_to_whole_paise():
-    """D-060, D-014: 1,001 credits at 1.99% with 18% GST on the fee: fee ceil(1991.99) = 1992,
-    GST ceil(358.56) = 359; total 100100 + 1992 + 359. Exact amounts are not rounded."""
+    """R-02, D-060, D-014: 1,001 credits at 1.99% with 18% GST on the fee: fee
+    ceil(1991.99) = 1992, GST ceil(358.56) = 359; total 100100 + 1992 + 359. Exact amounts are
+    not rounded."""
     q = quote(1001, 199, 1800)
     assert (q.price_paise, q.fee_paise, q.fee_gst_paise, q.amount_paise) == (
         100_100,
@@ -473,7 +498,7 @@ def test_purchase_with_a_rounded_fee_credits_the_credits(settings, make_user):
 
 
 def test_config_shows_the_fee_settings(client):
-    """D-060: config carries the fee rates for display."""
+    """R-02, D-060: config carries the fee rates for display."""
     body = client.get("/api/v1/config").json()
     assert (body["payment_fee_bps"], body["payment_fee_gst_bps"]) == (200, 0)
     assert body["min_purchase_credits"] == 1000
@@ -579,6 +604,8 @@ def test_signed_webhook_we_ignore_is_still_acknowledged(client):
         json.dumps({"event": "refund.created", "payload": {}}).encode(),
         event_body("payment.captured", "pay_unknown", "order_unknown", 102000, "captured"),
         json.dumps({"event": "payment.captured", "payload": {"payment": {"entity": {}}}}).encode(),
+        json.dumps({"event": "payment.captured", "payload": [1]}).encode(),
+        json.dumps({"event": "order.paid", "payload": {"payment": "x"}}).encode(),
         b"[1, 2, 3]",
         b"not json at all",
     ]
@@ -650,7 +677,7 @@ def test_reconcile_survives_a_gateway_error(client):
 
 
 def test_reconcile_cli_runs(monkeypatch, database_url, capsys):
-    """T-405: `python -m app.payments.cli reconcile` runs once in mock mode and reports."""
+    """R-02, T-405: `python -m app.payments.cli reconcile` runs once in mock mode and reports."""
     from app.payments import cli
 
     monkeypatch.setenv("DATABASE_URL", database_url)
@@ -741,7 +768,7 @@ def test_razorpay_gateway_fetches_and_refuses_bad_answers():
 
 
 def test_build_gateway_follows_the_setting():
-    """D-042: mock mode builds the MockGateway (no network); razorpay mode the real one."""
+    """R-03, D-042: mock mode builds the MockGateway (no network); razorpay mode the real one."""
     assert isinstance(gw.build_gateway(replace(Settings(), payments="mock")), MockGateway)
     live = replace(
         Settings(),

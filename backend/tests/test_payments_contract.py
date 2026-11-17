@@ -180,7 +180,7 @@ def test_config_tells_the_browser_the_payment_mode_and_limits():
 
 
 def test_fee_settings_default_and_validation(monkeypatch):
-    """D-060: the fee defaults to 200 bps (2%) and GST on it to 0; both must be whole numbers
+    """R-02, D-060: the fee defaults to 200 bps (2%) and GST on it to 0; both must be whole numbers
     of 0 or more."""
     monkeypatch.delenv("AVATAR_PAYMENT_FEE_BPS", raising=False)
     monkeypatch.delenv("AVATAR_PAYMENT_FEE_GST_BPS", raising=False)
