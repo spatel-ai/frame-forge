@@ -76,6 +76,14 @@
             "title": "Min Purchase Credits",
             "type": "integer"
           },
+          "payment_fee_bps": {
+            "title": "Payment Fee Bps",
+            "type": "integer"
+          },
+          "payment_fee_gst_bps": {
+            "title": "Payment Fee Gst Bps",
+            "type": "integer"
+          },
           "payments": {
             "enum": [
               "mock",
@@ -131,6 +139,8 @@
           "razorpay_key_id",
           "min_purchase_credits",
           "max_purchase_credits",
+          "payment_fee_bps",
+          "payment_fee_gst_bps",
           "support_email"
         ],
         "title": "ConfigOut",
@@ -458,6 +468,14 @@
             "title": "Credits",
             "type": "integer"
           },
+          "fee_gst_paise": {
+            "title": "Fee Gst Paise",
+            "type": "integer"
+          },
+          "fee_paise": {
+            "title": "Fee Paise",
+            "type": "integer"
+          },
           "key_id": {
             "title": "Key Id",
             "type": "string"
@@ -465,6 +483,10 @@
           "order_id": {
             "title": "Order Id",
             "type": "string"
+          },
+          "price_paise": {
+            "title": "Price Paise",
+            "type": "integer"
           },
           "razorpay_order_id": {
             "title": "Razorpay Order Id",
@@ -484,6 +506,9 @@
           "order_id",
           "razorpay_order_id",
           "amount_paise",
+          "price_paise",
+          "fee_paise",
+          "fee_gst_paise",
           "credits",
           "key_id",
           "status"
@@ -522,6 +547,40 @@
           "created_at"
         ],
         "title": "OrderStatusOut",
+        "type": "object"
+      },
+      "QuoteOut": {
+        "description": "What a purchase of `credits` costs (D-060): the customer pays the payment fee, and GST on\nthat fee when the owner turns it on. All in paise; the browser shows these, never computes\nthem. amount_paise = price_paise + fee_paise + fee_gst_paise.",
+        "properties": {
+          "amount_paise": {
+            "title": "Amount Paise",
+            "type": "integer"
+          },
+          "credits": {
+            "title": "Credits",
+            "type": "integer"
+          },
+          "fee_gst_paise": {
+            "title": "Fee Gst Paise",
+            "type": "integer"
+          },
+          "fee_paise": {
+            "title": "Fee Paise",
+            "type": "integer"
+          },
+          "price_paise": {
+            "title": "Price Paise",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "credits",
+          "price_paise",
+          "fee_paise",
+          "fee_gst_paise",
+          "amount_paise"
+        ],
+        "title": "QuoteOut",
         "type": "object"
       },
       "ResetCheckOut": {
@@ -1740,6 +1799,58 @@
           }
         },
         "summary": "One of the caller's orders, for the 'still confirming' screen",
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/api/v1/payments/quote": {
+      "get": {
+        "operationId": "get_quote_api_v1_payments_quote_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "credits",
+            "required": true,
+            "schema": {
+              "title": "Credits",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "What buying a number of credits costs, with the payment fee (D-060)",
         "tags": [
           "payments"
         ]

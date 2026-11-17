@@ -127,6 +127,10 @@ class Settings:
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, int) or value < 0:
                 raise ValueError(f"{name} must be a whole number of basis points, 0 or more.")
+        # D-042: fail closed. The mock gateway signs with a public secret and moves no money,
+        # so production never runs it.
+        if self.environment == "production" and self.payments == "mock":
+            raise ValueError("AVATAR_PAYMENTS=mock is not allowed in production.")
         if self.payments == "razorpay":
             missing = [
                 name

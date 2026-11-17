@@ -379,7 +379,16 @@ def test_log_sender_is_the_only_place_that_logs_the_address(caplog):
 
 def test_production_without_provider_refuses_to_start(tmp_path, database_url):
     """R-01: production must not silently drop confirmation emails."""
-    settings = replace(Settings(), environment="production", database_url=database_url)
+    # Placeholder Razorpay values: production refuses mock payments (D-042). No call is made.
+    settings = replace(
+        Settings(),
+        environment="production",
+        database_url=database_url,
+        payments="razorpay",
+        razorpay_key_id="rzp_live_placeholder",
+        razorpay_key_secret="placeholder",
+        razorpay_webhook_secret="placeholder",
+    )
     with pytest.raises(RuntimeError, match="no email provider"):
         build_email_sender(settings)
     with pytest.raises(RuntimeError, match="no email provider"):

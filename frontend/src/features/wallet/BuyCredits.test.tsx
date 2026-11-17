@@ -37,12 +37,12 @@ const me = { id: 'u1', name: 'Asha Verma', email: 'asha@example.com', email_veri
 const config = (payments: 'mock' | 'razorpay'): Config =>
   ({
     provider: 'mock', payments, razorpay_key_id: payments === 'mock' ? null : 'rzp_test_key',
-    min_purchase_credits: 500, max_purchase_credits: 10000, max_audio_seconds: 60, max_script_chars: 100,
+    payment_fee_bps: 0, payment_fee_gst_bps: 0, min_purchase_credits: 500, max_purchase_credits: 10000, max_audio_seconds: 60, max_script_chars: 100,
     max_image_mb: 1, languages: ['English'], credits_per_second: 20,
   }) as Config
 const wallet = (available: number): Wallet => ({ available_credits: available, reserved_credits: 0, balance_credits: available })
 const order = (credits: number): PaymentOrder => ({
-  order_id: 'o1', razorpay_order_id: 'order_rz1', amount_paise: credits * 100, credits, key_id: 'rzp_test_key', status: 'created',
+  order_id: 'o1', razorpay_order_id: 'order_rz1', amount_paise: credits * 100, price_paise: credits * 100, fee_paise: 0, fee_gst_paise: 0, credits, key_id: 'rzp_test_key', status: 'created',
 })
 const verified = (credits: number, balance: number): PaymentVerified => ({
   order_id: 'o1', status: 'paid', credits, wallet: wallet(balance),

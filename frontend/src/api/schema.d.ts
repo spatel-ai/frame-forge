@@ -344,6 +344,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/payments/quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What buying a number of credits costs, with the payment fee (D-060) */
+        get: operations["get_quote_api_v1_payments_quote_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/payments/verify": {
         parameters: {
             query?: never;
@@ -465,6 +482,10 @@ export interface components {
             max_script_chars: number;
             /** Min Purchase Credits */
             min_purchase_credits: number;
+            /** Payment Fee Bps */
+            payment_fee_bps: number;
+            /** Payment Fee Gst Bps */
+            payment_fee_gst_bps: number;
             /**
              * Payments
              * @enum {string}
@@ -595,10 +616,16 @@ export interface components {
             amount_paise: number;
             /** Credits */
             credits: number;
+            /** Fee Gst Paise */
+            fee_gst_paise: number;
+            /** Fee Paise */
+            fee_paise: number;
             /** Key Id */
             key_id: string;
             /** Order Id */
             order_id: string;
+            /** Price Paise */
+            price_paise: number;
             /** Razorpay Order Id */
             razorpay_order_id: string;
             /**
@@ -620,6 +647,24 @@ export interface components {
              * @enum {string}
              */
             status: "created" | "paid" | "failed";
+        };
+        /**
+         * QuoteOut
+         * @description What a purchase of `credits` costs (D-060): the customer pays the payment fee, and GST on
+         *     that fee when the owner turns it on. All in paise; the browser shows these, never computes
+         *     them. amount_paise = price_paise + fee_paise + fee_gst_paise.
+         */
+        QuoteOut: {
+            /** Amount Paise */
+            amount_paise: number;
+            /** Credits */
+            credits: number;
+            /** Fee Gst Paise */
+            fee_gst_paise: number;
+            /** Fee Paise */
+            fee_paise: number;
+            /** Price Paise */
+            price_paise: number;
         };
         /**
          * ResetCheckOut
@@ -1579,6 +1624,46 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    get_quote_api_v1_payments_quote_get: {
+        parameters: {
+            query: {
+                credits: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

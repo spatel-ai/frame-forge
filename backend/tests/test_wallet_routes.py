@@ -128,10 +128,22 @@ def test_anonymous_gets_401(client):
 @pytest.fixture
 def run_cli(app, database_url, monkeypatch, capsys):
     def run(*argv: str, environment: str = "development"):
+        # Production refuses mock payments (D-042), so it gets placeholder Razorpay values; the
+        # grant command makes no payment call.
+        live = (
+            {
+                "payments": "razorpay",
+                "razorpay_key_id": "rzp_live_placeholder",
+                "razorpay_key_secret": "placeholder",
+                "razorpay_webhook_secret": "placeholder",
+            }
+            if environment == "production"
+            else {}
+        )
         monkeypatch.setattr(
             cli,
             "Settings",
-            lambda: replace(Settings(), database_url=database_url, environment=environment),
+            lambda: replace(Settings(), database_url=database_url, environment=environment, **live),
         )
         try:
             code = cli.main(list(argv))

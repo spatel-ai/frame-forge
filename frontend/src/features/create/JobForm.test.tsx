@@ -20,7 +20,8 @@ const config: Config = {
   max_image_mb: 1,
   languages: ['English', 'Hindi'],
   credits_per_second: 20, voice_price_credits: 10,
-  payments: 'mock', razorpay_key_id: null, min_purchase_credits: 500, max_purchase_credits: 10000, support_email: null,
+  payments: 'mock', razorpay_key_id: null, min_purchase_credits: 1000, max_purchase_credits: 10000,
+  payment_fee_bps: 200, payment_fee_gst_bps: 0, support_email: null,
 }
 
 const job: Job = {

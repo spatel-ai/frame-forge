@@ -233,3 +233,9 @@ def test_support_email_comes_from_the_setting(tmp_path, database_url):
             create_app(settings, start_poller=False), base_url="https://testserver"
         ) as c:
             assert c.get("/api/v1/config").json()["support_email"] == expected
+
+
+def test_mock_payments_are_refused_in_production():
+    """D-042: production never runs the mock gateway, whose checkout secret is public."""
+    with pytest.raises(ValueError, match="not allowed in production"):
+        replace(Settings(), environment="production", payments="mock")
