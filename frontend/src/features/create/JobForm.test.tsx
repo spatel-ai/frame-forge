@@ -167,7 +167,7 @@ describe('JobForm client validation', () => {
     expect(screen.getAllByRole('alert')[0].textContent).toBe('Please choose a photo.')
     await user.upload(photoInput(), photo(1024 * 1024 + 1))
     const reason = screen.getAllByRole('alert')[0].textContent
-    expect(reason).toContain('That file is 1.0 MB')
+    expect(reason).toContain('That file is 1.1 MB')
     expect(reason).not.toContain('Please choose a photo.')
     // A wrong type also shows its own reason (fireEvent: user.upload drops files the accept list refuses).
     fireEvent.change(photoInput(), { target: { files: [new File(['%PDF'], 'cv.pdf', { type: 'application/pdf' })] } })
@@ -178,7 +178,7 @@ describe('JobForm client validation', () => {
   it('R-79: a rejected file, then submit: the newest message, "Please choose a photo.", is shown once', async () => {
     const { user } = renderForm()
     await user.upload(photoInput(), photo(1024 * 1024 + 1))
-    expect(screen.getAllByRole('alert')[0].textContent).toContain('That file is 1.0 MB')
+    expect(screen.getAllByRole('alert')[0].textContent).toContain('That file is 1.1 MB')
     await user.click(consentBox())
     await user.click(submit())
     const alerts = screen.getAllByRole('alert').map((a) => a.textContent)
