@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { Outlet } from 'react-router'
+import { Link, Outlet } from 'react-router'
 import { getConfig } from '../api/client'
 import type { Config } from '../api/client'
 import { useMe } from '../lib/session'
+import { useWallet } from '../features/wallet/useWallet'
 import { errMsg } from '../lib/util'
-import { Banner } from './feedback'
+import { Banner, CreditsPill } from './feedback'
 import { BottomNav, Sidebar, TopBar } from './shell'
 import styles from './AppShell.module.css'
 
@@ -24,6 +25,7 @@ export default function AppShell() {
     refetchIntervalInBackground: true,
   })
   const { data: me } = useMe()
+  const wallet = useWallet(!!me)
   const config = query.data ?? null
   const configError = query.error && !config ? errMsg(query.error) : null
 
@@ -34,8 +36,12 @@ export default function AppShell() {
       <a href="#content" className={styles.skip}>Skip to content</a>
       <Sidebar />
       <div className={styles.column}>
-        {/* The credits pill (M3) and the account menu (T-212) join the user's name in the TopBar. */}
         <TopBar mockMode={config?.provider === 'mock'}>
+          {me && !wallet.isError && (
+            <Link to="/wallet" className={styles.pillLink}>
+              <CreditsPill balance={wallet.data?.available_credits} loading={wallet.isPending} />
+            </Link>
+          )}
           {me && <span className={styles.userName}>{me.name}</span>}
         </TopBar>
         <main id="content" tabIndex={-1} className={styles.content}>
