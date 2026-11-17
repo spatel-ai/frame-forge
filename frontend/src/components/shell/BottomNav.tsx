@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { matchPath, NavLink, useLocation } from 'react-router'
 import { Dialog } from '../feedback'
 import { NavLinks } from './NavLinks'
@@ -27,6 +27,30 @@ export function BottomNav({ items }: { items?: NavItem[] }) {
   const primary = enabled.filter((i) => i.phonePrimary)
   const overflow = enabled.filter((i) => !i.phonePrimary)
   const moreCurrent = overflow.some((i) => matchPath({ path: i.to, end: false }, pathname))
+
+  // The bar is gone from 768 px up: close the sheet then, and leave focus on the page content.
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return
+    const mq = window.matchMedia('(min-width: 768px)')
+    const onChange = (e: MediaQueryListEvent) => {
+      if (!e.matches) return
+      setOpen(false)
+      requestAnimationFrame(() => {
+        if (!document.activeElement || document.activeElement === document.body) document.getElementById('content')?.focus()
+      })
+    }
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+
+  // Keep the page behind the open sheet from scrolling (WebKit scrolls it otherwise).
+  useEffect(() => {
+    if (!open) return
+    const root = document.documentElement
+    const before = root.style.overflow
+    root.style.overflow = 'hidden'
+    return () => { root.style.overflow = before }
+  }, [open])
 
   return (
     <>

@@ -1,10 +1,7 @@
 /* Phone first: one column, bottom bar fixed. 768 px adds a 72 px icon sidebar; 1024 px a 232 px one. */
-.shell { --bottom-nav-height: 56px; min-height: 100vh; min-height: 100dvh; }
+.shell { min-height: 100vh; min-height: 100dvh; }
 .column { min-width: 0; display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
 /* A phone held sideways: a shorter bar leaves more room for the page. */
-@media (max-width: 767px) and (max-height: 500px) {
-  .shell { --bottom-nav-height: 48px; }
-}
 
 .content {
   flex: 1; min-width: 0; width: 100%; max-width: 1120px;
@@ -24,15 +21,16 @@
 
 .skip {
   position: absolute; left: var(--space-2); top: var(--space-2); z-index: 20;
-  padding: var(--space-2) var(--space-4); border-radius: var(--radius-control);
+  display: inline-flex; align-items: center; min-height: 44px;
+  padding: 0 var(--space-4); border-radius: var(--radius-control);
   background: var(--color-surface); color: var(--color-primary-strong);
   border: var(--line-width) solid var(--color-primary); font-weight: var(--text-title-weight);
   transform: translateY(-200%);
 }
 .skip:focus { transform: none; outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
 
-.userName { min-width: 0; max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--text-title-weight); color: var(--color-ink-soft); }
-.pillLink { flex: none; text-decoration: none; }
+.userName { flex: 0 1 auto; min-width: 4ch; max-width: 16ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--text-title-weight); color: var(--color-ink-soft); }
+.pillLink { flex: 0 1 auto; min-width: 0; max-width: 100%; text-decoration: none; }
 /* 320 px: a tighter credits pill (still 44 px tall) so the one-row top bar fits. */
 @media (max-width: 359px) {
   .pillLink > span { padding: 0 var(--space-2); gap: var(--space-1); }
@@ -42,6 +40,7 @@
   display: inline-flex; align-items: center; min-height: var(--target-min); padding: var(--space-2) var(--space-4);
   border: var(--line-width) solid var(--color-primary); border-radius: var(--radius-control);
   color: var(--color-primary-strong); font-weight: var(--text-title-weight); text-decoration: none;
+  white-space: nowrap; flex: none;
 }
 .buyLink:hover { background: var(--color-primary-soft); }
 .buyLink:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }

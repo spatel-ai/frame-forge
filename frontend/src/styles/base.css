@@ -1,5 +1,18 @@
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+/* Height of the fixed phone bottom bar (a phone held sideways gets a shorter one). */
+:root { --bottom-nav-height: 56px; }
+@media (max-width: 767px) and (max-height: 500px) {
+  :root { --bottom-nav-height: 48px; }
+}
+/* Keyboard focus and scrolling into view must not stop under the fixed bottom bar (phones only). */
+@media (max-width: 767px) {
+  html { scroll-padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 9px); }
+  /* Chrome does not scroll a control that is only partly under the bar; the margin makes it count as hidden. */
+  :is(a, button, input, select, textarea, summary, [tabindex]) {
+    scroll-margin-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 9px);
+  }
+}
 body {
   overflow-wrap: break-word;
   margin: 0;
