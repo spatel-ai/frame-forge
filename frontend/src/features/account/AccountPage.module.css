@@ -1,14 +1,30 @@
-.page { display: flex; flex-direction: column; gap: var(--space-5); max-width: 720px; }
+/* Phone first (below 768 px). The wider layout is in the media query at the end. */
+.page { display: flex; flex-direction: column; gap: var(--space-5); width: 100%; min-width: 0; }
 .title { margin: 0; font-size: var(--text-page-title-size); font-weight: var(--text-page-title-weight); }
 .heading { margin: 0 0 var(--space-4); font-size: var(--text-section-size); font-weight: var(--text-section-weight); }
-.facts { margin: 0; display: flex; flex-direction: column; gap: var(--space-3); }
-.fact { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-4); min-height: var(--target-min); }
-.fact dt { flex: 0 0 120px; color: var(--color-ink-soft); }
-.fact dd { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); font-weight: var(--text-title-weight); }
-.form { display: flex; flex-direction: column; gap: var(--space-4); align-items: flex-start; }
-.narrow { width: 100%; max-width: 360px; }
-.note { margin: 0; color: var(--color-ink-soft); font-size: var(--text-caption-size); }
+.facts { margin: 0; display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.fact { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); min-height: var(--target-min); min-width: 0; }
+.fact dt { flex: 0 0 auto; color: var(--color-ink-soft); }
+.fact dd { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); font-weight: var(--text-title-weight); max-width: 100%; min-width: 0; overflow-wrap: anywhere; }
+.fact dd button { min-height: var(--target-min); }
+.form { display: flex; flex-direction: column; gap: var(--space-4); align-items: stretch; }
+.narrow { width: 100%; }
+.note { margin: 0; color: var(--color-ink-soft); font-size: var(--text-caption-size); overflow-wrap: anywhere; }
 .line { margin: 0 0 var(--space-3); }
-.row { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; }
-.actions { display: flex; flex-wrap: wrap; gap: var(--space-3); justify-content: flex-end; margin-top: var(--space-4); }
+.row { display: flex; flex-direction: column; gap: var(--space-2); align-items: stretch; min-width: 0; }
+.row button { width: 100%; min-height: var(--target-min); }
+.actions { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-4); }
+.actions button { width: 100%; min-height: var(--target-min); }
 .gap { margin-top: var(--space-3); }
+
+@media (min-width: 768px) {
+  .page { max-width: 720px; }
+  .fact { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-4); }
+  .fact dt { flex: 0 0 120px; }
+  .form { align-items: flex-start; }
+  .narrow { max-width: 360px; }
+  .row { align-items: flex-start; }
+  .row button { width: auto; }
+  .actions { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); }
+  .actions button { width: auto; }
+}
