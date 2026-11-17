@@ -561,10 +561,18 @@
   },
   {
     "id": "R-84",
-    "class": "Needs Verification",
+    "class": "Confirmed",
     "area": "Jobs",
-    "requirement": "Videos longer than 30 seconds, up to the video model's documented maximum audio length.",
-    "source": "Owner, 2026-11-17 (D-044)",
+    "requirement": "Videos up to 60 seconds for now (D-056); longer only after an owner-approved live run. Photos follow the model's documented rules: at least 300 px, ratio between 1:2.5 and 2.5:1 (D-057).",
+    "source": "Owner, 2026-11-17 (D-056, D-057)",
+    "discovery_item": ""
+  },
+  {
+    "id": "R-85",
+    "class": "Confirmed",
+    "area": "Create",
+    "requirement": "Banners appear only after the customer switches on \"Add banners\" (off by default); without banners there is no joining step on the progress screen.",
+    "source": "Owner change request, 2026-11-17 (D-058)",
     "discovery_item": ""
   }
 ]

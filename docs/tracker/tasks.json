@@ -1101,10 +1101,10 @@
     "lane": "FE-Create",
     "owner": "Sonnet",
     "need": "Acceptance",
-    "traces_to": "R-45, R-52",
+    "traces_to": "R-45, R-52, R-85",
     "starts_after": "T-513",
-    "task": "Banner picker with playable previews",
-    "acceptance": "Start and end chosen separately; \"None\" available; choice shown before approval",
+    "task": "Banner picker with playable previews behind an \"Add banners\" switch (D-058)",
+    "acceptance": "Switch off by default and lists hidden; on: start and end chosen separately, \"None\" available; choice shown before approval only when banners were added",
     "status": "To do",
     "verification": "",
     "evidence": ""
@@ -1116,10 +1116,10 @@
     "lane": "FE-Create",
     "owner": "Sonnet",
     "need": "Acceptance",
-    "traces_to": "R-53",
+    "traces_to": "R-53, R-85",
     "starts_after": "T-514",
     "task": "Show the joining step and the no-banner fallback",
-    "acceptance": "Customer is told plainly when banners could not be added",
+    "acceptance": "\"Adding your banners\" appears only for jobs with banners; customer is told plainly when banners could not be added",
     "status": "To do",
     "verification": "",
     "evidence": ""
@@ -1164,10 +1164,10 @@
     "traces_to": "R-84",
     "starts_after": "",
     "task": "Verify the video model's maximum audio length (D-044)",
-    "acceptance": "Dated official source recorded; `max_audio_seconds` and the script limit set from it, or D-044 reported as blocked",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "acceptance": "Dated official source recorded; the owner sets the limit (D-056: 60 s) and the photo rules (D-057)",
+    "status": "Done",
+    "verification": "VERIFIED",
+    "evidence": "Documentation check 2026-11-17, docs/FAL-VIDEO-FACTS.md: fal.ai states no audio limit for kling-video/ai-avatar/v2/standard; Kling's API docs say 2–300 s, photo ≥ 300 px, ratio 1:2.5–2.5:1, ≤ 10 MB; price $0.0562/s confirmed. Owner set 60 s (D-056) and the photo rules (D-057); built in config and service with tests (check.sh 392 passed). Not verified live."
   },
   {
     "id": "T-600",

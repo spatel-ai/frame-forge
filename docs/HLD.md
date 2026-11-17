@@ -15,8 +15,9 @@ that file wins and this design is corrected.
 
 A customer signs up, logs in, buys credits through Razorpay (₹1 = 1 credit), and spends those
 credits to generate talking-avatar videos. They paste a script or pick one they used before,
-optionally choose a start banner and an end banner, listen to the voice, approve it, and receive
-one video file: start banner, AI-generated video, end banner.
+optionally switch on banners and choose a start banner and an end banner (D-058), listen to the
+voice, approve it, and receive one video file: start banner (if any), AI-generated video, end
+banner (if any). Videos are up to 60 seconds (D-056).
 
 The videos are produced by fal.ai models, paid for from the company's own fal.ai balance. The
 customer never deals with fal.ai; they only see their credit wallet.
@@ -111,7 +112,7 @@ feedback and live state. Designs for each screen are on the design canvas linked
 | --- | --- |
 | Auth | Sign up, log in, verify email, forgot and reset password |
 | Home | Balance, "create a video", videos in progress, recent videos |
-| Create | Photo → script (paste or pick) → banners (pick or none) → consent → listen and see the price → generating → joining → result |
+| Create | Photo → script (paste or pick) or a saved voice → banners (an "Add banners" switch, off by default; D-058) → consent → listen and see the price → generating → joining (only when banners were added) → result |
 | Scripts | "My scripts": list, reuse, delete |
 | Videos | History list and a detail page |
 | Wallet | Balance, buy credits (Razorpay Checkout), transaction history |
@@ -239,8 +240,10 @@ and held at approval. Outside production, a customer may approve at most 50 vide
 - A template is a short video clip, about 2 to 3 seconds, of kind `start` or `end`. The company
   supplies them (D-018). When a clip is added it is measured with `ffprobe`; anything that is not
   a playable video within the length limit is refused. The length limit is a setting.
-- The customer chooses a start banner, an end banner, both or neither, with playable previews.
-  The choice can change until the audio is approved.
+- Banners are off by default. The customer switches on "Add banners" (D-058) and then chooses a
+  start banner, an end banner or both, each with "None" and playable previews. With the switch
+  off, the video has no banners and the progress screen has no "Adding your banners" step. The
+  choice can change until the audio is approved.
 - After the AI video is downloaded, the `video_assembling` step:
   1. measures the AI video's picture size, frame rate and sound format;
   2. converts each chosen clip to match, adding silence if the clip has no sound;
@@ -350,7 +353,7 @@ Where a row says "Not verified", the full statement from the parent CLAUDE.md ap
 | Razorpay webhook signature on raw body; event id header for dedupe; ordering not guaranteed | Checked against Razorpay documentation 2026-11-17. Not run |
 | Razorpay webhook retry schedule and required response time | Checked 2026-11-17 ([RAZORPAY-FACTS.md](RAZORPAY-FACTS.md)): any 2xx within 5 seconds; retries for 24 hours. Exact intervals not verified |
 | Video model price $0.0562 per second of output; inputs are image URL + audio URL | Checked on the fal.ai model page 2026-11-17 |
-| Video model limits on audio length and image size | Not verified. The model page does not state them. Needed for D-044 (longer videos) |
+| Video model limits on audio length and image size | fal.ai states none. Kling's own API documentation (checked 2026-11-17, [FAL-VIDEO-FACTS.md](FAL-VIDEO-FACTS.md)): audio 2–300 s, photo ≥ 300 px, ratio 1:2.5 to 2.5:1, ≤ 10 MB. We use 60 s (D-056) and the photo rules (D-057). Not verified live |
 | Video model output: picture size, frame rate, sound format | Not verified. The design measures each video instead of assuming |
 | The model keeps the face consistent; output quality is acceptable | Not verified. Can only be judged from live output, against criteria the owner has yet to set (Q-18) |
 | How fal.ai reports and bills failed generations | Not verified |

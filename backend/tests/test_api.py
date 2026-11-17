@@ -310,7 +310,7 @@ def _gif() -> bytes:
         ({"image": ("x.png", _small_png())}, "invalid_input", "image"),
         ({"image": ("x.gif", _gif())}, "invalid_input", "image"),
         ({"script": "   "}, "invalid_input", "script"),
-        ({"script": "a" * 401}, "invalid_input", "script"),
+        ({"script": "a" * 801}, "invalid_input", "script"),
         ({"script": "नमस्ते दोस्तों"}, "invalid_input", "script"),
         ({"language": "French"}, "invalid_input", "language"),
         ({"omit": ("image",)}, "validation_error", "image"),

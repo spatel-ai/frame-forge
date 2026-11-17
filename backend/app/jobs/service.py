@@ -161,6 +161,13 @@ class JobService:
                 "side. Choose a larger photo.",
                 "image",
             )
+        width, height = image.size
+        if max(width, height) > self.settings.max_image_aspect_ratio * min(width, height):
+            raise ValidationError(
+                "The photo is too tall or too wide. Crop it so one side is at most "
+                f"{self.settings.max_image_aspect_ratio:g} times the other.",
+                "image",
+            )
         out = BytesIO()
         if image_format == "JPEG":
             image.convert("RGB").save(out, "JPEG", quality=95)

@@ -147,10 +147,10 @@ def test_audio_over_the_limit_fails_and_cannot_be_approved(settings):
         service = make_service(settings)
         # The mock speaks 15 characters a second, so 400 characters at 12 is 33 seconds.
         service.provider.chars_per_second = 12.0
-        job_id = await ready_job(service, script="a" * 400)
+        job_id = await ready_job(service, script="a" * 800)
         job = service.store.get(job_id)
         assert job["status"] == db.FAILED
-        assert "30 seconds" in job["error"]
+        assert "60 seconds" in job["error"]
         with pytest.raises(Conflict):
             service.approve_audio(service.owner_id, job_id)
         assert service.provider.submit_count == 0
@@ -344,9 +344,12 @@ def test_restart_fails_jobs_cut_off_mid_call_instead_of_rerunning_them(settings)
     [
         (b"not an image", "hi", "English", "not a readable image"),
         (b"", "hi", "English", "empty"),
-        (png((100, 100)), "hi", "English", "at least 256"),
+        (png((100, 100)), "hi", "English", "at least 300"),
+        (png((299, 600)), "hi", "English", "at least 300"),
+        (png((300, 751)), "hi", "English", "too tall or too wide"),
+        (png((751, 300)), "hi", "English", "too tall or too wide"),
         (png(), "   ", "English", "script is empty"),
-        (png(), "a" * 401, "English", "longer than 400"),
+        (png(), "a" * 801, "English", "longer than 800"),
         (png(), "hi", "French", "Language must be"),
         (png(), "ਸਤ ਸ੍ਰੀ ਅਕਾਲ", "English", "written in Punjabi"),
         (png(), "ਸਤ ਸ੍ਰੀ ਅਕਾਲ", "Hindi", "written in Punjabi"),

@@ -66,7 +66,7 @@ the git repository.
 - Photos and video frames are grey placeholder boxes with a line icon, as in the examples.
 - Text contrast at least 4.5:1: use `#14182B`, `#4B5169` for text on white; never lighter greys
   for text. Controls at least 44 px tall.
-- Plain words. Every error says what to do next. Banners are labelled "Free".
+- Plain words. Every error says what to do next. Banners are labelled "Free" and appear only after the customer switches on "Add banners" (D-058).
 - No lorem ipsum, no invented statistics, no marketing claims.
 
 ## When done

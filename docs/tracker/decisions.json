@@ -475,7 +475,7 @@
   {
     "id": "D-044",
     "decision": "The video length limit follows the video model's documented maximum",
-    "status": "Proposed",
+    "status": "Superseded",
     "waiting_on": "",
     "area": "Backend",
     "choice": "Raise `max_audio_seconds` (today 30) to the longest audio the video model accepts, as stated in fal.ai's documentation, so a long voice can become a video. The price stays 20 credits per second (D-006); the script limit (400 characters) rises in proportion. Until the documentation is checked and the value recorded with its source and date, the limit stays 30 seconds.",
@@ -602,6 +602,39 @@
     "choice": "Setting `AVATAR_SUPPORT_EMAIL` (empty by default). `GET /config` returns it as `support_email` (null when empty); the failure screens show it when set. The owner adds the real address to `backend/.env` before launch.",
     "trade_off": "Screens must read sensibly when it is empty.",
     "validation": "Config test: empty → null, set → returned; frontend shows the address only when present.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-056",
+    "decision": "The video length limit is 60 seconds for now",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Both",
+    "choice": "`max_audio_seconds` is 60 and the script limit 800 characters (about 14 characters a second, measured live). fal.ai's pages state no limit for this model; Kling's own API documentation says 2 to 300 seconds ([FAL-VIDEO-FACTS.md](FAL-VIDEO-FACTS.md), T-518). The limit is raised further only after an owner-approved live run at the new length.",
+    "trade_off": "fal.ai cost per video doubles at the longest length (about $3.37 for 60 s at $0.0562/s); the per-second credit price scales with it. A voice longer than 60 s keeps its charge (D-040).",
+    "validation": "Config and tests: 800-character scripts accepted, 801 refused; a 67-second mock voice is refused as too long.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-057",
+    "decision": "Photos follow the video model's documented rules before any charge",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "At upload the photo must be at least 300 pixels on its short side and no more than 2.5 times longer on one side than the other (Kling's documented limits, [FAL-VIDEO-FACTS.md](FAL-VIDEO-FACTS.md)), on top of the existing format and 10 MB checks. A photo that fails is refused with a message under the photo field, before the voice is made, so nothing is charged.",
+    "trade_off": "Some unusual photos (very tall or very small) are refused that the model might have accepted.",
+    "validation": "Tests: 299 px and 2.51:1 refused, 300 px and 2.5:1 accepted, each as a 422 on the image field.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-058",
+    "decision": "Banners are added only when the customer switches them on",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Both",
+    "choice": "The banners step shows one \"Add banners\" switch, off by default. Off: no banner lists are shown and the video has no banners. On: the start and end banner lists appear (each with \"None\"), as in D-018 and Q-15. The review step shows the banner choice only when banners were added. The progress screen shows the \"Adding your banners\" step (`video_assembling`) only for a job with at least one banner; a job without banners goes from the AI video straight to the result.",
+    "trade_off": "One more control on the banners step.",
+    "validation": "Frontend tests: lists hidden until the switch is on; switching off clears the choice; progress has three steps without banners and four with. Backend: a job without template ids never enters `video_assembling` (T-509).",
     "date": "2026-11-17"
   }
 ]

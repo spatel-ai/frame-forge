@@ -1,7 +1,7 @@
 # Frameforge
 
 Upload a photo, type a script (English, Hindi or Punjabi), listen to the generated voice,
-approve it, and get a talking-avatar video of up to 30 seconds.
+approve it, and get a talking-avatar video of up to 60 seconds.
 
 - `backend/` — **Frameforge API**: FastAPI, PostgreSQL job tracking (in Docker), files on local disk under `backend/data/`
 - `frontend/` — **Frameforge Web**: React (Vite) single page
@@ -67,8 +67,10 @@ Tests use the mock provider only; they never call fal.ai.
 ## How paid requests are protected
 
 - No video is submitted until the audio is approved, and a job can be approved once.
-- Audio longer than 30 seconds fails the job before any video spend.
-- Scripts are capped at 400 characters so the voice stays under 30 seconds.
+- Audio longer than 60 seconds fails the job before any video spend (D-056).
+- Scripts are capped at 800 characters so the voice stays under 60 seconds.
+- Photos must be at least 300 pixels on the short side and no more than 2.5 times as long one
+  way as the other (D-057), so the video model does not refuse them after the voice is paid.
 - If fal.ai refuses a request (for example an exhausted balance), nothing is
   charged and audio already paid for is kept, so you can approve again after topping up.
 - A voice request that has not finished in 90 seconds is cancelled.

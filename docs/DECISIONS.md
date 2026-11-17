@@ -712,7 +712,7 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 
 ## D-044 — The video length limit follows the video model's documented maximum
 
-**Status:** Proposed (owner asked for longer videos, 2026-11-17; the limit needs verification) · 2026-11-17 · Area: backend
+**Status:** Superseded by D-056 (owner chose 60 seconds for now, 2026-11-17) · 2026-11-17 · Area: backend
 
 **Choice:** Raise `max_audio_seconds` (today 30) to the longest audio the video model accepts, as stated in fal.ai's documentation, so a long voice can become a video. The price stays 20 credits per second (D-006); the script limit (400 characters) rises in proportion. Until the documentation is checked and the value recorded with its source and date, the limit stays 30 seconds.
 
@@ -899,3 +899,51 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 **Trade-off:** Screens must read sensibly when it is empty.
 
 **Validation:** Config test: empty → null, set → returned; frontend shows the address only when present.
+
+---
+
+## D-056 — The video length limit is 60 seconds for now
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: both
+
+**Choice:** `max_audio_seconds` is 60 and the script limit 800 characters (about 14 characters a second, measured live). fal.ai's pages state no limit for this model; Kling's own API documentation says 2 to 300 seconds ([FAL-VIDEO-FACTS.md](FAL-VIDEO-FACTS.md), T-518). The limit is raised further only after an owner-approved live run at the new length.
+
+**Alternatives:** 300 seconds now (Kling's figure; not stated by fal.ai, so a refusal or a different bill would only show on a live run). Keep 30 seconds.
+
+**Why:** Owner's choice: double the length with low risk, without a paid test.
+
+**Trade-off:** fal.ai cost per video doubles at the longest length (about $3.37 for 60 s at $0.0562/s); the per-second credit price scales with it. A voice longer than 60 s keeps its charge (D-040).
+
+**Validation:** Config and tests: 800-character scripts accepted, 801 refused; a 67-second mock voice is refused as too long.
+
+---
+
+## D-057 — Photos follow the video model's documented rules before any charge
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: backend
+
+**Choice:** At upload the photo must be at least 300 pixels on its short side and no more than 2.5 times longer on one side than the other (Kling's documented limits, [FAL-VIDEO-FACTS.md](FAL-VIDEO-FACTS.md)), on top of the existing format and 10 MB checks. A photo that fails is refused with a message under the photo field, before the voice is made, so nothing is charged.
+
+**Alternatives:** Keep 256 px and any shape (the model could refuse the photo after the voice was paid).
+
+**Why:** Owner's choice; these limits come from Kling's documentation because fal.ai's pages state none.
+
+**Trade-off:** Some unusual photos (very tall or very small) are refused that the model might have accepted.
+
+**Validation:** Tests: 299 px and 2.51:1 refused, 300 px and 2.5:1 accepted, each as a 422 on the image field.
+
+---
+
+## D-058 — Banners are added only when the customer switches them on
+
+**Status:** Confirmed (owner change request, 2026-11-17) · 2026-11-17 · Area: both
+
+**Choice:** The banners step shows one "Add banners" switch, off by default. Off: no banner lists are shown and the video has no banners. On: the start and end banner lists appear (each with "None"), as in D-018 and Q-15. The review step shows the banner choice only when banners were added. The progress screen shows the "Adding your banners" step (`video_assembling`) only for a job with at least one banner; a job without banners goes from the AI video straight to the result.
+
+**Alternatives:** Always show both banner lists with "None" preselected (the earlier design).
+
+**Why:** Owner's change request: banners should be a deliberate choice, and customers who do not want them should not see the extra step.
+
+**Trade-off:** One more control on the banners step.
+
+**Validation:** Frontend tests: lists hidden until the switch is on; switching off clears the choice; progress has three steps without banners and four with. Backend: a job without template ids never enters `video_assembling` (T-509).

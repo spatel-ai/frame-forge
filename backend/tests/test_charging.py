@@ -261,11 +261,11 @@ def test_row_voice_over_the_limit_keeps_the_charge_and_the_audio(charging):
 
     async def run():
         c = charging(credits=100)
-        c.provider.chars_per_second = 12.0  # 400 characters → 33 s, over the 30 s limit
-        job_id = await c.ready_job(script="a" * 400)
+        c.provider.chars_per_second = 12.0  # 800 characters → 67 s, over the 60 s limit
+        job_id = await c.ready_job(script="a" * 800)
         job = c.job(job_id)
         assert job["status"] == db.FAILED
-        assert "longer than the allowed 30 seconds" in job["error"]
+        assert "longer than the allowed 60 seconds" in job["error"]
         assert job["price_credits"] is None
         assert job["audio_file"]
         assert (c.service.job_dir(job_id) / job["audio_file"]).stat().st_size > 0

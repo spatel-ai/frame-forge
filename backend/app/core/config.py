@@ -47,12 +47,17 @@ class Settings:
     # A login lasts this long, with no renewal (D-003).
     session_days: int = 30
 
-    max_audio_seconds: float = 30.0
-    # Live MiniMax English runs measured about 14 characters a second, so 400
-    # characters stays under 30 seconds instead of paying for unusable audio.
-    max_script_chars: int = 400
+    # D-044 (owner, 2026-11-17): 60 s for now. fal.ai states no limit for this model; Kling's own
+    # API docs say 2-300 s (docs/FAL-VIDEO-FACTS.md). Raise only after an owner-approved live test.
+    max_audio_seconds: float = 60.0
+    # Live MiniMax English runs measured about 14 characters a second, so 800
+    # characters stays under 60 seconds instead of paying for unusable audio.
+    max_script_chars: int = 800
     max_image_mb: int = 10
-    min_image_side_px: int = 256
+    # D-056: Kling's documented photo rules (at least 300 px; shape between 1:2.5 and 2.5:1),
+    # checked at upload so no voice is paid for a photo the video model would refuse.
+    min_image_side_px: int = 300
+    max_image_aspect_ratio: float = 2.5
     languages: tuple[str, ...] = ("English", "Hindi", "Punjabi")
 
     # Voice model: "minimax" (run live successfully on 2026-11-16) or "kokoro"

@@ -187,8 +187,9 @@ only after T-407.
 **Gate A needs:** Q-11, Q-15, Q-17 answered; placeholder or real banner clips available (Q-14).
 **Gate C:** none; joining is tested with small generated clips in mock mode.
 
-**Exit evidence:** A new user can sign up, buy credits, pick a saved script and banners, make a
-video that plays start banner, AI video, end banner in one file, and find it again later, on a
+**Exit evidence:** A new user can sign up, buy credits, pick a saved script, switch on banners and
+pick them, make a video that plays start banner, AI video, end banner in one file, make another
+without banners that skips the joining step, and find it again later, on a
 desktop-width screen (D-033). All in mock mode.
 
 | ID | Area | Owner | Need | Traces to | Task | Accepted when |
@@ -207,11 +208,11 @@ desktop-width screen (D-033). All in mock mode.
 | T-511 | FE | Sonnet | Acceptance | R-13 | Video history and detail | Play, download, see what it cost |
 | T-512 | FE | Sonnet | Acceptance | R-55 | Loading, empty and error states; responsive; accessibility pass | Every screen has all three states |
 | T-513 | FE | Sonnet | Acceptance | R-43 | Script picker on Create and a "My scripts" screen | Paste new or pick saved; delete with confirmation |
-| T-514 | FE | Sonnet | Acceptance | R-45, R-52 | Banner picker with playable previews | Start and end chosen separately; "None" available; choice shown before approval |
-| T-515 | FE | Sonnet | Acceptance | R-53 | Show the joining step and the no-banner fallback | Customer is told plainly when banners could not be added |
+| T-514 | FE | Sonnet | Acceptance | R-45, R-52, R-85 | Banner picker with playable previews behind an "Add banners" switch (D-058) | Switch off by default and lists hidden; on: start and end chosen separately, "None" available; choice shown before approval only when banners were added |
+| T-515 | FE | Sonnet | Acceptance | R-53, R-85 | Show the joining step and the no-banner fallback | "Adding your banners" appears only for jobs with banners; customer is told plainly when banners could not be added |
 | T-516 | BE | Opus | Correctness | R-83 | Saved voices: start a new job from a failed job's voice (D-043) | No voice charge; the voice is copied to the new job; price from its length; only the caller's failed jobs are offered (404 otherwise); `save_all_voices` setting, default off |
 | T-517 | FE | Sonnet | Acceptance | R-83 | Voice choice on Create and "Make a video with this voice" on failed results | Matches the approved boards; consent still required; server decides the price |
-| T-518 | BE | Fable | Correctness | R-84 | Verify the video model's maximum audio length (D-044) | Dated official source recorded; `max_audio_seconds` and the script limit set from it, or D-044 reported as blocked |
+| T-518 | BE | Fable | Correctness | R-84 | Verify the video model's maximum audio length (D-044) | Dated official source recorded; the owner sets the limit (D-056: 60 s) and the photo rules (D-057) |
 
 ## M6 — Admin and operations
 

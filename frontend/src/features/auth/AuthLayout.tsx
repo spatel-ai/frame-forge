@@ -6,7 +6,7 @@ import styles from './AuthLayout.module.css'
 const TICKS = [
   'English, Hindi and Punjabi voices',
   'Listen to the voice free before you pay',
-  'Videos up to 30 seconds, ready to download',
+  'Videos up to 60 seconds, ready to download',
 ]
 
 /** The split screen shared by every auth screen: brand panel left, card on a decorated background right. No app shell. */

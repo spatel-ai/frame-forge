@@ -36,7 +36,7 @@
     "Create-2-Banners.dc.html": {
       "expand": "fill",
       "h": 960,
-      "title": "Create 2: banners",
+      "title": "Create 2: banners switched on",
       "w": 1440,
       "x": 3040,
       "y": 0
@@ -299,6 +299,14 @@
       "h": 960,
       "title": "Empty states: Home, Videos, My scripts",
       "expand": "fill"
+    },
+    "Create-2-Banners-Off.dc.html": {
+      "x": 9640,
+      "y": 9800,
+      "w": 1440,
+      "h": 960,
+      "title": "Create 2: banners switched off (default)",
+      "expand": "fill"
     }
   },
   "createdOnFiles": {
@@ -326,7 +334,8 @@
     "t-m5fail",
     "n-m5fail",
     "t-m5lib",
-    "n-m5lib"
+    "n-m5lib",
+    "n-banners"
   ],
   "notes": {
     "n-brand": {
@@ -457,12 +466,20 @@
       "w": 420,
       "x": 4560,
       "y": 13400
+    },
+    "n-banners": {
+      "fill": "green",
+      "text": "Owner change request, 2026-11-17 (D-058): banners are off by default. The customer switches on \"Add banners\" to see the start and end lists. Without banners the progress has no \"Adding your banners\" step (see the M5 progress board).",
+      "w": 420,
+      "x": 9640,
+      "y": 10860
     }
   },
   "order": [
     "Main.dc.html",
     "Create-1-Details.dc.html",
     "Create-2-Banners.dc.html",
+    "Create-2-Banners-Off.dc.html",
     "Create-3-Review.dc.html",
     "Create-4-Progress.dc.html",
     "Create-5-Result.dc.html",
