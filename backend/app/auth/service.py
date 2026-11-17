@@ -10,6 +10,7 @@ import secrets
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 
+from ..core import mail_templates
 from ..core.config import Settings
 from ..core.errors import ApiError
 from . import passwords
@@ -132,15 +133,8 @@ class AuthService:
 
     def send_verification_email(self, email: str, token: str) -> None:
         link = f"{self.settings.app_base_url}/verify-email?token={token}"
-        body = (
-            "Welcome to Frameforge.\n\nConfirm your email address by opening this link "
-            f"within {VERIFY_TOKEN_HOURS} hours:\n{link}\n"
-        )
-        try:
-            self.email_sender.send(email, "Confirm your email address", body)
-        except Exception:
-            # The account exists; the customer can ask for another email. No address in the log.
-            log.error("Could not send a confirmation email", exc_info=True)
+        subject, text, html = mail_templates.confirm_email(link, VERIFY_TOKEN_HOURS)
+        self._send_quietly(email, subject, text, "confirmation", html)
 
     def _limit(self, *rules: Rule) -> None:
         wait = self.limiter.hit(*rules)
@@ -285,12 +279,8 @@ class AuthService:
             now + timedelta(minutes=RESET_TOKEN_MINUTES),
         )
         link = f"{self.settings.app_base_url}/reset-password?token={token}"
-        body = (
-            "Someone asked to reset the password of your Frameforge account.\n\n"
-            f"Choose a new password by opening this link. It works once, for {RESET_TOKEN_MINUTES} "
-            f"minutes:\n{link}\n\nIf this was not you, you can ignore this email.\n"
-        )
-        self._send_quietly(user["email"], "Reset your password", body, "reset")
+        subject, text, html = mail_templates.reset_password(link, RESET_TOKEN_MINUTES)
+        self._send_quietly(user["email"], subject, text, "reset", html)
 
     def check_reset_token(self, token: str) -> str:
         user = self.store.peek_email_token_user("reset", hash_token(token), self.now())
@@ -317,12 +307,16 @@ class AuthService:
             "password-changed",
         )
 
-    def _send_quietly(self, to: str, subject: str, body: str, kind: str) -> None:
+    def _send_quietly(
+        self, to: str, subject: str, body: str, kind: str, html: str | None = None
+    ) -> None:
+        """R-01: a send failure never fails sign-up or reset; the customer can ask for another
+        link. The log gets the kind and the error class only: no address, link, body or secret
+        (an SMTP error's text can carry the server's reply, so the traceback is not logged)."""
         try:
-            self.email_sender.send(to, subject, body)
-        except Exception:
-            # No address or link in the log; the customer can ask again.
-            log.error("Could not send a %s email", kind, exc_info=True)
+            self.email_sender.send(to, subject, body, html)
+        except Exception as exc:
+            log.warning("Could not send a %s email (%s)", kind, type(exc).__name__)
 
     # ------------------------------------------------------------------------------------
 

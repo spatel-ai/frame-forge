@@ -22,7 +22,7 @@ class CapturingSender:
     def __init__(self):
         self.sent: list[tuple[str, str, str]] = []
 
-    def send(self, to: str, subject: str, body: str) -> None:
+    def send(self, to: str, subject: str, body: str, html: str | None = None) -> None:
         self.sent.append((to, subject, body))
 
 
@@ -389,8 +389,8 @@ def test_production_without_provider_refuses_to_start(tmp_path, database_url):
         razorpay_key_secret="placeholder",
         razorpay_webhook_secret="placeholder",
     )
-    with pytest.raises(RuntimeError, match="no email provider"):
+    with pytest.raises(RuntimeError, match="SMTP is not configured"):
         build_email_sender(settings)
-    with pytest.raises(RuntimeError, match="no email provider"):
+    with pytest.raises(RuntimeError, match="SMTP is not configured"):
         with TestClient(create_app(settings, start_poller=False)):
             pass

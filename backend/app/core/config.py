@@ -130,6 +130,24 @@ class Settings:
     support_email: str = field(
         default_factory=lambda: os.getenv("AVATAR_SUPPORT_EMAIL", "").strip()
     )
+    # Outgoing email through the owner's Gmail (T-550, R-01, R-13). Gmail needs 2-Step
+    # Verification and an App Password. Empty username or password: no SMTP (development logs).
+    smtp_host: str = field(default_factory=lambda: os.getenv("AVATAR_SMTP_HOST", "smtp.gmail.com"))
+    smtp_port: int = field(default_factory=lambda: int(os.getenv("AVATAR_SMTP_PORT", "587")))
+    smtp_username: str = field(default_factory=lambda: os.getenv("USER_EMAIL", "").strip())
+    # repr=False: the password never shows in a log line or traceback that prints Settings.
+    smtp_password: str = field(
+        # Google shows app passwords in groups of four; the spaces are not part of it.
+        default_factory=lambda: "".join(os.getenv("USER_EMAIL_PASSWORD", "").split()),
+        repr=False,
+    )
+    mail_from_name: str = field(
+        default_factory=lambda: os.getenv("AVATAR_MAIL_FROM_NAME", "Frameforge").strip()
+    )
+
+    @property
+    def smtp_configured(self) -> bool:
+        return bool(self.smtp_username and self.smtp_password)
 
     def __post_init__(self) -> None:
         if self.voice not in ("minimax", "kokoro"):
