@@ -1,6 +1,6 @@
 # Milestones — Frameforge
 
-Nine milestones, each a slice that works end to end on backend and frontend. A milestone ends
+Eleven milestones, each a slice that works end to end on backend and frontend. A milestone ends
 with evidence, not with "code written".
 
 - Task **status and verification** are kept in [tracker/tasks.json](tracker/tasks.json), not here.
@@ -27,7 +27,7 @@ a blocker; never skip it.
 | A | Before starting a milestone | Requirements understood and still wanted; acceptance criteria written; dependencies and blocking questions resolved; provider facts the work relies on are verified; each task has an owner |
 | B | Before joining backend and frontend work | Both sides match the agreed API contract; unit tests pass; errors are handled; security rules respected; nothing else broke |
 | C | Before any paid or live external run | User authorization requirements are satisfied (consent for the likeness used); owner has approved this specific run and its expected cost; credentials are set securely; inputs meet the provider's rules; duplicate paid requests are impossible |
-| D | Before calling a milestone done | Every acceptance criterion has evidence; integration results documented with the parent file's statuses; known limits reported; generated media inspected where feasible; no open critical defect; security and privacy expectations met. Every screen the milestone touched meets the definition of done in [UX.md](UX.md) section 8 and has been seen in a browser at 1440 px and 1024 px (and at 390 px if it changes an M1.5 phone layout; D-033) |
+| D | Before calling a milestone done | Every acceptance criterion has evidence; integration results documented with the parent file's statuses; known limits reported; generated media inspected where feasible; no open critical defect; security and privacy expectations met. Every screen the milestone touched meets the definition of done in [UX.md](UX.md) section 8 and has been seen in a browser at phone, tablet and desktop widths (the device matrix in UX.md section 7; D-069) |
 
 Gate A also includes the parent file's §5 alignment check: if a task no longer adds value, or a
 simpler way exists, change the plan before building.
@@ -41,9 +41,10 @@ simpler way exists, change the plan before building.
 | M1.5 | Design system and UX | Approved designs for every customer screen, a component library, and the existing flow rebuilt to them | M1 |
 | M2 | Accounts and login | Only logged-in users can use the product; each sees only their own work | M1.5, Q-02 |
 | M3 | Wallet and charging | Videos cost credits; the ledger is correct under concurrency (no real payments yet) | M2, Q-01, Q-08, Q-19 |
+| M3.5 | Responsive on every device | Every customer screen works on phones, tablets and desktops, 320 to 1920 px wide, portrait and landscape. Priority: done before the unfinished work below (owner, 2026-11-17) | M1.5, the screens built so far |
 | M4 | Razorpay payments | Customers buy credits with Razorpay in test mode | M3, Q-06, Q-10 |
 | M5 | Product completeness | Scripts, banners, history, consent: a product a customer can use unaided | M4, Q-11, Q-15, Q-17 |
-| M5.5 | First customer release (R1) | One stable real flow, deployed: sign up with a Gmail-sent link, buy credits, script, real 10–12 s voice and video, play from the fal.ai link, history, video-ready email | M5 Create flow (T-502, T-505, T-513), owner inputs |
+| M5.5 | First customer release (R1) | One stable real flow, deployed: sign up with a Gmail-sent link, buy credits, script, real 10–12 s voice and video, play from the fal.ai link, history, video-ready email | M5 Create flow (T-502, T-505, T-513), M3.5 before go-live (T-558), owner inputs |
 | M6 | Admin and operations | Staff can see, correct and reconcile money, and manage templates | M5, Q-05, Q-09 |
 | M7 | Hardening and launch | Deployed, secured, verified live with real money | M6, Q-03, Q-07, Q-12, Q-13, Q-18 |
 
@@ -158,6 +159,40 @@ overspend, and that the stored balance equals the sum of the ledger.
 | T-310 | FE | Sonnet | Acceptance | R-13 | Balance in the header; wallet page with transactions | Balance refreshes after every charge |
 | T-311 | FE | Sonnet | Acceptance | R-09 | Show the price before approval; handle "not enough credits" | Approval disabled with the shortfall shown |
 
+## M3.5 — Responsive on every device
+
+Owner request, 2026-11-17: "I want this website to be enterprises level responsive. For mobile
+views like Android, iOS and tablets, all the devices should support responsiveness", as a
+dedicated milestone done on priority, with the rest moved later. Frontend only. This replaces the
+desktop-only rule (D-033) with D-069. Plan, phases and device matrix: [M3.5-PLAN.md](M3.5-PLAN.md).
+
+**Gate A needs:** nothing from the owner beyond the request; the device matrix is an assumption
+recorded in D-069. **Gate C:** none; every check runs in mock mode.
+
+**Exit evidence:** In mock mode, an automated browser run over every customer screen and dialog,
+at each width of the device matrix in Chromium and WebKit, shows no sideways scrolling, no control
+under 44 px, no input under 16 px on phones and nothing hidden under the bottom bar, and the
+screenshots have been looked at. This is "verified in emulated browsers". The owner's check on a
+real iPhone, Android phone and tablet (T-364) is what makes it verified on real devices.
+
+| ID | Area | Owner | Need | Traces to | Task | Accepted when |
+| --- | --- | --- | --- | --- | --- | --- |
+| T-350 | DOC | Fable | Acceptance | R-88 | Record the change: D-069, R-88, the device matrix, UX.md, Gate D, the frontend rules, and phone and tablet behaviour for each screen that has no phone drawing | `sync.py` cross-check passes |
+| T-351 | FE | Sonnet | Correctness | R-88 | Browser check harness (Playwright) in `frontend/e2e/`, kept out of the unit-test run, with a logged-in mock account that has ledger rows, long script titles, banners, and videos in review, progress, finished and failed states | Per screen and width it checks sideways scroll, 44 px controls, 16 px inputs on phones and the bottom bar, and saves a screenshot; stops without the "Mock mode" pill; site address read from the environment; one screen can run alone; `npm run check` still passes; today's failures saved as the baseline |
+| T-352 | FE | Sonnet | Correctness | R-88 | Global files: `viewport-fit=cover` in `index.html`; phone heading sizes in `styles/` | No regression in the harness; unit tests pass |
+| T-353 | FE | Sonnet | Acceptance | R-88 | App frame: `dvh` in place of `100vh`; phone bottom bar with Home, Create, Videos, Wallet and a "More" sheet (Scripts, Banners, Account); compact top bar on phones; landscape and tablet | Frame checks pass at every width; unit tests pass |
+| T-354 | FE | Sonnet | Acceptance | R-88 | Shared components: 16 px input text on phones; dialogs become full-height scrolling sheets on phones; hover styles only on devices that hover; touch wording on the file drop zone; 44 px text buttons; pagination | Component checks pass at every width; unit tests pass |
+| T-355 | FE | Sonnet | Acceptance | R-88 | Log in, sign up, forgot, sent, reset and confirm-email screens: the brand panel becomes a header band on phones | Harness passes for these screens at every width in both engines; screenshots looked at; `npm run check` passes |
+| T-356 | FE | Sonnet | Acceptance | R-88 | Home on phones and tablets | Same bar as T-355 |
+| T-357 | FE | Sonnet | Acceptance | R-88 | Videos list and video detail on phones and tablets | Same bar as T-355 |
+| T-358 | FE | Sonnet | Acceptance | R-88 | Scripts and its dialogs on phones and tablets | Same bar as T-355 |
+| T-359 | FE | Sonnet | Acceptance | R-88 | Banners and its dialogs on phones and tablets | Same bar as T-355 |
+| T-360 | FE | Sonnet | Acceptance | R-88 | Wallet (the table becomes stacked rows on phones) and the Buy credits dialog | Same bar as T-355 |
+| T-361 | FE | Haiku | Acceptance | R-88 | Account on phones and tablets | Same bar as T-355 |
+| T-362 | FE | Sonnet | Acceptance | R-88 | Create flow: tablet and landscape pass, script picker, banner picker | Same bar as T-355; the M1.5 phone layouts still pass |
+| T-363 | FE | Fable | Acceptance | R-88 | Merge one branch at a time, run the full device matrix, a 200% zoom and keyboard pass, and write the milestone report | No failure across the matrix; report written with the parent file's statuses |
+| T-364 | FE | Owner | Acceptance | R-88 | Check on a real iPhone, a real Android phone and a tablet what emulation cannot show: notch and home-bar spacing, the address bar hiding, no zoom on tapping an input, the keyboard not covering the field | The owner confirms, or faults are logged and fixed |
+
 ## M4 — Razorpay payments
 
 **Gate A needs:** Q-06 answered (done 2026-11-17; now 1,000 to 10,000 credits, D-059; the customer pays the payment fee, D-060); Razorpay facts re-checked (T-401,
@@ -191,8 +226,8 @@ only after T-407.
 
 **Exit evidence:** A new user can sign up, buy credits, pick a saved script, switch on banners and
 pick them, make a video that plays start banner, AI video, end banner in one file, make another
-without banners that skips the joining step, and find it again later, on a
-desktop-width screen (D-033). All in mock mode.
+without banners that skips the joining step, and find it again later, at phone
+and desktop widths (D-069). All in mock mode.
 
 | ID | Area | Owner | Need | Traces to | Task | Accepted when |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -208,7 +243,7 @@ desktop-width screen (D-033). All in mock mode.
 | T-509 | BE | Opus | Correctness | R-48, R-53, R-56 | Wire joining into the job lifecycle as `video_assembling` | Retried; re-run after restart; fallback per D-019; exactly one charge in every case; price unchanged |
 | T-510 | FE | Sonnet | Acceptance | R-13 | Home screen | Balance, create, in progress, recent |
 | T-511 | FE | Sonnet | Acceptance | R-13 | Video history and detail | Play, download, see what it cost |
-| T-512 | FE | Sonnet | Acceptance | R-55 | Loading, empty and error states; responsive; accessibility pass | Every screen has all three states |
+| T-512 | FE | Sonnet | Acceptance | R-55 | Loading, empty and error states; accessibility pass (responsive work moved to M3.5) | Every screen has all three states |
 | T-513 | FE | Sonnet | Acceptance | R-43 | Script picker on Create and a "My scripts" screen | Paste new or pick saved; delete with confirmation |
 | T-514 | FE | Sonnet | Acceptance | R-45, R-52, R-85 | Banner picker with playable previews behind an "Add banners" switch (D-058) | Switch off by default and lists hidden; on: start and end chosen separately, "None" available; choice shown before approval only when banners were added |
 | T-515 | FE | Sonnet | Acceptance | R-53, R-85 | Show the joining step and the no-banner fallback | "Adding your banners" appears only for jobs with banners; customer is told plainly when banners could not be added |
@@ -313,8 +348,10 @@ parallel once the tasks they start after are done. Two tasks in the same lane ne
 | BE-Content | `backend/app/scripts/`, `backend/app/templates/` | |
 | BE-Media | `backend/app/media/` | ffmpeg joining; depends on nothing else |
 | BE-Admin | `backend/app/admin/` | |
-| FE-Shell | `frontend/src/routes.tsx`, `frontend/src/api/`, `frontend/src/styles/`, `frontend/package.json` | The frontend integrator |
-| FE-Auth, FE-Account, FE-Create, FE-Wallet, FE-Home, FE-Videos, FE-Admin | `frontend/src/features/<name>/` | One folder each. FE-Create also owns `features/scripts/` (T-513) |
+| FE-Shell | `frontend/src/routes.tsx`, `frontend/src/api/`, `frontend/src/styles/`, `frontend/package.json`, `frontend/index.html`, `frontend/vite.config.ts`, the Playwright config and `frontend/e2e/` | The frontend integrator |
+| FE-Frame | `frontend/src/components/AppShell.*`, `frontend/src/components/shell/`, `frontend/src/components/NotFound.*` | The frame around every logged-in screen (from M3.5) |
+| FE-Components | The rest of `frontend/src/components/` | Shared form, feedback and layout parts (from M3.5) |
+| FE-Auth, FE-Account, FE-Create, FE-Wallet, FE-Home, FE-Videos, FE-Scripts, FE-Banners, FE-Admin | `frontend/src/features/<name>/` | One folder each. T-513 built `features/scripts/` in the FE-Create lane; from M3.5 it is its own lane |
 | Ops | Deployment and monitoring configuration | |
 | Review | No files; reads and runs | Security review and the owner-approved live runs |
 
@@ -328,8 +365,9 @@ parallel once the tasks they start after are done. Two tasks in the same lane ne
    place in the order. Two migrations are never created from the same parent.
 4. **Contract before code.** Backend and frontend work on a feature starts only after its
    contract task is done. The frontend builds against a mocked API until Gate B.
-5. **Each parallel task works in its own git worktree and branch.** Fable merges one branch at a
-   time and runs the mock tests after each merge (Gate B).
+5. **Each parallel task works in its own git worktree and branch.** One branch is merged at a
+   time and the mock tests run after each merge (Gate B). From M3.5 a merger agent does the
+   merging and Fable reviews the merged result (D-070).
 6. **Tracker files are updated by the integrator at merge time**, not by each task, so two tasks
    never edit `tasks.json` together.
 7. If a task finds it must change another lane's file, it stops and reports. That is a sign the
@@ -343,6 +381,8 @@ parallel once the tasks they start after are done. Two tasks in the same lane ne
 | After the versioned API (T-104) | BE-Auth · FE-Auth · BE-Media (joining module T-507, T-508) |
 | After login works (T-202, T-204) | BE-Wallet · FE-Wallet · BE-Content (scripts T-504) · BE-Admin read routes (T-601) |
 | After the ledger service (T-302) | BE-Pay · BE-Jobs (charging T-304) · FE-Create (price T-311) · FE-Wallet (buy credits T-410) |
+| M3.5, after the browser check harness (T-351) | FE-Shell (T-352) · FE-Frame (T-353) · FE-Components (T-354) |
+| M3.5, after those three are merged | FE-Auth · FE-Home · FE-Videos · FE-Scripts · FE-Banners · FE-Wallet · FE-Account · FE-Create (T-355 to T-362) |
 | After charging is tied in (T-304) | BE-Jobs finishes scripts, consent, the daily video limit, saved voices and wires joining (T-509) · FE-Create adds the pickers and the voice choice · FE-Home, FE-Videos |
 
 Where parallel work does **not** help: the BE-Jobs lane. Ownership, pricing, charging, consent,
@@ -405,6 +445,21 @@ its lane free, can start.
 | T-306 | BE-Wallet | T-302 |
 | T-310 | FE-Wallet | T-211, T-300 |
 | T-311 | FE-Create | T-155, T-211, T-300 |
+| T-350 | Docs | — |
+| T-351 | FE-Shell | T-350, T-158 |
+| T-352 | FE-Shell | T-351 |
+| T-353 | FE-Frame | T-351 |
+| T-354 | FE-Components | T-351 |
+| T-355 | FE-Auth | T-352, T-353, T-354, T-210 |
+| T-356 | FE-Home | T-352, T-353, T-354, T-510 |
+| T-357 | FE-Videos | T-352, T-353, T-354, T-511 |
+| T-358 | FE-Scripts | T-352, T-353, T-354 |
+| T-359 | FE-Banners | T-352, T-353, T-354 |
+| T-360 | FE-Wallet | T-352, T-353, T-354, T-412 |
+| T-361 | FE-Account | T-352, T-353, T-354, T-212 |
+| T-362 | FE-Create | T-352, T-353, T-354, T-513 |
+| T-363 | Review | T-355, T-356, T-357, T-358, T-359, T-360, T-361, T-362 |
+| T-364 | Review | T-363 |
 | T-400 | Contract | T-300 |
 | T-401 | Review | T-300 |
 | T-402 | BE-Pay | T-302, T-400, T-401 |
@@ -428,9 +483,9 @@ its lane free, can start.
 | T-509 | BE-Jobs | T-505, T-506, T-508, T-503 |
 | T-510 | FE-Home | T-310, T-500 |
 | T-511 | FE-Videos | T-211, T-500 |
-| T-512 | FE-Shell | T-510, T-511, T-515, T-158 |
+| T-512 | FE-Shell | T-510, T-511, T-515, T-158, T-363 |
 | T-513 | FE-Create | T-311, T-500 |
-| T-514 | FE-Create | T-513 |
+| T-514 | FE-Create | T-513, T-362 |
 | T-515 | FE-Create | T-514 |
 | T-516 | BE-Jobs | T-509 |
 | T-517 | FE-Create | T-515, T-516 |
@@ -443,7 +498,7 @@ its lane free, can start.
 | T-555 | Ops | T-505 |
 | T-556 | Review | T-553, T-554 |
 | T-557 | Review | T-552 |
-| T-558 | Review | T-556, T-557 |
+| T-558 | Review | T-556, T-557, T-363 |
 | T-559 | Review | T-555, T-558 |
 | T-560 | Review | T-559 |
 | T-600 | Contract | T-500 |

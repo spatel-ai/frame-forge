@@ -354,7 +354,7 @@
   {
     "id": "D-033",
     "decision": "New screens are built for desktop width only",
-    "status": "Confirmed",
+    "status": "Superseded",
     "waiting_on": "",
     "area": "Frontend",
     "choice": "From M2 on, every new screen is designed, built and checked at desktop width (1440 px) only. No phone layout is drawn or built for new screens. What M1.5 already built for phones (the bottom navigation bar, the phone layouts of the app frame, the create flow and the not-found page) stays as it is and is not removed.",
@@ -745,6 +745,28 @@
     "choice": "With `AVATAR_S3_BUCKET` set, the AI video from fal.ai and the final video with banners are both uploaded to a private S3 bucket (`videos/<job id>/ai.mp4` and `video.mp4`). The job stores the keys; `GET /jobs/{id}/video` checks the owner and redirects to a signed link valid for one hour. On EC2 the instance role gives access; no AWS keys are stored. New dependency: `boto3`. Without a bucket (development) files stay on local disk. If S3 fails three times the customer still gets the video from fal's link (D-065) and the job is flagged. A bucket lifecycle rule deletes videos after 30 days (D-054); the bucket's CORS must allow GET from the site for the in-page download.",
     "trade_off": "One more service and dependency; signed links from an instance role can expire early when the role's credentials rotate. Not verified against a real bucket: Not verified — requires documentation review, execution, or live integration testing.",
     "validation": "Tests with a fake storage and a stubbed boto3 client: both keys stored, redirect for the owner, 404 for others, 410 after expiry, fallback when S3 is down. A real-bucket run happens at deployment.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-069",
+    "decision": "Every customer screen works on phones, tablets and desktops",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Frontend",
+    "choice": "Every customer screen and dialog is built and checked for phones, tablets and desktops, replacing the desktop-only rule (D-033) and restoring D-027 in full. The work is its own priority milestone, M3.5, placed before all unfinished work. \"Every device\" is written as a tested range (assumed): every width from 320 px to 1920 px, portrait and landscape, in Chromium (Android Chrome) and WebKit (iOS Safari). The existing breakpoints stay: phone below 768 px, tablet 768 to 1023 px, desktop from 1024 px. Screens with a phone drawing (Log in, Home, Create, Wallet) follow it; the others follow the written rules in UX.md section 5 and the per-screen notes in M3.5-PLAN.md. On phones the bottom bar shows Home, Create, Videos, Wallet and \"More\", and \"More\" opens a sheet with Scripts, Banners and Account. One development dependency is added for the width checks: `@playwright/test`.",
+    "trade_off": "The first customer release (T-558 to T-560) and the remaining M5 polish wait behind this milestone. Screens without a phone drawing are laid out by rule, not by an approved picture. Every later screen costs more to build and check. An emulated browser cannot show notch spacing, the iOS address bar, zoom on input focus or the on-screen keyboard, so those rest on the owner's real-device check (T-364).",
+    "validation": "An automated browser run in mock mode over every screen and dialog at widths 320, 360, 390, 430, 768, 820, 1024, 1280, 1440 and 1920 px plus phone and tablet landscape, in both engines: no sideways scrolling, standalone controls at least 44 px, inputs at least 16 px on phones, nothing under the bottom bar; screenshots looked at (T-363). Then the owner's real-device check (T-364).",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-070",
+    "decision": "A merger agent merges parallel branches; Fable reviews the result",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Both",
+    "choice": "From M3.5, work run through the `/lead` skill (`.claude/skills/lead/SKILL.md`) uses a merger agent (Opus) to merge each approved branch into `development`, one at a time, re-run the checks and update the tracker. Fable, as lead, reads the merged diff and the evidence and accepts or sends it back. This changes one sentence of D-022 (\"Fable merges one branch at a time\"); lanes, single file ownership and worktrees stay as D-022 set them.",
+    "trade_off": "One more agent per phase and its cost. The lead no longer sees every conflict first-hand, so it must read the merged diff, not the merger's summary.",
+    "validation": "After every merge the frontend check and the backend mock tests pass, and the tracker cross-check passes; the lead's review of the merged diff is recorded in the milestone report.",
     "date": "2026-11-17"
   }
 ]

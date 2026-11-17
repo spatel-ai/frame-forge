@@ -191,11 +191,13 @@ building or changing a screen. They are acceptance criteria, not suggestions.
 - **Every failure:** says what happened, what was not charged, and what to do next.
 - **Live state:** follow the refetch table in UX.md section 7. Money shows only what the server
   returned.
-- **Desktop width only (D-033):** new screens are built for 1440 px and checked at 1440 and 1024 px;
-  no phone layout. Do not break the phone layouts M1.5 already built (app frame, create flow).
+- **Every device (D-069):** every screen and dialog works from 320 px to 1920 px wide, portrait and
+  landscape, with no sideways scrolling. Write styles phone first, with `min-width` queries at
+  768 px (tablet) and 1024 px (desktop). Controls are at least 44 px tall, input text at least
+  16 px on phones, full-height layouts use `dvh`. The rules are in UX.md section 7 (Responsive).
 
 A task is done only when it meets the nine points of UX.md section 8, including being seen in a
-real browser at desktop width.
+real browser at phone, tablet and desktop widths.
 
 ## Tests
 

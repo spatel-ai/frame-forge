@@ -536,7 +536,7 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 
 ## D-033 — New screens are built for desktop width only
 
-**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: frontend
+**Status:** Superseded by D-069 (owner, 2026-11-17) · 2026-11-17 · Area: frontend
 
 **Choice:** From M2 on, every new screen is designed, built and checked at desktop width (1440 px) only. No phone layout is drawn or built for new screens. What M1.5 already built for phones (the bottom navigation bar, the phone layouts of the app frame, the create flow and the not-found page) stays as it is and is not removed.
 
@@ -1108,3 +1108,34 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 
 **Validation:** Tests with a fake storage and a stubbed boto3 client: both keys stored, redirect for the owner, 404 for others, 410 after expiry, fallback when S3 is down. A real-bucket run happens at deployment.
 
+---
+
+## D-069 — Every customer screen works on phones, tablets and desktops
+
+**Status:** Confirmed (owner, 2026-11-17; the device matrix is an engineering assumption) · 2026-11-17 · Area: frontend
+
+**Choice:** Every customer screen and dialog is built and checked for phones, tablets and desktops, replacing the desktop-only rule (D-033) and restoring D-027 in full. The work is its own priority milestone, M3.5, placed before all unfinished work. "Every device" is written as a tested range (assumed): every width from 320 px to 1920 px, portrait and landscape, in Chromium (Android Chrome) and WebKit (iOS Safari). The existing breakpoints stay: phone below 768 px, tablet 768 to 1023 px, desktop from 1024 px. Screens with a phone drawing (Log in, Home, Create, Wallet) follow it; the others follow the written rules in UX.md section 5 and the per-screen notes in M3.5-PLAN.md. On phones the bottom bar shows Home, Create, Videos, Wallet and "More", and "More" opens a sheet with Scripts, Banners and Account. One development dependency is added for the width checks: `@playwright/test`.
+
+**Alternatives:** Keep desktop only (D-033). Fix only the screens that break worst on a phone (log in, wallet). Draw a phone design for every screen before building. A separate mobile site or a native app (R-32, deferred).
+
+**Why:** The owner asked for it: "I want this website to be enterprises level responsive. For mobile views like Android, iOS and tablets, all the devices should support responsiveness of this website", "a separate dedicated milestone", "this needs to be done on priority". The videos themselves are mostly watched on phones (D-063).
+
+**Trade-off:** The first customer release (T-558 to T-560) and the remaining M5 polish wait behind this milestone. Screens without a phone drawing are laid out by rule, not by an approved picture. Every later screen costs more to build and check. An emulated browser cannot show notch spacing, the iOS address bar, zoom on input focus or the on-screen keyboard, so those rest on the owner's real-device check (T-364).
+
+**Validation:** An automated browser run in mock mode over every screen and dialog at widths 320, 360, 390, 430, 768, 820, 1024, 1280, 1440 and 1920 px plus phone and tablet landscape, in both engines: no sideways scrolling, standalone controls at least 44 px, inputs at least 16 px on phones, nothing under the bottom bar; screenshots looked at (T-363). Then the owner's real-device check (T-364).
+
+---
+
+## D-070 — A merger agent merges parallel branches; Fable reviews the result
+
+**Status:** Confirmed (owner approved the M3.5 plan and the lead skill, 2026-11-17) · 2026-11-17 · Area: both
+
+**Choice:** From M3.5, work run through the `/lead` skill (`.claude/skills/lead/SKILL.md`) uses a merger agent (Opus) to merge each approved branch into `development`, one at a time, re-run the checks and update the tracker. Fable, as lead, reads the merged diff and the evidence and accepts or sends it back. This changes one sentence of D-022 ("Fable merges one branch at a time"); lanes, single file ownership and worktrees stay as D-022 set them.
+
+**Alternatives:** Fable keeps merging itself (D-022 as written). Builders merge their own branches.
+
+**Why:** The owner imported the lead skill, which separates planning and review from merging so the lead's attention stays on analysis and acceptance.
+
+**Trade-off:** One more agent per phase and its cost. The lead no longer sees every conflict first-hand, so it must read the merged diff, not the merger's summary.
+
+**Validation:** After every merge the frontend check and the backend mock tests pass, and the tracker cross-check passes; the lead's review of the merged diff is recorded in the milestone report.

@@ -40,8 +40,16 @@
     "status": "Done"
   },
   {
-    "id": "M4",
+    "id": "M3.5",
     "order": 5,
+    "milestone": "Responsive on every device",
+    "outcome": "Every customer screen works on phones, tablets and desktops, 320 to 1920 px wide, portrait and landscape. Priority: done before the unfinished work below (owner, 2026-11-17)",
+    "depends_on": "M1.5, the screens built so far",
+    "status": "In progress"
+  },
+  {
+    "id": "M4",
+    "order": 6,
     "milestone": "Razorpay payments",
     "outcome": "Customers buy credits with Razorpay in test mode",
     "depends_on": "M3, Q-06, Q-10",
@@ -49,7 +57,7 @@
   },
   {
     "id": "M5",
-    "order": 6,
+    "order": 7,
     "milestone": "Product completeness",
     "outcome": "Scripts, banners, history, consent: a product a customer can use unaided",
     "depends_on": "M4, Q-11, Q-15, Q-17",
@@ -57,15 +65,15 @@
   },
   {
     "id": "M5.5",
-    "order": 7,
+    "order": 8,
     "milestone": "First customer release (R1)",
     "outcome": "One stable real flow, deployed: sign up with a Gmail-sent link, buy credits, script, real 10–12 s voice and video, play from the fal.ai link, history, video-ready email",
-    "depends_on": "M5 Create flow (T-502, T-505, T-513), owner inputs",
+    "depends_on": "M5 Create flow (T-502, T-505, T-513), M3.5 before go-live (T-558), owner inputs",
     "status": "In progress"
   },
   {
     "id": "M6",
-    "order": 8,
+    "order": 9,
     "milestone": "Admin and operations",
     "outcome": "Staff can see, correct and reconcile money, and manage templates",
     "depends_on": "M5, Q-05, Q-09",
@@ -73,7 +81,7 @@
   },
   {
     "id": "M7",
-    "order": 9,
+    "order": 10,
     "milestone": "Hardening and launch",
     "outcome": "Deployed, secured, verified live with real money",
     "depends_on": "M6, Q-03, Q-07, Q-12, Q-13, Q-18",

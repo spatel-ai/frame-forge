@@ -25,7 +25,7 @@ for validation, loading and feedback, so that every later screen is built to the
 | Design direction | Inspired by how Canva and similar creative tools are laid out, with our own identity. Not a copy of any product's branding |
 | Brand | None exists; engineering proposes one |
 | Scope of design | All planned customer screens, designed before they are built |
-| Device priority | Desktop only for new screens (D-033). The phone layouts built in M1.5 stay |
+| Device priority | Phones, tablets and desktops, every screen (D-069, which replaced the desktop-only rule D-033 on 2026-11-17) |
 
 ### What comparable tools do
 
@@ -157,11 +157,14 @@ Desktop (1024 px and wider):
 
 Phone (below 768 px):
 
-- The sidebar becomes a **bottom bar** with Home, Create, Videos, Wallet, and More.
+- The sidebar becomes a **bottom bar** with Home, Create, Videos, Wallet, and More. "More" opens a
+  sheet with Scripts, Banners and Account (D-069).
 - The top bar keeps the page title and the credits pill.
 - Card grids become one column; side-by-side panels stack; dialogs become full-height sheets.
 
-Between 768 and 1023 px the sidebar collapses to icons.
+Tablet (768 to 1023 px): the sidebar collapses to icons; card grids use two columns where the
+cards fit; dialogs stay centred. A phone held sideways is still a phone layout if it is under
+768 px wide.
 
 Logged-out screens (log in, sign up, reset password) have no sidebar. On desktop the screen is
 split: a primary-colour brand panel on the left (wordmark, an illustration of a photo and script
@@ -174,7 +177,7 @@ the form needs.
 
 | Screen | Route | Primary action | Designed |
 | --- | --- | --- | --- |
-| Home | `/` | Create a video | Desktop (phone drawn, not built: D-033) |
+| Home | `/` | Create a video | Desktop, phone drawn |
 | Create 1: photo, script and voice choice | `/create` | Continue | Desktop, phone (built in M1.5); voice choice (D-043) and script picker drawn for M5 |
 | Create 2: banners | `/create` (no job exists until the voice is made, D-045) | Continue | Desktop: "Add banners" switch, off by default (D-058), drawn on and off |
 | Create 2b: consent | `/create` | Make my voice (10 credits) | Desktop (D-045) |
@@ -183,14 +186,18 @@ the form needs.
 | Create 5: result | `/create/:id` | Download | Desktop |
 | Videos | `/videos` | Create a video | Desktop |
 | Scripts | `/scripts` | Use this script | Desktop |
-| Wallet | `/wallet` | Buy credits | Desktop (phone drawn, not built: D-033) |
+| Wallet | `/wallet` | Buy credits | Desktop, phone drawn |
 | Buy credits, after-payment states | dialog on any screen | Pay | Desktop |
 | Video detail | `/videos/:id` | Download | Desktop |
 | Failure results, daily limit | `/create/:id` | Make a video with this voice / Start over | Desktop |
-| Log in, Sign up | `/login`, `/signup` | Log in, Create account | Desktop (phone log in drawn, not built: D-033) |
+| Log in, Sign up | `/login`, `/signup` | Log in, Create account | Desktop, phone log in drawn |
 | Forgot, reset, confirm email | `/forgot-password`, `/reset-password`, `/verify-email` | Send link, Save | Desktop |
 | Account | `/account` | Save | Desktop |
 | States and components | reference sheets | — | Desktop |
+
+Every screen in this table is built for phones and tablets as well (M3.5, D-069). Where the
+"Designed" column names no phone drawing, the phone and tablet layout follows section 5 and the
+per-screen notes in [M3.5-PLAN.md](M3.5-PLAN.md).
 
 Admin screens are optional (MILESTONES M6) and use the same components without bespoke design.
 
@@ -278,16 +285,25 @@ returned.
 
 ### Responsive
 
-- New screens (M2 on, D-033): designed and built at 1440 px, checked at 1440 px and 1024 px. No
-  phone layout.
-- The screens built in M1.5 (app frame, create flow, not-found) keep working from 360 px to 1920 px
-  with no sideways scrolling; changes to them must not break that.
+Every screen and dialog works on phones, tablets and desktops (D-069).
+
+- **Range:** every width from 320 px to 1920 px, portrait and landscape, with no sideways scrolling.
+- **Device matrix checked in a browser:** 320, 360, 390, 430, 768, 820, 1024, 1280, 1440 and
+  1920 px wide, plus a phone and a tablet held sideways, in Chromium and WebKit.
+- **Breakpoints:** phone below 768 px, tablet 768 to 1023 px, desktop from 1024 px. Styles are
+  written phone first (`min-width` queries).
+- **Touch:** every standalone control is at least 44 px tall; nothing depends on hover.
+- **Inputs:** text in inputs is at least 16 px on phones, so iOS does not zoom the page.
+- **Height:** full-height layouts use `dvh`, and fixed bars leave room for the device's safe areas.
+- **Tables** become stacked rows on phones; **dialogs** become full-height sheets that scroll.
+- A mobile app is still out of scope (R-32).
 
 ## 8. Definition of done for a screen
 
 A frontend task is finished only when all of these are true:
 
-1. It matches its design on the canvas at 1440 px (D-033: no phone design for new screens).
+1. It matches its design on the canvas at 1440 px, and its phone drawing where one exists; where
+   none exists, it follows the phone and tablet rules in sections 5 and 7 (D-069).
 2. It uses only the shared components and tokens; no one-off colours, sizes or spacing.
 3. It has designed loading, empty and error states.
 4. Every input follows the validation rules in section 7.
@@ -295,5 +311,5 @@ A frontend task is finished only when all of these are true:
 6. Data that can change updates without a refresh, per the table in section 7.
 7. It passes the keyboard and contrast checks in section 7.
 8. Its tests cover: loading, success, empty, each error code, and each validation rule.
-9. It has been seen in a real browser at 1440 px and 1024 px before being called verified (and at
-   390 px too if it changes an M1.5 screen).
+9. It has been seen in a real browser at phone, tablet and desktop widths (at least 390, 768,
+   1024 and 1440 px) and passes the device-matrix check in section 7 before being called verified.

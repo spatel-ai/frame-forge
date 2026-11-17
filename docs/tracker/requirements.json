@@ -129,9 +129,9 @@
   },
   {
     "id": "R-77",
-    "class": "Confirmed",
+    "class": "Out of Scope",
     "area": "Design",
-    "requirement": "Screens are built for desktop width. The phone layouts built in M1.5 stay; new screens get no phone layout (D-033).",
+    "requirement": "Replaced by R-88 on 2026-11-17 (D-069). Was: screens are built for desktop width; the phone layouts built in M1.5 stay; new screens get no phone layout (D-033).",
     "source": "Owner, 2026-11-17 (narrowed the same day: desktop only from M2 on)",
     "discovery_item": ""
   },
@@ -590,5 +590,13 @@
     "requirement": "A customer short of credits for a ready video can add credits from the review screen and return to the same video, where Approve is then enabled.",
     "source": "Owner change request, 2026-11-17 (D-061)",
     "discovery_item": ""
+  },
+  {
+    "id": "R-88",
+    "class": "Confirmed",
+    "area": "Design",
+    "requirement": "Every customer screen works on Android phones, iPhones, tablets and desktops. Tested range (assumed, D-069): 320 to 1920 px wide, portrait and landscape, in Chromium and WebKit.",
+    "source": "Owner, 2026-11-17 (\"enterprises level responsive ... all the devices should support responsiveness of this website\")",
+    "discovery_item": "Business: what output resolutions and devices are required"
   }
 ]
