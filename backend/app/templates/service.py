@@ -51,6 +51,11 @@ def templates_dir(settings: Settings) -> Path:
     return settings.data_dir / "templates"
 
 
+def _is_portrait_9_16(width: int, height: int) -> bool:
+    """True for a portrait clip whose shape is 9:16 within 2% (D-063)."""
+    return height > width and abs(width * 16 - height * 9) <= 0.02 * height * 9
+
+
 def add_template(engine: Engine, settings: Settings, kind: str, name: str, clip: Path) -> str:
     """Measure `clip`, copy it into the templates folder and insert the row; returns the id.
 
@@ -69,6 +74,12 @@ def add_template(engine: Engine, settings: Settings, kind: str, name: str, clip:
         raise TemplateRefused(
             f"The clip is {info.duration:.1f} s; banners may be at most "
             f"{settings.max_template_seconds:g} s."
+        )
+    # D-063: videos are mostly watched on phones, so banners are portrait 9:16 (within 2%).
+    if not _is_portrait_9_16(info.width, info.height):
+        raise TemplateRefused(
+            f"The clip is {info.width}x{info.height}; banners must be portrait 9:16, "
+            "for example 720x1280 or 1080x1920."
         )
     duration_ms = round(info.duration * 1000)
     if duration_ms <= 0:

@@ -4,7 +4,7 @@ Usage:
     uv run python backend/scripts/make_banner_clips.py [out_dir]
 
 Default out_dir is backend/data/banners. Requires ffmpeg and ffprobe on PATH.
-Writes four 1280x720, 25 fps, H.264 (yuv420p) + AAC stereo 48 kHz MP4 clips.
+Writes four 720x1280 (portrait 9:16, D-063), 25 fps, H.264 (yuv420p) + AAC stereo 48 kHz MP4 clips.
 
 Text is drawn with ffmpeg's drawtext filter when the ffmpeg build has it and a
 system font is found. Otherwise the clips are plain colour, and a warning is
@@ -21,8 +21,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-WIDTH = 1280
-HEIGHT = 720
+WIDTH = 720
+HEIGHT = 1280
 FPS = 25
 SAMPLE_RATE = 48000
 DURATION_TOLERANCE_S = 0.1

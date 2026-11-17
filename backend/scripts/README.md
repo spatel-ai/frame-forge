@@ -5,7 +5,7 @@
 Generates four simple starter banner clips with ffmpeg, so the joining step (M5) has real clips
 to test with.
 
-- Output: 1280×720, 25 fps, H.264 (yuv420p), AAC stereo 48 kHz MP4.
+- Output: 720×1280 (portrait 9:16, D-063), 25 fps, H.264 (yuv420p), AAC stereo 48 kHz MP4.
 - `start-logo-reveal.mp4` (2 s, purple, "Frameforge", quiet tone)
 - `start-simple-title.mp4` (2 s, light, "Frameforge", silent)
 - `end-thank-you.mp4` (2.5 s, purple, "Thank you for watching", quiet tone)
@@ -22,7 +22,7 @@ uv run python backend/scripts/make_banner_clips.py <out_dir>  # writes to anothe
 ```
 
 After writing, the script runs `ffprobe` on each clip, prints a summary, and exits non-zero if a
-clip is not 1280×720 or its duration is more than 0.1 s from the expected length.
+clip is not 720×1280 (portrait 9:16, D-063) or its duration is more than 0.1 s from the expected length.
 
 Banners are free and optional (D-058). The owner can replace these clips with their own later;
 keep the same size, frame rate and audio format so the joining step accepts them.

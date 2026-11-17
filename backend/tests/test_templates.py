@@ -48,7 +48,7 @@ def run(settings, engine):
 
 def clip(tmp_path: Path, name: str, duration: float, audio=(48000, 2)) -> Path:
     return make_clip(
-        tmp_path / name, size="320x180", fps="25", duration=duration, colour="red", audio=audio
+        tmp_path / name, size="180x320", fps="25", duration=duration, colour="red", audio=audio
     )
 
 
@@ -146,3 +146,20 @@ def test_routes_list_and_preview(client, run, engine, settings, tmp_path, sign_u
     for bad in (ids["A start"], "unknown"):
         r = client.get(f"/api/v1/templates/{bad}/preview")
         assert r.status_code == 404 and r.json()["code"] == "template_not_found"
+
+
+def test_add_refuses_a_landscape_clip(run, engine, tmp_path, capsys):
+    """R-44, D-063: banners are portrait 9:16; a landscape or square clip is refused, nothing
+    written."""
+    for size in ("320x180", "240x240"):
+        wide = make_clip(
+            tmp_path / f"wide-{size}.mp4",
+            size=size,
+            fps="25",
+            duration=1.0,
+            colour="red",
+            audio=(48000, 2),
+        )
+        assert run("add", "--kind", "start", "--name", "Wide", str(wide)) == 2
+        assert "portrait 9:16" in capsys.readouterr().err
+    assert rows(engine) == []

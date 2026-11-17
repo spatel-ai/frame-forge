@@ -1000,9 +1000,9 @@
     "starts_after": "T-504",
     "task": "`templates` table, a command to add clips, and the list route",
     "acceptance": "A clip is measured when added; only active templates are listed",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent working in its own worktree (M5 phase 2), launched 2026-11-17."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Migration 0008 templates; `python -m app.templates.cli add|list|retire` (measured with ffprobe; refuses non-video, no picture, >5 s, and since D-063 anything not portrait 9:16); GET /templates (active, start then end) and preview. tests/test_templates.py + matrix. backend check 555 passed. Dev DB at 0008 with the four 720x1280 starter banners added through the command."
   },
   {
     "id": "T-507",
