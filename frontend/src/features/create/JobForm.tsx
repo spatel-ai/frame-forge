@@ -348,8 +348,8 @@ export function JobForm({
           <p className={styles.unconfirmed}>You can fill this in now. Generating needs a confirmed email.</p>
         )}
         <p className={styles.unconfirmed}>Generating the voice costs {formatCredits(config.voice_price_credits)} credits.</p>
-        <Button type="submit" size="large" busy={busy} busyLabel="Generating voice…" disabled={!canGenerate || notEnough || !consent}>
-          Generate voice
+        <Button type="submit" size="large" busy={busy} busyLabel="Making your voice…" disabled={!canGenerate || notEnough || !consent}>
+          {`Make my voice · ${formatCredits(config.voice_price_credits)} credits`}
         </Button>
         {!consent && <p className={styles.unconfirmed}>Tick the box above to continue.</p>}
       </div>

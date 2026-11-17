@@ -63,7 +63,7 @@ async function settledWalletCalls() {
 }
 
 const approveButton = () => screen.getByRole('button', { name: 'Approve and make video' }) as HTMLButtonElement
-const generateButton = () => screen.getByRole('button', { name: 'Generate voice' }) as HTMLButtonElement
+const generateButton = () => screen.getByRole('button', { name: /^Make my voice/ }) as HTMLButtonElement
 
 async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
   await user.upload(await screen.findByLabelText(/upload a photo/i), new File([new Uint8Array(10)], 'f.jpg', { type: 'image/jpeg' }))

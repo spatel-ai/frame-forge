@@ -58,7 +58,7 @@ function renderForm(onCreated = vi.fn()) {
 
 const photoInput = () => screen.getByLabelText(/upload a photo/i)
 const scriptBox = () => screen.getByLabelText(/what should the person say/i)
-const submit = () => screen.getByRole('button', { name: 'Generate voice' })
+const submit = () => screen.getByRole('button', { name: /^Make my voice/ })
 const consentBox = () => screen.getByRole('checkbox', { name: 'I have permission.' })
 
 beforeEach(() => {
@@ -184,7 +184,7 @@ describe('JobForm submit', () => {
     await user.type(scriptBox(), 'Hello')
     await user.click(consentBox())
     await user.click(submit())
-    const busy = await screen.findByRole('button', { name: 'Generating voice…' })
+    const busy = await screen.findByRole('button', { name: 'Making your voice…' })
     expect(busy.getAttribute('aria-busy')).toBe('true')
     await user.click(busy)
     await user.keyboard('{Enter}')

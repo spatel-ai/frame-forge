@@ -39,7 +39,7 @@ function renderForm(client = new QueryClient()) {
 }
 
 const box = () => screen.getByRole('checkbox', { name: 'Wording from the server.' }) as HTMLInputElement
-const submit = () => screen.getByRole('button', { name: 'Generate voice' }) as HTMLButtonElement
+const submit = () => screen.getByRole('button', { name: /^Make my voice/ }) as HTMLButtonElement
 const scriptBox = () => screen.getByLabelText(/what should the person say/i) as HTMLTextAreaElement
 
 async function fill(user: ReturnType<typeof userEvent.setup>) {
