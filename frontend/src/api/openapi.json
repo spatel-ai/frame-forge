@@ -1,6 +1,69 @@
 {
   "components": {
     "schemas": {
+      "BannerOut": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "image_url": {
+            "title": "Image Url",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "image_url",
+          "created_at"
+        ],
+        "title": "BannerOut",
+        "type": "object"
+      },
+      "BannersOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BannerOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "BannersOut",
+        "type": "object"
+      },
+      "Body_create_banner_api_v1_banners_post": {
+        "properties": {
+          "image": {
+            "contentMediaType": "application/octet-stream",
+            "title": "Image",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "image"
+        ],
+        "title": "Body_create_banner_api_v1_banners_post",
+        "type": "object"
+      },
       "Body_create_job_api_v1_jobs_post": {
         "properties": {
           "consent": {
@@ -1823,6 +1886,236 @@
         "summary": "Send the confirmation email again to the logged-in user",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/api/v1/banners": {
+      "get": {
+        "operationId": "list_banners_api_v1_banners_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BannersOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Implemented"
+          }
+        },
+        "summary": "The caller's banners, newest first",
+        "tags": [
+          "banners"
+        ]
+      },
+      "post": {
+        "operationId": "create_banner_api_v1_banners_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_banner_api_v1_banners_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BannerOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Implemented"
+          }
+        },
+        "summary": "Upload a banner image (PNG, JPEG or WebP) with a name",
+        "tags": [
+          "banners"
+        ]
+      }
+    },
+    "/api/v1/banners/{banner_id}": {
+      "delete": {
+        "operationId": "delete_banner_api_v1_banners__banner_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "banner_id",
+            "required": true,
+            "schema": {
+              "title": "Banner Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Implemented"
+          }
+        },
+        "summary": "Delete one of the caller's banners; videos already made are unchanged",
+        "tags": [
+          "banners"
+        ]
+      }
+    },
+    "/api/v1/banners/{banner_id}/image": {
+      "get": {
+        "operationId": "get_banner_image_api_v1_banners__banner_id__image_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "banner_id",
+            "required": true,
+            "schema": {
+              "title": "Banner Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Implemented"
+          }
+        },
+        "summary": "A banner's image, for its owner",
+        "tags": [
+          "banners"
         ]
       }
     },

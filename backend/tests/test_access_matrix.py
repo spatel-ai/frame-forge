@@ -180,6 +180,26 @@ ROWS: list[Row] = [
         Row(method, "/api/v1/scripts/{script_id}", "anonymous", 401, "not_authenticated")
         for method in ("GET", "DELETE")
     ],
+    # Banners contract stubs (D-067): a session, then 501 until built.
+    *[
+        Row(method, path, actor, 501, "not_implemented")
+        for method, path in (
+            ("GET", "/api/v1/banners"),
+            ("GET", "/api/v1/banners/{banner_id}/image"),
+            ("DELETE", "/api/v1/banners/{banner_id}"),
+        )
+        for actor in ("owner", "other", "admin")
+    ],
+    *[
+        Row(method, path, "anonymous", 401, "not_authenticated")
+        for method, path in (
+            ("GET", "/api/v1/banners"),
+            ("POST", "/api/v1/banners"),
+            ("GET", "/api/v1/banners/{banner_id}/image"),
+            ("DELETE", "/api/v1/banners/{banner_id}"),
+        )
+    ],
+    Row("POST", "/api/v1/banners", "owner", 422, "validation_error"),
     # M4 payments (T-402 to T-404; R-03). Creating an order needs a confirmed email (D-049); the
     # quote needs only a session. The owner's order ({order_id}, or `order_id` in the body) is
     # 404 order_not_found to everyone else, admin included.

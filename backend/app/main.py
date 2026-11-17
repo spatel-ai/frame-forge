@@ -10,6 +10,7 @@ from .auth.email import EmailSender, build_email_sender
 from .auth.ratelimit import register_rate_limit_handler
 from .auth.service import AuthService
 from .auth.store import AuthStore
+from .banners import routes as banner_routes
 from .core import health
 from .core.config import Settings
 from .core.database import DatabaseNotReady, check_database
@@ -82,6 +83,7 @@ def create_app(
     app.include_router(job_routes.router)
     app.include_router(wallet_routes.router)
     app.include_router(script_routes.router)
+    app.include_router(banner_routes.router)
     app.include_router(template_routes.router)
     app.include_router(payment_routes.router)
     app.include_router(payment_routes.webhook_router)
