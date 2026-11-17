@@ -76,3 +76,18 @@ Single file ownership per lane (D-022); Fable reviews every diff before merging.
   review → approve (hold) → video (capture) → wallet shows each entry; a second job with too few
   credits shows the shortfall message.
 - Not verified in M3: real payments (M4), live fal.ai.
+
+## M3 report (Gates B and D, 2026-11-17)
+
+**Status: MOCK-VERIFIED.** No fal.ai or Razorpay call was made; the backend ran with
+`AVATAR_PROVIDER=mock` and `AVATAR_PAYMENTS=mock`, confirmed through `/api/v1/config` first.
+
+| Point | Result |
+| --- | --- |
+| What was implemented | Wallets and an append-only ledger (T-301, T-302); prices fixed at voice-ready (T-303); every HLD §5.2 status change committed with its ledger entry (T-304), with per-attempt holds (D-039); wallet routes and the development-only grant command (T-306); credits pill, wallet page, price on review and the not-enough-credits state (T-310, T-311). Later owner decisions built in: D-040, D-047, D-048, D-056, D-057 |
+| Why | Videos cost credits (D-006, D-038) and the balance must never be overspent or double-charged (R-04, R-10) |
+| What was verified | Concurrency (T-305): concurrent holds, approvals, grants and job creations on one wallet never overspend; the balance always equals the ledger sum. Browser run (`scratchpad/browser/m3.mjs`, Chromium, 1440 and 1024 px): 22 of 22 checks passed — a new account has 0 credits and cannot make a voice; the grant command adds 300; a voice takes 10 (pill 290); the price shown is the server's `ceil(3.8 s × 20) = 76`; approval holds it and delivery captures it (wallet 214, nothing reserved); the wallet lists grant, voice, hold and capture newest first; a second job priced 934 with 204 available shows "This video costs 934 credits. You have 204.", Approve is disabled, and a forced approve gets 402 `insufficient_credits` with nothing held; no sideways scroll at 1024 px; no request left the machine. Screenshots were inspected |
+| Tests executed | `backend/check.sh`: 392 passed. `npm run check`: 352 passed |
+| What remains unverified | Live fal.ai (owner: documentation checks only, Q-13). Browsers other than Chromium |
+| Known risks or limitations | Jobs left in flight from before migration 0005 cannot be settled (none existed in the development database). A refused job-settlement is logged and retried each poll, never charged twice. The "Buy credits" action arrives with M4 |
+| Next justified action | M4 (payments) is being built in parallel; then its browser check and the owner-approved Razorpay test-mode run (T-407) |
