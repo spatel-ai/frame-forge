@@ -1015,9 +1015,9 @@
     "starts_after": "T-104",
     "task": "Joining module: measure a video and join start clip + video + end clip with ffmpeg",
     "acceptance": "Works on files alone, with no knowledge of jobs or the wallet; clips converted to match the measured video",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "app/media/joining.py: measure() via ffprobe, join() start+AI+end into one H.264/AAC MP4 at the AI video's size, rate and sound; temp file then rename; no shell. tests/test_media.py 17 tests (order by sampled colour, mixed size/rate/sound, portrait, silent parts, broken and truncated inputs, ffmpeg failure leaves no .part, missing tools). backend check 478 passed. Assumed defaults: clips of another shape get black bars (owner to confirm); AI video re-encoded at CRF 18; odd sizes fail and fall back to no banners (D-019); stale .part files to be swept in T-509. Not verified with real fal.ai output."
   },
   {
     "id": "T-508",
