@@ -185,26 +185,26 @@
   },
   {
     "id": "R-09",
-    "class": "Assumed",
+    "class": "Confirmed",
     "area": "Wallet",
     "requirement": "The price is per second of audio, rounded up to a whole credit, and shown before the customer approves.",
-    "source": "Decision D-006",
+    "source": "Owner, 2026-11-17 (Q-01, D-006)",
     "discovery_item": ""
   },
   {
     "id": "R-10",
-    "class": "Assumed",
+    "class": "Confirmed",
     "area": "Wallet",
-    "requirement": "Credits are held at approval, taken when the video is delivered, and returned if it fails.",
-    "source": "Decision D-005",
+    "requirement": "Credits are held at approval, taken when the video is delivered, and returned if it fails; captured and flagged when the outcome is unknown (D-005), and a voice is returned when none reached the customer (D-038, D-048).",
+    "source": "Owner, 2026-11-17 (Q-19, D-005; D-038, D-048)",
     "discovery_item": "Engineering: how failed jobs are recovered"
   },
   {
     "id": "R-11",
-    "class": "Assumed",
+    "class": "Confirmed",
     "area": "Wallet",
-    "requirement": "Voice previews are not charged, but are limited per day and need enough credits for the video.",
-    "source": "Decision D-015",
+    "requirement": "Outside production, each customer may approve at most 50 videos a day (setting); production has no limit, and voices are never limited because each is paid for.",
+    "source": "Owner, 2026-11-17 (D-046)",
     "discovery_item": ""
   },
   {
@@ -329,10 +329,10 @@
   },
   {
     "id": "R-82",
-    "class": "Assumed",
+    "class": "Confirmed",
     "area": "Design",
     "requirement": "The product uses the proposed brand: the name Frameforge (D-031), the colours and typefaces in UX.md section 4, light theme only at launch.",
-    "source": "Decision D-028; question Q-20",
+    "source": "Owner, 2026-11-17 (Q-20, D-028)",
     "discovery_item": ""
   },
   {
@@ -355,7 +355,7 @@
     "id": "R-22",
     "class": "Needs Verification",
     "area": "Payments",
-    "requirement": "A Razorpay account exists with test keys now and live activation before launch.",
+    "requirement": "A Razorpay account exists with test keys now and live activation before launch (the owner has keys, Q-10; the live test-mode run T-407 still needs approval).",
     "source": "Question Q-10",
     "discovery_item": ""
   },
@@ -549,6 +549,22 @@
     "area": "Payments",
     "requirement": "Payment gateways other than Razorpay.",
     "source": "Engineering",
+    "discovery_item": ""
+  },
+  {
+    "id": "R-83",
+    "class": "Confirmed",
+    "area": "Jobs",
+    "requirement": "When a job fails after its voice was made, the voice is kept; the customer can start a new job with it and pay only for the video. Saving every voice is a setting, off by default.",
+    "source": "Owner, 2026-11-17 (D-043)",
+    "discovery_item": ""
+  },
+  {
+    "id": "R-84",
+    "class": "Needs Verification",
+    "area": "Jobs",
+    "requirement": "Videos longer than 30 seconds, up to the video model's documented maximum audio length.",
+    "source": "Owner, 2026-11-17 (D-044)",
     "discovery_item": ""
   }
 ]

@@ -1,6 +1,6 @@
 # UX and Design — Frameforge Web
 
-Status: **Proposed, awaiting owner approval of the designs** (2026-11-17, task T-152).
+Status: **Confirmed**: the owner approved the designs and the brand on 2026-11-17 (T-152, D-028). Later boards are approved as they are added to the canvas.
 
 This document is the standard every screen is built and reviewed against. The screen designs
 themselves are on the design canvas:
@@ -37,7 +37,7 @@ written by competitors; the apps themselves sit behind a login and were not open
 | --- | --- | --- |
 | A dashboard with one prominent "Create video" action | HeyGen tutorials | Home has one primary action; everything else is secondary |
 | A structured, step-by-step flow: script, avatar, voice, layout, generate | Synthesia reviews | A stepper for Create, one decision per step |
-| A dedicated script panel with a play button to hear the voice before rendering | HeyGen tutorials | Voice preview is its own step, before any credits are spent |
+| A dedicated script panel with a play button to hear the voice before rendering | HeyGen tutorials | Voice preview is its own step; the voice costs 10 credits when it is made (D-038), and the video is charged only after approval |
 | Preview before spending credits; credits tied to video length | HeyGen tutorials | Price is shown beside the preview, before approval |
 | Photo-first simplicity: upload a face, type a script, get a video | D-ID reviews | Our flow is this shape; we do not add a timeline editor |
 | Template galleries shown as cards | Synthesia reviews | Banners and videos are card galleries with previews |
@@ -72,8 +72,8 @@ Seen in the M1 browser run screenshots.
 | Class | Item |
 | --- | --- |
 | Confirmed | R-75 to R-81 in [tracker/requirements.json](tracker/requirements.json) |
-| Assumed | The brand proposal in section 4 (R-82). Polling every 3 seconds is "real time" enough (D-030). Light theme only at launch |
-| Needs Verification | Whether the proposed colours and type suit the owner's market (Q-20). The price shown in designs, which depends on Q-01 |
+| Assumed | Polling every 3 seconds is "real time" enough (D-030). Light theme only at launch |
+| Needs Verification | None open: the brand (Q-20, R-82) and the price (Q-01: 20 credits per second, 10 per voice) are answered |
 | Deferred | Dark theme. Animated illustrations. A drag-and-drop timeline editor. Languages other than English in the interface itself |
 | Out of Scope | Copying any other product's logo, artwork or brand colours |
 
@@ -175,16 +175,20 @@ the form needs.
 | Screen | Route | Primary action | Designed |
 | --- | --- | --- | --- |
 | Home | `/` | Create a video | Desktop (phone drawn, not built: D-033) |
-| Create 1: photo and script | `/create` | Continue | Desktop, phone (built in M1.5) |
-| Create 2: banners | `/create/:id/banners` | Generate voice | Desktop |
+| Create 1: photo, script and voice choice | `/create` | Continue | Desktop, phone (built in M1.5); voice choice (D-043) and script picker drawn for M5 |
+| Create 2: banners | `/create/:id/banners` | Continue | Desktop |
+| Create 2b: consent | `/create` | Make my voice (10 credits) | Desktop (D-045) |
 | Create 3: review voice and price | `/create/:id` | Approve and generate video | Desktop |
 | Create 4: progress | `/create/:id` | none (waiting) | Desktop |
 | Create 5: result | `/create/:id` | Download | Desktop |
 | Videos | `/videos` | Create a video | Desktop |
 | Scripts | `/scripts` | Use this script | Desktop |
 | Wallet | `/wallet` | Buy credits | Desktop (phone drawn, not built: D-033) |
-| Buy credits | dialog on any screen | Pay | Desktop |
+| Buy credits, after-payment states | dialog on any screen | Pay | Desktop |
+| Video detail | `/videos/:id` | Download | Desktop |
+| Failure results, daily limit | `/create/:id` | Make a video with this voice / Start over | Desktop |
 | Log in, Sign up | `/login`, `/signup` | Log in, Create account | Desktop (phone log in drawn, not built: D-033) |
+| Forgot, reset, confirm email | `/forgot-password`, `/reset-password`, `/verify-email` | Send link, Save | Desktop |
 | Account | `/account` | Save | Desktop |
 | States and components | reference sheets | — | Desktop |
 
@@ -240,7 +244,7 @@ The customer never has to refresh the page.
 | What | How it stays current |
 | --- | --- |
 | A job in progress | Refetched every 3 seconds while in progress; the progress steps advance |
-| The credits pill | Refetched after every action that can change it (approve, video finished, payment), and when the window regains focus |
+| The credits pill | Refetched after every action that can change it (submit, approve, video finished or failed, payment), and when the window regains focus |
 | A payment being confirmed | Refetched every 2 seconds until the server confirms or fails it, for up to a minute, then a "still confirming" message with what to do |
 | Lists (videos, scripts, transactions) | Refetched when the screen is opened and after an action that changes them |
 | An item the customer just changed | Updated on screen at once, then confirmed by the server's answer. If the server refuses, the change is rolled back and explained |
@@ -252,9 +256,12 @@ returned.
 
 - Credits are whole numbers with thousands separators: `1,240 credits`.
 - Rupees use `Intl.NumberFormat('en-IN')`: `₹1,240`.
-- The price of a video is shown before approval, with the balance after it.
-- When credits are short, the approve button is replaced by "You need 40 more credits" and a
-  "Buy credits" action that returns the customer to the same step.
+- The price of a video is shown before approval, with the credits available now.
+- When credits are short, the approve button is disabled and the server's shortfall message is
+  shown ("This video costs 240 credits. You have 200."), with a "Buy credits" action that
+  returns the customer to the same step (the action appears with M4).
+- Buying is in credits (D-047): the customer chooses 500 to 10,000 credits and sees the rupees to
+  pay (₹1 = 1 credit).
 - Banners are always labelled "Free".
 
 ### Accessibility

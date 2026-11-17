@@ -115,9 +115,9 @@
     "starts_after": "",
     "task": "Owner answers the questions blocking M1 to M3: Q-01, Q-02, Q-08, Q-19",
     "acceptance": "Answers recorded in the tracker",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "VERIFIED",
+    "evidence": "Owner answered Q-01, Q-02, Q-08 and Q-19 on 2026-11-17 (questions.json)."
   },
   {
     "id": "T-008",
@@ -405,6 +405,21 @@
     "evidence": "Merged 9f81600. 422 errors carry `fields` keyed by image/script/language; 404/405/409 do not. backend/check.sh: 70 passed (14 new contract tests). Frontend npm run check: 32 passed; API types regenerated with `fields`."
   },
   {
+    "id": "T-158",
+    "milestone": "M1.5",
+    "area": "Frontend",
+    "lane": "FE-Shell",
+    "owner": "Sonnet",
+    "need": "Correctness",
+    "traces_to": "R-42",
+    "starts_after": "T-311, T-212",
+    "task": "Move code shared between features into `lib/` (validation, job storage, wallet refresh, credit formatting)",
+    "acceptance": "No feature imports another feature; shared folders import no feature; checks pass",
+    "status": "To do",
+    "verification": "",
+    "evidence": ""
+  },
+  {
     "id": "T-156",
     "milestone": "M1.5",
     "area": "Frontend",
@@ -670,9 +685,9 @@
     "starts_after": "T-304, T-306",
     "task": "Concurrency and invariant tests",
     "acceptance": "No overspend; balance = sum of ledger",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Merged. tests/test_wallet_concurrency.py: 50 concurrent holds on 1,000 credits → exactly 23; mixed grants/holds/captures/releases match the ledger; 20 concurrent approvals with credits for 7 → 7 held, 13 refused unchanged; same reference from 20 threads written once; 20 concurrent creates with credits for 6 voices → 6 jobs, no orphans. Independent invariant checker after every test (balance = ledger sum, reserved = sum of reserved_delta, available ≥ 0 at every committed point). 3 repeated runs green; check.sh 388 passed. Real PostgreSQL, READ COMMITTED."
   },
   {
     "id": "T-306",
@@ -742,7 +757,7 @@
     "owner": "Fable",
     "need": "Correctness",
     "traces_to": "R-02, R-66",
-    "starts_after": "T-008",
+    "starts_after": "T-300",
     "task": "Re-check Razorpay documentation against D-016",
     "acceptance": "Each relied-on fact has a dated source",
     "status": "Done",
@@ -923,8 +938,8 @@
     "need": "Safety",
     "traces_to": "R-11",
     "starts_after": "T-502",
-    "task": "Daily cap on voice generations",
-    "acceptance": "Over the cap → 429 with a clear message",
+    "task": "Daily video limit outside production (D-046)",
+    "acceptance": "Outside production the 51st approval in a day → 429 `daily_limit_reached`, nothing held; production has no limit; voices are never limited",
     "status": "To do",
     "verification": "",
     "evidence": ""
@@ -1057,7 +1072,7 @@
     "owner": "Sonnet",
     "need": "Acceptance",
     "traces_to": "R-55",
-    "starts_after": "T-510, T-511, T-515",
+    "starts_after": "T-510, T-511, T-515, T-158",
     "task": "Loading, empty and error states; responsive; accessibility pass",
     "acceptance": "Every screen has all three states",
     "status": "To do",
@@ -1105,6 +1120,51 @@
     "starts_after": "T-514",
     "task": "Show the joining step and the no-banner fallback",
     "acceptance": "Customer is told plainly when banners could not be added",
+    "status": "To do",
+    "verification": "",
+    "evidence": ""
+  },
+  {
+    "id": "T-516",
+    "milestone": "M5",
+    "area": "Backend",
+    "lane": "BE-Jobs",
+    "owner": "Opus",
+    "need": "Correctness",
+    "traces_to": "R-83",
+    "starts_after": "T-509",
+    "task": "Saved voices: start a new job from a failed job's voice (D-043)",
+    "acceptance": "No voice charge; the voice is copied to the new job; price from its length; only the caller's failed jobs are offered (404 otherwise); `save_all_voices` setting, default off",
+    "status": "To do",
+    "verification": "",
+    "evidence": ""
+  },
+  {
+    "id": "T-517",
+    "milestone": "M5",
+    "area": "Frontend",
+    "lane": "FE-Create",
+    "owner": "Sonnet",
+    "need": "Acceptance",
+    "traces_to": "R-83",
+    "starts_after": "T-515, T-516",
+    "task": "Voice choice on Create and \"Make a video with this voice\" on failed results",
+    "acceptance": "Matches the approved boards; consent still required; server decides the price",
+    "status": "To do",
+    "verification": "",
+    "evidence": ""
+  },
+  {
+    "id": "T-518",
+    "milestone": "M5",
+    "area": "Backend",
+    "lane": "Review",
+    "owner": "Fable",
+    "need": "Correctness",
+    "traces_to": "R-84",
+    "starts_after": "",
+    "task": "Verify the video model's maximum audio length (D-044)",
+    "acceptance": "Dated official source recorded; `max_audio_seconds` and the script limit set from it, or D-044 reported as blocked",
     "status": "To do",
     "verification": "",
     "evidence": ""

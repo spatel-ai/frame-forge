@@ -24,8 +24,8 @@ The parent [CLAUDE.md](../CLAUDE.md) governs the project. These documents apply 
 | --- | --- | --- |
 | `tracker/milestones.json` | Milestone | status: Planned, In progress, Done |
 | `tracker/tasks.json` | Task | status: To do, In progress, Blocked, Done. verification: see below |
-| `tracker/decisions.json` | Decision | status: Confirmed, Proposed, Needs owner |
-| `tracker/questions.json` | Question for the owner | status: Open, Answered. handling: Needs your answer, Default applies unless you object |
+| `tracker/decisions.json` | Decision | status: Confirmed, Proposed, Needs owner, Superseded (sync.py keeps only the word; a note in brackets stays in DECISIONS.md) |
+| `tracker/questions.json` | Question for the owner | status: Open, Answered. handling: Needs your answer, Default applies unless you object, Answered |
 | `tracker/requirements.json` | Requirement | class: Confirmed, Assumed, Needs Verification, Deferred, Out of Scope |
 
 Use the values exactly as written; the dashboard counts them by exact text.
@@ -90,9 +90,10 @@ Status: VERIFIED | MOCK-VERIFIED | IMPLEMENTED, UNVERIFIED | BLOCKED | DEFERRED
 The screen designs for every customer screen, on a design canvas. UX.md is the written standard;
 the canvas is the picture. The link is private to its owner until shared.
 
-The same 24 screens are kept in [design/](design/) as one `.dc.html` file each, with
-`canvas.json` (the board layout) and `BRIEF.md` (the rules they were drawn to). Agents building a
-screen read the matching file there. The owner approved the designs (Q-20, D-028).
+Every board on the canvas is also kept in [design/](design/) as one `.dc.html` file (screens and
+state sheets), with `canvas.json` (the board layout) and `BRIEF.md` (the rules they were drawn
+to). Agents building a screen read the matching file there. The owner approved the designs
+(Q-20, D-028); boards added later carry a note on the canvas saying whether they are approved.
 
 ## Dashboard
 

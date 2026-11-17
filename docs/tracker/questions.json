@@ -5,7 +5,7 @@
     "why_it_matters": "fal.ai charges the company $0.0562 per second of video (about $1.69 for 30 seconds) plus the voice. The rate must cover that, Razorpay's fee, tax and your margin, at a dollar-to-rupee rate you choose.",
     "default_if_unanswered": "None. The rate is built as a setting with no value; M3 cannot finish without it.",
     "escalation": "Cost",
-    "handling": "Needs your answer",
+    "handling": "Answered",
     "blocks": "M3",
     "status": "Answered",
     "answer": "20 credits per second of voice (600 credits for a 30-second video), D-006. Owner, 2026-11-17."
@@ -16,7 +16,7 @@
     "why_it_matters": "It decides what is built in M2 and which outside services are needed (email sender, SMS sender, Google project).",
     "default_if_unanswered": "Email and password with email verification (decision D-003). Not started without your answer.",
     "escalation": "Security",
-    "handling": "Answered by the owner",
+    "handling": "Answered",
     "blocks": "M2",
     "status": "Answered",
     "answer": "Email and password (owner, 2026-11-17). Decision D-003 confirmed."
@@ -44,7 +44,7 @@
   {
     "id": "Q-05",
     "question": "What is the refund policy, and do credits expire?",
-    "why_it_matters": "Decides how refunds are handled in M6 and what the terms say.",
+    "why_it_matters": "Decides how refunds are handled in M6 and what the terms say. The approved Buy-credits design says \"Credits do not expire\", marked as a placeholder until this is answered.",
     "default_if_unanswered": "Credits do not expire and cannot be cashed out. Failed videos return credits automatically. Payment refunds are done by an admin in Razorpay and reverse the credits.",
     "escalation": "Cost",
     "handling": "Needs your answer",
@@ -55,9 +55,9 @@
     "id": "Q-06",
     "question": "Can customers buy any amount, or only fixed packs? What are the smallest and largest purchases?",
     "why_it_matters": "Shapes the buy-credits screen and the server-side limits.",
-    "default_if_unanswered": "Any whole-rupee amount from ₹50 to ₹10,000 per purchase. These two limits are engineering placeholders, not researched figures.",
+    "default_if_unanswered": "Any whole-rupee amount from ₹500 to ₹10,000 per purchase. These two limits are engineering placeholders, not researched figures.",
     "escalation": "Cost",
-    "handling": "Needs your answer",
+    "handling": "Answered",
     "blocks": "M4",
     "status": "Answered",
     "answer": "Any whole-rupee amount from ₹500 to ₹10,000 per purchase (₹1 = 1 credit). Owner, 2026-11-17."
@@ -78,7 +78,7 @@
     "why_it_matters": "Each voice generation costs the company money even if the customer never makes the video.",
     "default_if_unanswered": "Free, only when the wallet covers the estimated video price, capped at 20 voice generations per user per day. The cap of 20 is an engineering placeholder.",
     "escalation": "Cost",
-    "handling": "Needs your answer",
+    "handling": "Answered",
     "blocks": "M3",
     "status": "Answered",
     "answer": "Charge 10 credits for each voice generation, kept if no video is made, returned if the voice itself fails (D-038). Owner, 2026-11-17."
@@ -99,7 +99,7 @@
     "why_it_matters": "Payment code can be written and mock-tested without them, but cannot be proven against Razorpay.",
     "default_if_unanswered": "M4 stops at MOCK-VERIFIED.",
     "escalation": "None",
-    "handling": "Default applies unless you object",
+    "handling": "Answered",
     "blocks": "M4",
     "status": "Answered",
     "answer": "The owner has a Razorpay account with keys and a webhook secret and pastes them into backend/.env. Using them needs the owner's approval per run (Gate C, T-407). Owner, 2026-11-17."
@@ -190,7 +190,7 @@
     "why_it_matters": "The request is never retried, to avoid paying twice. The customer got no video, but the company may still have been billed.",
     "default_if_unanswered": "The customer's credits are returned; the company bears any fal.ai charge; the job is flagged for staff (decision D-005).",
     "escalation": "Cost",
-    "handling": "Needs your answer",
+    "handling": "Answered",
     "blocks": "M3",
     "status": "Answered",
     "answer": "The customer is charged (the hold is captured) when a paid request's outcome is unknown; the job is flagged. Clear failures still return credits (D-005). Owner, 2026-11-17."
@@ -201,7 +201,7 @@
     "why_it_matters": "No screen is rebuilt until you approve. The palette and typefaces are engineering's proposal, not a brand you chose.",
     "default_if_unanswered": "None. The component library and every later screen wait for your approval.",
     "escalation": "Core behaviour",
-    "handling": "Answered by the owner",
+    "handling": "Answered",
     "blocks": "M1.5",
     "status": "Answered",
     "answer": "Approved (owner, 2026-11-17), after the login and sign-up screens were given an illustrated brand panel at the owner's request."
@@ -212,7 +212,7 @@
     "why_it_matters": "It appears in the wordmark, the browser tab, emails and the Razorpay checkout window.",
     "default_if_unanswered": "The working name 'Talking Avatar'. Changing it later is a small edit.",
     "escalation": "None",
-    "handling": "Answered by the owner",
+    "handling": "Answered",
     "blocks": "M7",
     "status": "Answered",
     "answer": "Frameforge. Backend: Frameforge API. Frontend: Frameforge Web (owner, 2026-11-17; decision D-031)."
@@ -223,7 +223,7 @@
     "why_it_matters": "The login design has a 'Forgot password?' link but no reset screen or flow is planned. Without one, a locked-out paying customer needs manual help. It also requires the system to send email.",
     "default_if_unanswered": "Yes: add a reset screen and an emailed link to M2.",
     "escalation": "None",
-    "handling": "Answered by the owner",
+    "handling": "Answered",
     "blocks": "M2",
     "status": "Answered",
     "answer": "Yes: implement the forgot-password flow (owner, 2026-11-17). Designed now; built in M2 (T-203, T-210) because it needs customer accounts. HLD section 5.5."

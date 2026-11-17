@@ -37,7 +37,7 @@ The parent CLAUDE.md wins on any conflict and is never edited.
 
 | Question | Answer |
 | --- | --- |
-| Q-06 amounts | Any whole-rupee amount from ₹500 to ₹10,000 per purchase |
+| Q-06 amounts | Any whole number of credits from 500 to 10,000 per purchase (₹500 to ₹10,000; ₹1 = 1 credit). The contract is in credits (D-047) |
 | Q-10 account | The owner has keys and a webhook secret and pastes them into `backend/.env`. Using them needs approval for that run |
 
 ## Discovery
@@ -52,15 +52,15 @@ The parent CLAUDE.md wins on any conflict and is never edited.
 | 6 | `payment.failed` may not be sent for the first failed attempt | §G | Never depend on it. Reconciliation fetches the payment |
 | 7 | Key prefixes `rzp_test_` / `rzp_live_` not stated in the docs read | §H | D-042 check fails closed; confirmed in T-407 |
 | 8 | Whether `GET /orders/{id}/payments` lists captured payments is unclear | §B | Reconciliation also reads the order's `status` and `amount_paid`; confirmed in T-407 |
-| 9 | The design's ₹100 and ₹250 picks were below the new minimum | `docs/design/Buy-Credits.dc.html` | Board changed to ₹500 / ₹1,000 / ₹2,500 / ₹5,000. After-payment states drawn (`Payment-States.dc.html`). Approved by the owner on 2026-11-17 |
+| 9 | The design's ₹100 and ₹250 picks were below the new minimum | `docs/design/Buy-Credits.dc.html` | Board changed to 500 / 1,000 / 2,500 / 5,000 credits. After-payment states drawn (`Payment-States.dc.html`). Approved by the owner on 2026-11-17 |
 | 10 | The design says "Credits do not expire" | Buy-Credits board | Depends on Q-05 (M6). Kept, flagged |
 
 ### Classified register
 
 | Class | Item |
 | --- | --- |
-| Confirmed | D-016 flow; paise integers; ₹500–₹10,000; credit only on a valid signature, `captured` and an amount equal to the order; one crediting routine |
-| Assumed | ₹1 buys 1 credit with no GST on top (Q-03 is open for M7). Reconciliation looks at orders older than 30 minutes, every 5 minutes, for up to 3 days. Quick picks ₹500 / ₹1,000 / ₹2,500 / ₹5,000 |
+| Confirmed | D-016 flow; paise integers; 500–10,000 credits per purchase (D-047); credit only on a valid signature, `captured` and an amount equal to the order; one crediting routine |
+| Assumed | ₹1 buys 1 credit with no GST on top (Q-03 is open for M7). Reconciliation looks at orders older than 30 minutes, every 5 minutes, for up to 3 days. Quick picks 500 / 1,000 / 2,500 / 5,000 credits |
 | Needs Verification | Key prefixes, the order-payments list, retry intervals and the webhook digest encoding (hex). All in T-407 |
 | Deferred | Refunds (M6), GST invoices (Q-03, M7), live keys (M7) |
 | Out of Scope | Saved cards, subscriptions, other payment providers |
@@ -86,12 +86,12 @@ When the test-mode run is approved, the owner adds a webhook in the Razorpay Das
 
 | Route | Body → result | Errors |
 | --- | --- | --- |
-| `POST /api/v1/payments/orders` | `{rupees}` → `{order_id, razorpay_order_id, amount_paise, credits, key_id, status}` | 401, 403 `email_not_verified`, 422 `fields.rupees`, 502 `payment_provider_unavailable` |
-| `GET /api/v1/payments/orders/{order_id}` | → `{order_id, status, rupees, credits, created_at}` | 401, 404 (missing or not yours) |
+| `POST /api/v1/payments/orders` | `{credits}` (D-047) → `{order_id, razorpay_order_id, amount_paise, credits, key_id, status}` | 401, 403 `email_not_verified` (D-049, Proposed), 422 `fields.credits`, 502 `payment_provider_unavailable` |
+| `GET /api/v1/payments/orders/{order_id}` | → `{order_id, status, credits, created_at}` | 401, 404 (missing or not yours) |
 | `POST /api/v1/payments/verify` | `{order_id, razorpay_payment_id, razorpay_signature}` → `{order_id, status, credits, wallet}` | 401, 404, 400 `payment_signature_invalid`, 409 `payment_not_captured`, 502 |
 | `POST /api/v1/webhooks/razorpay` | raw body, `X-Razorpay-Signature`, `x-razorpay-event-id` → 200 | 400 `webhook_signature_invalid` (no session, no origin check) |
 | `POST /api/v1/payments/mock/complete` | development and mock mode only: `{order_id, outcome: "captured"\|"failed"}` → the Checkout handler's fields, signed with the mock secret | 404 in any other mode |
-| `GET /api/v1/config` | adds `payments`, `razorpay_key_id` (null in mock), `min_purchase_rupees`, `max_purchase_rupees` | — |
+| `GET /api/v1/config` | adds `payments`, `razorpay_key_id` (null in mock), `min_purchase_credits`, `max_purchase_credits` | — |
 
 The order `status` is one of `created`, `paid` or `failed`. `failed` is shown only after a
 definite failure, and a later capture still credits.
@@ -101,7 +101,7 @@ definite failure, and a later capture still credits.
 | Phase | Tasks (owner) | What happens | Done when |
 | --- | --- | --- | --- |
 | 0 | T-401 (done), T-400, design (Fable) | Facts with sources; the contract as schemas, 501 stubs and settings; frontend types regenerated; boards updated | The contract test passes; the owner approved the two boards (2026-11-17) |
-| 1 | T-402 (Sonnet, BE-Payments) ∥ T-410 (Sonnet, FE-Wallet) | Migration 0006 (`payment_orders`, `webhook_events`); the gateway (httpx plus mock); create-order. Buy-credits dialog against the mocked API | Limits enforced; the gateway is the only Razorpay caller; frontend checks pass |
+| 1 | T-402 (Sonnet, BE-Pay) ∥ T-410 (Sonnet, FE-Wallet) | Migration 0006 (`payment_orders`, `webhook_events`); the gateway (httpx plus mock); create-order. Buy-credits dialog against the mocked API | Limits enforced; the gateway is the only Razorpay caller; frontend checks pass |
 | 2 | T-403 (Opus) ∥ T-411 (Sonnet) | The crediting routine and the verify route. After-payment states | Credits once; signature checked with our stored order id; status `captured` and the amount checked by fetching the payment |
 | 3 | T-404 (Opus) | Webhook | Raw-body signature; event-id dedupe; the same crediting routine |
 | 4 | T-405 (Sonnet) | Reconciliation in the background loop | Paid but unconfirmed → credited once |
@@ -109,7 +109,7 @@ definite failure, and a later capture still credits.
 | 6 | Gates B and D (Fable) | Merge, checks, browser check in mock mode, report | MOCK-VERIFIED |
 | 7 | T-407 (Fable) | One run in Razorpay test mode | Only with the owner's approval for that run |
 
-Phase 1 and later start after M3 is done.
+Phase 1 and later start after M3 is done (its build is done; the M3 browser check and report remain).
 
 ## Verification
 
@@ -117,8 +117,8 @@ Phase 1 and later start after M3 is done.
   httpx transport.
 - Browser check in mock mode at 1440 and 1024 px:
   1. Confirm `"payments":"mock"` and `"provider":"mock"` first.
-  2. Buy ₹500 → mock checkout → "Payment received" → the wallet shows `purchase` +500.
-  3. ₹499 and ₹10,001 are refused under the field.
+  2. Buy 500 credits → mock checkout → "Payment received" → the wallet shows `purchase` +500.
+  3. 499 and 10,001 credits are refused under the field.
   4. Failed and cancelled endings appear.
   5. No request leaves the machine.
 - Not verified until T-407: Razorpay's real API, Checkout and webhooks.
@@ -134,12 +134,14 @@ Stop and report instead of guessing when:
 
 ## Report (parent CLAUDE.md §10)
 
-At the end of the milestone, the report covers seven points:
+At the end of the milestone, the report covers the seven points of the template in [README.md](README.md):
 
-- what was built, and why;
-- what was verified, and which tests ran;
-- what remains unverified;
-- known risks;
-- the next step.
+1. what was implemented;
+2. why it was necessary;
+3. what was verified;
+4. which tests were executed;
+5. what remains unverified;
+6. known risks or limitations;
+7. the next justified action.
 
 Each is given an honest status. Then ask whether to refresh the tracker dashboard.

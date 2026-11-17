@@ -74,10 +74,13 @@ def main():
         if len(parts) != 6:
             sys.exit(f"{head.group(1)}: a decision needs Status, Choice, Alternatives, Why, Trade-off, Validation")
         status, date, area = [p.strip() for p in parts["Status"].split("·")]
-        question = re.search(r"Q-\d+", status)
+        # The dashboard counts statuses by exact word: Confirmed, Proposed, Needs owner, Superseded.
+        # Any note in brackets after the word stays in DECISIONS.md only.
+        word = "Needs owner" if status.startswith("Needs") else status.split(" (")[0].split(" by ")[0]
+        question = re.search(r"Q-\d+", status) if word == "Needs owner" else None
         decisions.append({
             "id": head.group(1), "decision": head.group(2).strip(),
-            "status": "Needs owner" if status.startswith("Needs") else status,
+            "status": word,
             "waiting_on": question.group(0) if question else "",
             "area": area.replace("Area: ", "").capitalize(), "choice": parts["Choice"],
             "trade_off": parts["Trade-off"], "validation": parts["Validation"], "date": date,

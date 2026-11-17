@@ -2,7 +2,7 @@
 
 The governing rules are in the parent [CLAUDE.md](../CLAUDE.md). The charging design is
 [HLD.md](HLD.md) §4 (tables, ledger kinds) and §5.2 (one transaction per status change);
-decisions D-004, D-005, D-006, D-014, D-038. Owner said on 2026-11-17: when M2 is done, proceed
+decisions D-004, D-005, D-006, D-014, D-038, D-039, D-040, D-046, D-048. Owner said on 2026-11-17: when M2 is done, proceed
 with the next set of development.
 
 ## Context
@@ -39,18 +39,18 @@ and shows no overspend, and that the stored balance equals the sum of the ledger
 
 | Class | Item |
 | --- | --- |
-| Confirmed | Prices and charging rules above; integers only (D-014); hold, capture, release (D-005); ₹1 = 1 credit (D-007) |
+| Confirmed | Prices and charging rules above; hold, capture, release (D-005); ₹1 = 1 credit (D-007) |
 | Assumed | Price rounds up to whole credits. A failed voice returns its 10 credits. Insufficient credits at submit or approval answers 402 `insufficient_credits`. Flagged jobs get a `needs_review` column. A new account starts with 0 credits |
 | Needs Verification | That PostgreSQL row locks plus the `CHECK` constraint hold under concurrent approvals (proved by T-305, not assumed) |
-| Deferred | Buying credits (M4). Admin adjustments and refunds of flagged jobs (M6). GST lines (Q-03) |
-| Out of Scope | Credit expiry, transfers (Q-05, Q-12) |
+| Deferred | Credit expiry (Q-05, M6). Buying credits (M4). Admin adjustments and refunds of flagged jobs (M6). GST lines (Q-03) |
+| Out of Scope | Transfers between customers (Q-12). Integers only for money is Proposed (D-014) and followed everywhere |
 
 ## API contract (T-300)
 
 | Route | Result | Errors |
 | --- | --- | --- |
 | `GET /api/v1/wallet` | `{balance_credits, reserved_credits, available_credits}` | 401 |
-| `GET /api/v1/wallet/transactions?page=&page_size=` | `{items: [{id, kind, credits, balance_after, reserved_after, job_id, created_at}], total, page, page_size}`, newest first | 401, 422 |
+| `GET /api/v1/wallet/transactions?page=&page_size=` | `{items: [{id, kind, credits, reserved_delta, balance_after, reserved_after, job_id, created_at}], total, page, page_size}`, newest first | 401, 422 |
 | `GET /api/v1/config` | adds `credits_per_second`, `voice_price_credits`; drops the USD cost | — |
 | `JobOut` | adds `price_credits` (null until the voice is ready) and `charged_credits`; drops the USD cost | — |
 | `POST /api/v1/jobs`, `POST /api/v1/jobs/{id}/approve` | unchanged bodies | add 402 `insufficient_credits` |
@@ -62,7 +62,7 @@ and shows no overspend, and that the stored balance equals the sum of the ledger
 | --- | --- | --- | --- |
 | 0 | Gate A, T-300 (Fable) | This plan; decisions; the contract as schemas and 501 stubs; frontend types regenerated | Contract test passes |
 | 1 | T-301 + T-302 (Opus, BE-Wallet) ∥ T-310 (Sonnet, FE-Wallet) | `wallets` and `ledger_entries` with the `CHECK` and `UNIQUE (kind, ref_type, ref_id)`; ledger service with row locks and idempotency. Frontend: credits pill and wallet page against the mocked API | The database rejects overspend and duplicates; frontend checks pass |
-| 2 | T-303 + T-304 (Opus, BE-Jobs) ∥ T-306 (Sonnet, BE-Wallet) ∥ T-311 (Sonnet, FE-Create) | Voice charge at submit; price fixed at audio-ready; every row of HLD §5.2 as one transaction. Wallet routes and the grant command. Price card on review, 402 handling with the server's message | One test per §5.2 row |
+| 2 | T-303 (Sonnet) + T-304 (Opus), built together by Opus in BE-Jobs ∥ T-306 (Sonnet, BE-Wallet) ∥ T-311 (Sonnet, FE-Create) | Voice charge at submit; price fixed at audio-ready; every row of HLD §5.2 as one transaction. Wallet routes and the grant command. Price card on review, 402 handling with the server's message | One test per §5.2 row |
 | 3 | T-305 (Opus) | Concurrency and invariant tests: many approvals and grants at once on one wallet | No overspend; balance = sum of ledger |
 | 4 | Gates B and D (Fable) | Merge, both checks, browser review at 1440 and 1024 px in mock mode, report | Report written |
 

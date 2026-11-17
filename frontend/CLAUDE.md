@@ -8,11 +8,13 @@ never overrides it. If the two disagree, the parent file wins; fix this file.
 | Parent section | What it means for frontend work |
 | --- | --- |
 | §2 Think → Validate → Decide → Execute → Verify | Follow it for every task in [docs/MILESTONES.md](../docs/MILESTONES.md). Material choices go in [docs/DECISIONS.md](../docs/DECISIONS.md) with all five parts |
-| §3 Discovery | A screen that needs behaviour the design does not define is a new requirement: record it in [docs/tracker/requirements.json](../docs/tracker/requirements.json), do not invent it |
-| §4 Evidence | Never write a library call or a Razorpay Checkout option from memory. Check the installed package or the official documentation and record the date |
-| §6 Gates | Gate B applies before wiring a screen to the backend: the route must exist in the OpenAPI contract |
-| §7 Delegation | Each task names its owner model. Use the brief template in [docs/README.md](../docs/README.md) |
-| §8 Stop conditions | Stop and report when the contract and the backend disagree, a change would trigger a paid call, or two fixes have failed without new evidence |
+| §3 Discovery | A screen that needs behaviour the design does not define is a new requirement: record it in [docs/tracker/requirements.json](../docs/tracker/requirements.json) with one of the five classes (Confirmed, Assumed, Needs Verification, Deferred, Out of Scope); do not invent it. Anything touching cost, privacy, security, consent or core behaviour becomes a question for the owner |
+| §4 Evidence | Never write a library call or a Razorpay Checkout option from memory. Check the installed package or the official documentation and record the date. If evidence cannot be had, write: "Not verified — requires documentation review, execution, or live integration testing." |
+| §5 Alignment | Before each phase, compare the work with the requirements, the designs and the contract; drop or simplify work that no longer adds value |
+| §6 Gates | All four gates (A before starting, B before integrating, C before any paid or live run, D before calling it done) apply; the checklist is in MILESTONES.md. For Gate B the route must also exist in the OpenAPI contract. Never bypass a failed gate |
+| §7 Delegation | Each task names its owner model; Haiku never gets an ambiguous design decision. Use the nine-part brief in [docs/README.md](../docs/README.md). Agents give evidence; Fable never approves on an agent's word alone |
+| §8 Stop conditions | All nine conditions of parent §8 apply, with its six steps for recurring failures. In particular: the contract and the backend disagree, a change would trigger a paid call, a security issue is found, or two fixes have failed without new evidence |
+| §9 Scope | Classify improvements as required (correctness, safety, acceptance), optional or future; build only the required ones without asking |
 | §10 Reporting | Report with the seven points and the five statuses. The template is in docs/README.md |
 
 ## Read before changing anything
@@ -33,7 +35,7 @@ Several tasks may be in progress at once. The lanes, their files and each task's
 list are in [docs/MILESTONES.md](../docs/MILESTONES.md), section "Parallel plan".
 
 - Start a task only when every task it starts after is Done and no other task is active in its lane.
-- Change only your lane's files. If you need a change in `src/routes.tsx`, `src/api/` or `package.json`, hand it to the FE-Shell
+- Change only your lane's files. If you need a change in `src/routes.tsx`, `src/api/`, `src/styles/` or `package.json`, hand it to the FE-Shell
   lane; do not edit those yourself.
 - Work in your own git worktree and branch. Fable merges one branch at a time.
 - Do not edit `docs/tracker/` from a parallel task; report your status and evidence, and the
@@ -43,8 +45,10 @@ list are in [docs/MILESTONES.md](../docs/MILESTONES.md), section "Parallel plan"
 ## Cost and test rule (owner, 2026-11-17; decision D-021)
 
 - **Allowed without asking:** component tests against a mocked API, lint, type check, build.
-- **Needs the owner's approval for that run:** anything that makes the backend call fal.ai, and
-  any Razorpay Checkout session, including test mode.
+- **Needs the owner's approval for that run (Gate C):** anything that makes the backend call
+  fal.ai, and any Razorpay Checkout session, including test mode. Before asking, state what will
+  run and the expected cost.
+- A passing mocked test is `MOCK-VERIFIED`. Only an approved real run earns `VERIFIED`.
 - When trying the app, the backend must be in mock mode: the header shows a "Mock mode" badge. If
   the badge is missing, stop; you are connected to the paid provider.
 
@@ -76,22 +80,27 @@ src/
   main.tsx      router and query client
   routes.tsx    route table
   api/          client.ts (the one fetch client), schema.d.ts and openapi.json (generated)
-  components/   AppShell, NotFound; shared, presentational
+  components/   AppShell, NotFound, and feedback/ form/ icons/ layout/ shell/ (the component
+                library; shell/ holds the sidebar, top bar and RequireAuth)
   features/
-    create/     CreatePage, JobPage, JobForm, JobView, jobQueries, storage, tests
-  lib/          small shared helpers
+    auth/       log in, sign up, confirm email, forgot and reset password
+    account/    account page
+    create/     the create flow: form, review with price, progress, result, job queries
+    wallet/     credits pill data, wallet page
+  lib/          small shared helpers (session, formatting)
   styles/       tokens.css + base.css
 ```
 
-Later features add their own folder under `features/`: `auth/ scripts/ videos/ wallet/ account/
-admin/ home/`. A feature folder owns its screens, hooks and tests. Features do not import from each
-other; shared code moves to `components/`, `lib/` or `api/`.
+Later features add their own folder under `features/`: `scripts/ videos/ admin/ home/`. A feature
+folder owns its screens, hooks and tests. Features do not import from each other; shared code
+moves to `components/`, `lib/` or `api/`. Known gap: some files still break this rule (for
+example account imports from auth and create); task T-158 moves that shared code into `lib/`.
 
 ## Screens
 
 | Route | Screen | Milestone |
 | --- | --- | --- |
-| `/login`, `/signup`, `/verify-email`, `/forgot-password`, `/reset-password` | Auth | M2 |
+| `/login`, `/signup`, `/verify-email`, `/forgot-password`, `/forgot-password/sent`, `/reset-password` | Auth | M2 |
 | `/` | Home: balance, create, in progress, recent | M5 |
 | `/create`, `/create/:jobId` | Photo → script → banners → consent → listen and price → generating → joining → result | M1 (ported), M3 (price), M5 (script picker, banners, consent) |
 | `/scripts` | My scripts: list, reuse, delete | M5 |
@@ -146,10 +155,11 @@ other; shared code moves to `components/`, `lib/` or `api/`.
 - All calls go through the one client in `src/api/`. No `fetch` in components.
 - Types are generated from OpenAPI. Do not hand-write a response type; if one is missing, the
   backend contract is missing it.
-- Errors arrive as `{detail, code}`. Show `detail`; branch on `code`, never on the message text.
+- Errors arrive as `{detail, code}`, plus `fields` for input errors. Show `detail`; branch on
+  `code`, never on the message text.
 - Server data lives in TanStack Query. Use local state only for form input and interface state.
 - Poll a job only while its status is `audio_generating`, `video_submitting`, `video_generating`
-  or `video_assembling`. Stop on any other status.
+  or `video_assembling` (that status arrives in M5). Stop on any other status.
 
 ## UX standards (decision D-029)
 
@@ -191,7 +201,10 @@ real browser at desktop width.
    [docs/tracker/tasks.json](../docs/tracker/tasks.json). `verification` is one of the parent
    file's five statuses, stated honestly. When working in parallel, report these instead and the
    integrator records them at merge.
-2. If you made or changed a decision, add it to DECISIONS.md and
-   [docs/tracker/decisions.json](../docs/tracker/decisions.json).
-3. Report with the template in docs/README.md, including what was not run.
-4. Ask the owner whether to refresh the dashboard from the tracker files.
+2. If you made or changed a decision, add it to [docs/DECISIONS.md](../docs/DECISIONS.md) and run
+   `python3 docs/tracker/sync.py`, which rebuilds `decisions.json`. When working in parallel,
+   report the decision instead; the integrator records it.
+3. If you found a new requirement or unknown, add it to `requirements.json` or `questions.json`
+   (or report it, when working in parallel).
+4. Report with the template in docs/README.md, including what was not run.
+5. Ask the owner whether to refresh the dashboard from the tracker files.

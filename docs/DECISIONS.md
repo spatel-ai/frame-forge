@@ -3,7 +3,7 @@
 Every decision records the five parts the parent [CLAUDE.md](../CLAUDE.md) §2 asks for: the
 choice, the alternatives considered, the reason, the trade-off, and how it will be validated.
 
-A decision has one of three statuses:
+A decision has one of four statuses:
 
 - **Confirmed** — stated or approved by the owner. A proposal becomes Confirmed only when the owner
   approves it; engineering never marks its own proposal Confirmed. D-001, D-002, D-011, D-012 and
@@ -11,9 +11,14 @@ A decision has one of three statuses:
 - **Proposed** — recommended by engineering; becomes Confirmed when the owner approves these docs.
 - **Needs owner** — affects cost, privacy, security, consent or core behaviour, so it waits for
   the owner's answer to the linked question in [tracker/questions.json](tracker/questions.json).
+- **Superseded** — replaced by a later decision, named in the status line. Kept for history.
+
+A note in brackets after the status word (for example "Confirmed (owner answered Q-19)") is
+allowed; the tracker records only the word.
 
 When a decision changes, add a new entry that supersedes the old one; do not rewrite history.
-Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the same.
+[tracker/decisions.json](tracker/decisions.json) is rebuilt from this file by
+`python3 docs/tracker/sync.py`; never edit it by hand.
 
 ---
 
@@ -259,7 +264,7 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 ## D-016 — Razorpay Orders + Standard Checkout; credits granted only on server-verified proof
 
-**Status:** Confirmed · 2026-11-17 (owner approved the M4 plan; facts re-checked in T-401, [RAZORPAY-FACTS.md](RAZORPAY-FACTS.md)) · Area: both
+**Status:** Confirmed (owner approved the M4 plan; facts re-checked in T-401, [RAZORPAY-FACTS.md](RAZORPAY-FACTS.md)) · 2026-11-17 · Area: both
 
 **Choice:** The backend creates a Razorpay order. The browser opens Razorpay Checkout. Credits are granted by one idempotent routine reached from two places: the browser's verify call and the Razorpay webhook. That routine requires a valid signature, payment status `captured`, and an amount equal to the order. A reconciliation task asks Razorpay about orders left unpaid.
 
@@ -341,7 +346,7 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 **Status:** Confirmed · 2026-11-17 · Area: both
 
-**Choice:** Tests that use the mock provider and signed fixtures may run during development. Any call to fal.ai, and any call to Razorpay beyond its free test mode, needs the owner's approval for that run. Razorpay test mode still needs the owner to supply the keys.
+**Choice:** Tests that use the mock provider and signed fixtures may run during development. Any call to fal.ai, and any call to Razorpay including its free test mode, needs the owner's approval for that run (owner, 2026-11-17).
 
 **Alternatives:** No tests without asking (the owner's first instruction, replaced the same day). No tests at all.
 
@@ -627,7 +632,7 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 ## D-039 — Each approval attempt of a job has its own hold reference
 
-**Status:** Confirmed (built and tested in T-304) · 2026-11-17 · Area: backend
+**Status:** Proposed (built and tested in T-304; awaiting the owner) · 2026-11-17 · Area: backend
 
 **Choice:** A job carries an approval attempt number, starting at 1 and increased each time the customer approves. The video hold, capture and release use the reference `('job', '<job_id>#<attempt>')` instead of `('job', '<job_id>')`. The voice charge and voice return keep `('job', '<job_id>')`, because a job has one voice. When submission to fal.ai fails cleanly (upload fails or fal.ai refuses), the job returns to `audio_ready` with the hold released, as HLD §5.2 says, and approving again writes a new hold under the next attempt.
 
@@ -638,6 +643,8 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 **Trade-off:** One more job column, and the ledger reads the job id from the reference by cutting at `#`.
 
 **Validation:** Tests: approve, clean failure, release, approve again, capture; each attempt has exactly one hold and one capture or release; repeating an attempt's operation is a no-op.
+
+---
 
 ## D-040 — A voice longer than the limit keeps its charge; the audio is kept for reuse
 
@@ -653,6 +660,8 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 **Validation:** A test in tests/test_charging.py: status failed, voice_charge kept, no voice_return, audio file still present, ledger invariant holds.
 
+---
+
 ## D-041 — Razorpay is called with the existing httpx client, not the razorpay SDK
 
 **Status:** Proposed · 2026-11-17 · Area: backend
@@ -667,6 +676,8 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 **Validation:** Signed-fixture tests with a fake transport (no network); the owner-approved test-mode run T-407 confirms the real calls.
 
+---
+
 ## D-042 — Payments run in mock mode unless switched; outside production only test keys are accepted
 
 **Status:** Proposed · 2026-11-17 · Area: backend
@@ -680,3 +691,115 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 **Trade-off:** If Razorpay's test key ids do not start with `rzp_test_`, the owner must report it and the check is corrected before T-407.
 
 **Validation:** Config tests: missing values, a non-test key in development, and a test key in development; the T-407 run confirms the prefix.
+
+---
+
+## D-043 — Saved voices: a failed job's voice can be reused for a new video
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: both
+
+**Choice:** A voice is kept on its job when the job fails after the voice was made: the voice was longer than the limit, the video was refused, failed, timed out, or its outcome is unknown. When the customer starts a NEW job, Create offers a voice choice: "Make a new voice" (10 credits, D-038) or one of their saved voices from failed jobs. A saved voice skips voice generation and its charge; the new job goes straight to listen-and-approve, priced from that voice's length (D-006). A setting `save_all_voices` (default off) would keep every voice; with it off, only failed jobs' voices are offered. No video is ever made without a voice.
+
+**Alternatives:** Retry inside the failed job (one history entry, but a failed job would no longer be final). Never reuse voices (the customer pays again for a voice already made).
+
+**Why:** Owner's decision, 2026-11-17: a paid voice should not be wasted when the video fails, and a new job keeps history and money simple (each job has its own charges).
+
+**Trade-off:** Saved voice files are kept longer (retention, Q-09, applies). A reused voice is copied to the new job so deleting or failing one job never affects another.
+
+**Validation:** Tests: a failed job's voice appears in the choice; a new job with it has no voice_charge, status audio_ready and the right price; a too-long voice is offered only when D-044 allows its length; another user's voice is never offered (404). Built in M5.
+
+---
+
+## D-044 — The video length limit follows the video model's documented maximum
+
+**Status:** Proposed (owner asked for longer videos, 2026-11-17; the limit needs verification) · 2026-11-17 · Area: backend
+
+**Choice:** Raise `max_audio_seconds` (today 30) to the longest audio the video model accepts, as stated in fal.ai's documentation, so a long voice can become a video. The price stays 20 credits per second (D-006); the script limit (400 characters) rises in proportion. Until the documentation is checked and the value recorded with its source and date, the limit stays 30 seconds.
+
+**Alternatives:** Keep 30 seconds and never offer too-long voices. Pick a number without checking (could send fal.ai inputs it refuses, or charge for videos it cannot make).
+
+**Why:** Owner's decision that too-long voices should be usable (2026-11-17); parent CLAUDE.md §4 forbids writing a provider limit from memory.
+
+**Trade-off:** Longer videos cost the company more at fal.ai per video; the per-second credit price covers it. A live check of the new limit needs the owner's approval (Gate C).
+
+**Validation:** Documentation check with a dated source; a config test for the new limit; the owner-approved live run before launch (Q-13).
+
+---
+
+## D-045 — Consent is given on Create, before the voice is made
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: both
+
+**Choice:** The consent checkbox ("I have permission to use this person's photo", wording per Q-11) sits on Create before "Make my voice" and is never pre-ticked. The job and its 10-credit voice charge cannot start without it; the server refuses a job without recorded consent (T-502). The approve step only shows that consent was given.
+
+**Alternatives:** Consent at approval, next to the price (the job and a paid voice would already exist without consent). Asking twice.
+
+**Why:** Owner's decision: the job is created, and the photo used, when the voice is made, so consent must come first.
+
+**Trade-off:** One more required control on Create.
+
+**Validation:** Backend test: POST /jobs without consent is refused and nothing is charged. Frontend test: the button stays disabled until the box is ticked.
+
+---
+
+## D-046 — A daily limit on videos outside production only; no limit on voices
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: backend
+
+**Choice:** A setting `daily_video_limit` allows 50 video approvals per customer per day when `AVATAR_ENV` is not `production`; in production there is no limit. It is checked at approval: over the limit the answer is 429 `daily_limit_reached` ("You've reached today's limit of 50 videos.") and nothing is held. Voices are never limited: every voice is paid for with credits (D-038).
+
+**Alternatives:** A daily cap on voices (the old D-015 idea). One limit everywhere including production.
+
+**Why:** Owner's decision, 2026-11-17: development and testing need a guard on paid video calls; paying customers should not be blocked.
+
+**Trade-off:** A development run can be stopped by the limit; raise the setting if needed.
+
+**Validation:** Tests: the 51st approval in a day in development gets 429 with no hold; production with the same count passes; voices are never refused for count. T-503.
+
+---
+
+## D-047 — Purchases are expressed in credits
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: both
+
+**Choice:** The buying contract uses credits everywhere: `POST /payments/orders {credits}`, order status `credits`, settings and config `min_purchase_credits` (500) and `max_purchase_credits` (10,000). Since ₹1 = 1 credit (D-007) the number is the same as the rupees paid. Only `amount_paise`, sent to Razorpay, is in money.
+
+**Alternatives:** Rupees in the contract (what T-400 first wrote).
+
+**Why:** Owner's decision: credits are the unit customers see everywhere in the product.
+
+**Trade-off:** If ₹1 = 1 credit ever changes, the order route must convert explicitly; amount_paise stays the only money field.
+
+**Validation:** Contract test asserts `credits` on create-order and no `rupees` field; limits test 499/500/10,000/10,001 (T-402).
+
+---
+
+## D-048 — A voice whose outcome is unknown returns the voice charge
+
+**Status:** Confirmed (owner approved the plan, 2026-11-17) · 2026-11-17 · Area: backend
+
+**Choice:** The owner's rule for voices: the 10 credits are taken when a voice is made and returned if it is not. A voice call that ends with an unknown outcome (an unexpected error, or a server restart while the voice was being made) delivers no voice to the customer, so the job fails and the 10 credits are returned (`voice_return`). The job is still flagged for review, because the company may have paid fal.ai.
+
+**Alternatives:** Keep the charge on an unknown voice outcome (applying the video rule of Q-19, as first built in T-304).
+
+**Why:** Owner, 2026-11-17: "10 credits are taken if the voice is made; if not, they are returned." The Q-19 capture rule stays for the video, where a paid video may exist.
+
+**Trade-off:** The company absorbs fal.ai's cost of a voice that may have been made but never reached the customer.
+
+**Validation:** Tests: an unexpected voice error and a restart in audio_generating each end failed, needs_review, with voice_charge and voice_return.
+
+---
+
+## D-049 — Buying credits needs a confirmed email
+
+**Status:** Proposed (awaiting the owner) · 2026-11-17 · Area: backend
+
+**Choice:** Creating a payment order answers 403 `email_not_verified` until the customer has confirmed their email, as making a voice or video does (D-036).
+
+**Alternatives:** Let unconfirmed accounts buy credits (they could pay but not use them until confirming).
+
+**Why:** A customer who cannot use credits should not be asked to pay; a confirmed email also gives a working contact for payment problems.
+
+**Trade-off:** One more step before a first purchase.
+
+**Validation:** Access-matrix row: unconfirmed user → 403 on POST /payments/orders (T-402).

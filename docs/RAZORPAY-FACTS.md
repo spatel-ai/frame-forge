@@ -2,7 +2,7 @@
 
 Method: official pages at razorpay.com/docs fetched through a page-to-markdown tool (summarised by a small model, so quotes are as relayed; re-read the linked page before relying on a nuance). No Razorpay API called. Live-behaviour is NOT verified by any of this.
 
-## Contradictions with HLD rules 1-5
+## Contradictions with the five rules of HLD §5.1 (paise; checkout signature; webhook signature; event-id dedupe; failed then captured)
 
 None found. All five rules are supported (details in J). Two precision points to add to the HLD, not contradictions:
 - Rule 4: docs say only event id uniqueness per event and at-least-once delivery; retries last 24 h then the webhook is auto-disabled (G).

@@ -8,11 +8,13 @@ never overrides it. If the two disagree, the parent file wins; fix this file.
 | Parent section | What it means for backend work |
 | --- | --- |
 | §2 Think → Validate → Decide → Execute → Verify | Follow it for every task in [docs/MILESTONES.md](../docs/MILESTONES.md). Material choices go in [docs/DECISIONS.md](../docs/DECISIONS.md) with all five parts |
-| §3 Discovery | New requirements and unknowns go in [docs/tracker/requirements.json](../docs/tracker/requirements.json) with a class. Anything touching cost, privacy, security, consent or core behaviour becomes a question for the owner, not a default |
-| §4 Evidence | Never write a provider call, SDK function or parameter from memory. Check the installed package or the provider's documentation and record the date |
-| §6 Gates | The gate checklist is in MILESTONES.md. Do not start a milestone before Gate A, and do not report it done before Gate D |
-| §7 Delegation | Each task names its owner model. Use the brief template in [docs/README.md](../docs/README.md) when handing a task to another agent |
-| §8 Stop conditions | Stop and report when a provider fact cannot be verified, a change would cost money without approval, a contract is inconsistent, or two fixes have failed without new evidence |
+| §3 Discovery | New requirements and unknowns go in [docs/tracker/requirements.json](../docs/tracker/requirements.json) with one of the five classes: Confirmed, Assumed, Needs Verification, Deferred, Out of Scope. Never turn an assumption into Confirmed silently. Anything touching cost, privacy, security, consent or core behaviour becomes a question for the owner, not a default |
+| §4 Evidence | Never write a provider call, SDK function or parameter from memory. Check the installed package or the provider's documentation and record the date. If evidence cannot be had, write: "Not verified — requires documentation review, execution, or live integration testing." A mock test is not evidence of a live integration |
+| §5 Alignment | Before each phase, compare the work with the requirements, the code and the contracts; drop or simplify work that no longer adds value |
+| §6 Gates | All four gates (A before starting, B before integrating, C before any paid or live run, D before calling it done) apply; the checklist is in MILESTONES.md. A failed gate means correct it, cut scope or report a blocker; never bypass it |
+| §7 Delegation | Each task names its owner model; Haiku never gets an ambiguous architectural decision. Use the nine-part brief in [docs/README.md](../docs/README.md). Agents give evidence; Fable never approves on an agent's word alone |
+| §8 Stop conditions | All nine conditions of parent §8 apply, with its six steps for recurring failures. In particular: a provider fact cannot be verified, a change would cost money without approval, a contract is inconsistent, a security issue is found, or two fixes have failed without new evidence |
+| §9 Scope | Classify improvements as required (correctness, safety, acceptance), optional or future; build only the required ones without asking |
 | §10 Reporting | Report with the seven points and the five statuses. The template is in docs/README.md |
 
 ## Read before changing anything
@@ -33,7 +35,7 @@ Several tasks may be in progress at once. The lanes, their files and each task's
 list are in [docs/MILESTONES.md](../docs/MILESTONES.md), section "Parallel plan".
 
 - Start a task only when every task it starts after is Done and no other task is active in its lane.
-- Change only your lane's files. If you need a change in `app/main.py`, `pyproject.toml` or the migrations folder, hand it to the BE-Core
+- Change only your lane's files. If you need a change in `app/core/`, `app/main.py`, `pyproject.toml` or the migrations folder, hand it to the BE-Core
   lane; do not edit those yourself.
 - Work in your own git worktree and branch. Fable merges one branch at a time.
 - Do not edit `docs/tracker/` from a parallel task; report your status and evidence, and the
@@ -76,9 +78,13 @@ development data.
 
 ```text
 app/main.py            wiring only: app, lifespan, routers, error handlers, middleware
-app/core/              config, database engine, error shape, request-id logging, health
-app/jobs/              db.py (store), service.py (lifecycle), routes.py, schemas.py, errors.py, models.py
+app/core/              config, database engine, error shape, request-id logging, origin check, health
+app/auth/              users, sessions, email links, passwords, rate limits, current_user dependency
+app/jobs/              db.py (store), service.py (lifecycle and charging), routes.py, schemas.py, errors.py, models.py
+app/wallet/            ledger.py (the only writer of wallets and ledger_entries), routes, cli.py (grant)
+app/payments/          Razorpay orders, verify, webhook (M4; contract stubs today)
 app/providers.py       fal and mock
+app/export_openapi.py  prints the API contract
 migrations/            Alembic; one chain, ordered by the BE-Core lane
 tests/                 conftest.py gives each test a fresh schema
 ```
@@ -102,7 +108,9 @@ Breaking one of these can charge a customer wrongly or pay fal.ai twice.
    decision on Q-19, D-005: the customer is charged), and flag it for staff. A clear failure releases.
 6. **Credits and paise are integers.** No `float` for money, in code, JSON or the database.
 7. **Credits are granted only by the one crediting routine**, after signature, `captured` status
-   and amount have all been checked. Never from a value the browser sent.
+   and amount have all been checked. Never from a value the browser sent. The one exception is
+   the development-only grant command (`app/wallet/cli.py`), which refuses to run unless
+   `AVATAR_ENV=development` and still writes through the ledger.
 8. **Verify the Razorpay webhook signature on the raw body before reading it.** Dedupe on the
    event id header.
 9. **Every money-moving action is idempotent.**
@@ -149,8 +157,11 @@ Breaking one of these can charge a customer wrongly or pay fal.ai twice.
   the message under that field (D-029, [docs/UX.md](../docs/UX.md) section 7).
 - Error messages are read by customers: plain words, what went wrong, what to do next. Never a
   technical term, an exception name or an internal id.
-- Status codes: 401 not logged in, 402 not enough credits, 403 not allowed, 404 missing or not
-  yours, 409 wrong state, 422 invalid input, 429 too many requests.
+- Status codes: 400 bad link or signature, 401 not logged in, 402 not enough credits, 403 not
+  allowed, 404 missing or not yours, 409 wrong state, 422 invalid input, 429 too many requests or
+  the daily video limit, 500 unexpected error, 501 not built yet, 502 payment provider
+  unavailable, 503 database unavailable. The error `code` is what clients branch on; the codes in
+  use are listed in the M2, M3 and M4 plans.
 - A change to a response is a contract change: update the frontend types in the same work.
 - Database changes go through Alembic migrations only. Never edit an applied migration.
 
@@ -168,8 +179,9 @@ Breaking one of these can charge a customer wrongly or pay fal.ai twice.
    [docs/tracker/tasks.json](../docs/tracker/tasks.json). `verification` is one of the parent
    file's five statuses, stated honestly. When working in parallel, report these instead and the
    integrator records them at merge.
-2. If you made or changed a decision, add it to DECISIONS.md and
-   [docs/tracker/decisions.json](../docs/tracker/decisions.json).
+2. If you made or changed a decision, add it to [docs/DECISIONS.md](../docs/DECISIONS.md) and run
+   `python3 docs/tracker/sync.py`, which rebuilds `decisions.json`. When working in parallel,
+   report the decision instead; the integrator records it.
 3. If you found a new requirement or unknown, add it to `requirements.json` or `questions.json`.
 4. Report with the template in docs/README.md, including what was not run.
 5. Ask the owner whether to refresh the dashboard from the tracker files.

@@ -24,7 +24,7 @@
   {
     "id": "D-003",
     "decision": "First-party login with server-side sessions",
-    "status": "Confirmed (owner chose email and password, 2026-11-17)",
+    "status": "Confirmed",
     "waiting_on": "",
     "area": "Both",
     "choice": "Email and password. Passwords hashed with Argon2id. A random session token in an `HttpOnly`, `Secure`, `SameSite=Lax` cookie, with only its hash stored in the database. Email verification and password reset by emailed single-use link.",
@@ -46,8 +46,8 @@
   {
     "id": "D-005",
     "decision": "Hold at approval, capture on completion, release on failure",
-    "status": "Confirmed (owner answered Q-19, 2026-11-17)",
-    "waiting_on": "Q-19",
+    "status": "Confirmed",
+    "waiting_on": "",
     "area": "Backend",
     "choice": "Credits are reserved when the customer approves the audio, taken when the video is delivered, and returned when it clearly fails (fal.ai refuses it, errors, or times out). The job status change and the ledger entry are written in one transaction. **When a paid request's outcome is unknown** (the request to fal.ai was cut off and we cannot tell whether it was accepted), **the held credits are captured** (the customer is charged), the job is marked failed and flagged for staff. Owner's decision, 2026-11-17.",
     "trade_off": "In the unknown-outcome case the customer pays for a video they did not receive. This is rare (a cut-off request), but it will cause complaints; staff can review flagged jobs and return credits by an audited adjustment (M6).",
@@ -57,8 +57,8 @@
   {
     "id": "D-006",
     "decision": "Price is credits per second of AI audio, fixed before approval",
-    "status": "Confirmed (owner answered Q-01, 2026-11-17: 20 credits per second, so 600 credits for a 30-second video)",
-    "waiting_on": "Q-01",
+    "status": "Confirmed",
+    "waiting_on": "",
     "area": "Both",
     "choice": "`price = ceil(audio seconds × credits_per_second)`, with `credits_per_second = 20` as a setting. The price is computed once when the voice is ready, stored on the job, shown to the customer, and that stored value is what is held and captured.",
     "trade_off": "The customer only learns the exact price after the voice is generated; before that they see an estimate.",
@@ -156,8 +156,8 @@
   {
     "id": "D-015",
     "decision": "Voice generation is not charged separately",
-    "status": "Superseded by D-038 (owner answered Q-08, 2026-11-17: charge for each voice)",
-    "waiting_on": "Q-08",
+    "status": "Superseded",
+    "waiting_on": "",
     "area": "Both",
     "choice": "The video price covers the voice. A job can only be started when the wallet covers its estimated price, and each user has a daily cap on voice generations.",
     "trade_off": "The company pays for voices that never become videos, up to the cap.",
@@ -173,7 +173,7 @@
     "choice": "The backend creates a Razorpay order. The browser opens Razorpay Checkout. Credits are granted by one idempotent routine reached from two places: the browser's verify call and the Razorpay webhook. That routine requires a valid signature, payment status `captured`, and an amount equal to the order. A reconciliation task asks Razorpay about orders left unpaid.",
     "trade_off": "More moving parts than a single callback: a verify route, a webhook route and a reconciliation task.",
     "validation": "Signature formula, paise amounts, raw-body webhook verification, event-id dedupe and unordered delivery were checked against Razorpay's documentation on 2026-11-17. Signed-fixture tests (T-406) give MOCK-VERIFIED; a run in Razorpay test mode (T-407) gives VERIFIED. Retry timing: Not verified — requires documentation review, execution, or live integration testing.",
-    "date": "2026-11-17 (owner approved the M4 plan; facts re-checked in T-401, [RAZORPAY-FACTS.md](RAZORPAY-FACTS.md))"
+    "date": "2026-11-17"
   },
   {
     "id": "D-017",
@@ -225,7 +225,7 @@
     "status": "Confirmed",
     "waiting_on": "",
     "area": "Both",
-    "choice": "Tests that use the mock provider and signed fixtures may run during development. Any call to fal.ai, and any call to Razorpay beyond its free test mode, needs the owner's approval for that run. Razorpay test mode still needs the owner to supply the keys.",
+    "choice": "Tests that use the mock provider and signed fixtures may run during development. Any call to fal.ai, and any call to Razorpay including its free test mode, needs the owner's approval for that run (owner, 2026-11-17).",
     "trade_off": "Mock tests prove our logic, not the providers. Live behaviour stays unproven until an approved run.",
     "validation": "Work is reported with the parent file's statuses: MOCK-VERIFIED after mock tests, VERIFIED only after an approved real run.",
     "date": "2026-11-17"
@@ -299,7 +299,7 @@
   {
     "id": "D-028",
     "decision": "Proposed brand and design tokens",
-    "status": "Confirmed (owner approved the designs, 2026-11-17)",
+    "status": "Confirmed",
     "waiting_on": "",
     "area": "Frontend",
     "choice": "The name is settled separately (D-031: Frameforge). A vivid blue-violet primary (`#4A3AFF`), a marigold used only for credits (`#FFB020`), a cool neutral page, Plus Jakarta Sans for headings and Inter for text, a 4 px spacing scale, 8 to 16 px corners. All values live in one tokens file. Light theme only at launch. The full table is in UX.md section 4.",
@@ -332,7 +332,7 @@
   {
     "id": "D-031",
     "decision": "The product is Frameforge; the backend is Frameforge API, the frontend Frameforge Web",
-    "status": "Confirmed (owner, 2026-11-17)",
+    "status": "Confirmed",
     "waiting_on": "",
     "area": "Both",
     "choice": "The product name customers see is \"Frameforge\". The backend is called \"Frameforge API\" (its OpenAPI title) and the frontend \"Frameforge Web\". Documents, designs, the browser tab and the app header use these names. Internal identifiers that customers never see keep their current values for now: the folder names `backend/` and `frontend/`, the package names, the Docker project and database name `avatar`, and the `AVATAR_` environment variables.",
@@ -354,7 +354,7 @@
   {
     "id": "D-033",
     "decision": "New screens are built for desktop width only",
-    "status": "Confirmed (owner, 2026-11-17)",
+    "status": "Confirmed",
     "waiting_on": "",
     "area": "Frontend",
     "choice": "From M2 on, every new screen is designed, built and checked at desktop width (1440 px) only. No phone layout is drawn or built for new screens. What M1.5 already built for phones (the bottom navigation bar, the phone layouts of the app frame, the create flow and the not-found page) stays as it is and is not removed.",
@@ -387,7 +387,7 @@
   {
     "id": "D-036",
     "decision": "Unconfirmed accounts can log in but cannot make videos",
-    "status": "Confirmed (owner, 2026-11-17)",
+    "status": "Confirmed",
     "waiting_on": "",
     "area": "Both",
     "choice": "After sign-up the customer is logged in straight away and sent a confirmation link. Until they confirm, `POST /jobs` and approving a voice return 403 `email_not_verified`, and the app shows a notice with a \"send the link again\" action. Confirming needs no login: the link works on any device.",
@@ -409,8 +409,8 @@
   {
     "id": "D-038",
     "decision": "Each voice generation costs 10 credits",
-    "status": "Confirmed (owner, 2026-11-17, answering Q-08)",
-    "waiting_on": "Q-08",
+    "status": "Confirmed",
+    "waiting_on": "",
     "area": "Both",
     "choice": "Generating a voice costs 10 credits (a setting), taken when the customer submits the photo and script, in the same transaction that creates the job. It is kept even if the customer never makes the video. If the voice itself fails to generate (a clear failure, no voice delivered), the 10 credits are returned, following the owner's rule that clear failures cost the customer nothing. A customer with fewer than 10 available credits cannot start a job (HTTP 402 `insufficient_credits`). The video price (D-006) is separate and is held at approval. The daily cap on free voices that D-015 needed is dropped: charging replaces it.",
     "trade_off": "Customers pay for every retry of a script. Two new ledger kinds are needed: `voice_charge` and `voice_return`.",
@@ -420,7 +420,7 @@
   {
     "id": "D-039",
     "decision": "Each approval attempt of a job has its own hold reference",
-    "status": "Confirmed (built and tested in T-304)",
+    "status": "Proposed",
     "waiting_on": "",
     "area": "Backend",
     "choice": "A job carries an approval attempt number, starting at 1 and increased each time the customer approves. The video hold, capture and release use the reference `('job', '<job_id>#<attempt>')` instead of `('job', '<job_id>')`. The voice charge and voice return keep `('job', '<job_id>')`, because a job has one voice. When submission to fal.ai fails cleanly (upload fails or fal.ai refuses), the job returns to `audio_ready` with the hold released, as HLD §5.2 says, and approving again writes a new hold under the next attempt.",
@@ -459,6 +459,83 @@
     "choice": "Setting `AVATAR_PAYMENTS` is `mock` (default) or `razorpay`. Mock mode makes no network call; a development-only route signs a fake payment with a fixed mock secret so the real verify and crediting code runs. In `razorpay` mode the backend refuses to start if any key or secret is missing, or if `AVATAR_ENV` is not `production` and the key id does not start with `rzp_test_`. The key id is the only Razorpay value sent to the browser.",
     "trade_off": "If Razorpay's test key ids do not start with `rzp_test_`, the owner must report it and the check is corrected before T-407.",
     "validation": "Config tests: missing values, a non-test key in development, and a test key in development; the T-407 run confirms the prefix.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-043",
+    "decision": "Saved voices: a failed job's voice can be reused for a new video",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Both",
+    "choice": "A voice is kept on its job when the job fails after the voice was made: the voice was longer than the limit, the video was refused, failed, timed out, or its outcome is unknown. When the customer starts a NEW job, Create offers a voice choice: \"Make a new voice\" (10 credits, D-038) or one of their saved voices from failed jobs. A saved voice skips voice generation and its charge; the new job goes straight to listen-and-approve, priced from that voice's length (D-006). A setting `save_all_voices` (default off) would keep every voice; with it off, only failed jobs' voices are offered. No video is ever made without a voice.",
+    "trade_off": "Saved voice files are kept longer (retention, Q-09, applies). A reused voice is copied to the new job so deleting or failing one job never affects another.",
+    "validation": "Tests: a failed job's voice appears in the choice; a new job with it has no voice_charge, status audio_ready and the right price; a too-long voice is offered only when D-044 allows its length; another user's voice is never offered (404). Built in M5.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-044",
+    "decision": "The video length limit follows the video model's documented maximum",
+    "status": "Proposed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "Raise `max_audio_seconds` (today 30) to the longest audio the video model accepts, as stated in fal.ai's documentation, so a long voice can become a video. The price stays 20 credits per second (D-006); the script limit (400 characters) rises in proportion. Until the documentation is checked and the value recorded with its source and date, the limit stays 30 seconds.",
+    "trade_off": "Longer videos cost the company more at fal.ai per video; the per-second credit price covers it. A live check of the new limit needs the owner's approval (Gate C).",
+    "validation": "Documentation check with a dated source; a config test for the new limit; the owner-approved live run before launch (Q-13).",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-045",
+    "decision": "Consent is given on Create, before the voice is made",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Both",
+    "choice": "The consent checkbox (\"I have permission to use this person's photo\", wording per Q-11) sits on Create before \"Make my voice\" and is never pre-ticked. The job and its 10-credit voice charge cannot start without it; the server refuses a job without recorded consent (T-502). The approve step only shows that consent was given.",
+    "trade_off": "One more required control on Create.",
+    "validation": "Backend test: POST /jobs without consent is refused and nothing is charged. Frontend test: the button stays disabled until the box is ticked.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-046",
+    "decision": "A daily limit on videos outside production only; no limit on voices",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "A setting `daily_video_limit` allows 50 video approvals per customer per day when `AVATAR_ENV` is not `production`; in production there is no limit. It is checked at approval: over the limit the answer is 429 `daily_limit_reached` (\"You've reached today's limit of 50 videos.\") and nothing is held. Voices are never limited: every voice is paid for with credits (D-038).",
+    "trade_off": "A development run can be stopped by the limit; raise the setting if needed.",
+    "validation": "Tests: the 51st approval in a day in development gets 429 with no hold; production with the same count passes; voices are never refused for count. T-503.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-047",
+    "decision": "Purchases are expressed in credits",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Both",
+    "choice": "The buying contract uses credits everywhere: `POST /payments/orders {credits}`, order status `credits`, settings and config `min_purchase_credits` (500) and `max_purchase_credits` (10,000). Since ₹1 = 1 credit (D-007) the number is the same as the rupees paid. Only `amount_paise`, sent to Razorpay, is in money.",
+    "trade_off": "If ₹1 = 1 credit ever changes, the order route must convert explicitly; amount_paise stays the only money field.",
+    "validation": "Contract test asserts `credits` on create-order and no `rupees` field; limits test 499/500/10,000/10,001 (T-402).",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-048",
+    "decision": "A voice whose outcome is unknown returns the voice charge",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "The owner's rule for voices: the 10 credits are taken when a voice is made and returned if it is not. A voice call that ends with an unknown outcome (an unexpected error, or a server restart while the voice was being made) delivers no voice to the customer, so the job fails and the 10 credits are returned (`voice_return`). The job is still flagged for review, because the company may have paid fal.ai.",
+    "trade_off": "The company absorbs fal.ai's cost of a voice that may have been made but never reached the customer.",
+    "validation": "Tests: an unexpected voice error and a restart in audio_generating each end failed, needs_review, with voice_charge and voice_return.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-049",
+    "decision": "Buying credits needs a confirmed email",
+    "status": "Proposed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "Creating a payment order answers 403 `email_not_verified` until the customer has confirmed their email, as making a voice or video does (D-036).",
+    "trade_off": "One more step before a first purchase.",
+    "validation": "Access-matrix row: unconfirmed user → 403 on POST /payments/orders (T-402).",
     "date": "2026-11-17"
   }
 ]
