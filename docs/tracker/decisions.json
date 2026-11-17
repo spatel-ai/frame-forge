@@ -200,8 +200,8 @@
   {
     "id": "D-019",
     "decision": "Banners are joined on our server after the AI video arrives",
-    "status": "Needs owner",
-    "waiting_on": "Q-17",
+    "status": "Confirmed",
+    "waiting_on": "",
     "area": "Backend",
     "choice": "A new job step, `video_assembling`, sits between `video_generating` and `completed`. The server measures the AI video, converts the chosen clips to the same picture size, frame rate and sound format, and joins start clip + AI video + end clip with ffmpeg. The step calls no paid service, so it is retried automatically and re-run after a restart. If it still fails, the customer receives the AI video without banners and is charged as normal, and the job is flagged.",
     "trade_off": "ffmpeg becomes a required part of the server (today it is optional). Joining uses server CPU. The fallback charges a customer for a video without the banners they chose, which is why this waits for the owner (Q-17).",
@@ -420,7 +420,7 @@
   {
     "id": "D-039",
     "decision": "Each approval attempt of a job has its own hold reference",
-    "status": "Proposed",
+    "status": "Confirmed",
     "waiting_on": "",
     "area": "Backend",
     "choice": "A job carries an approval attempt number, starting at 1 and increased each time the customer approves. The video hold, capture and release use the reference `('job', '<job_id>#<attempt>')` instead of `('job', '<job_id>')`. The voice charge and voice return keep `('job', '<job_id>')`, because a job has one voice. When submission to fal.ai fails cleanly (upload fails or fal.ai refuses), the job returns to `audio_ready` with the hold released, as HLD §5.2 says, and approving again writes a new hold under the next attempt.",
@@ -530,12 +530,45 @@
   {
     "id": "D-049",
     "decision": "Buying credits needs a confirmed email",
-    "status": "Proposed",
+    "status": "Confirmed",
     "waiting_on": "",
     "area": "Backend",
     "choice": "Creating a payment order answers 403 `email_not_verified` until the customer has confirmed their email, as making a voice or video does (D-036).",
     "trade_off": "One more step before a first purchase.",
     "validation": "Access-matrix row: unconfirmed user → 403 on POST /payments/orders (T-402).",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-050",
+    "decision": "A saved voice keeps its script and language",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Both",
+    "choice": "When a new job uses a saved voice (D-043), its script and language are shown but locked: they are the words the voice already says. To change the words, the customer makes a new voice (10 credits).",
+    "trade_off": "A customer who wants a small text change pays for a new voice.",
+    "validation": "Frontend test: with a saved voice chosen, the script and language fields are read-only. Backend test: a job created from a saved voice copies that job's script and language and ignores any sent text (T-516, T-517).",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-051",
+    "decision": "A job flagged for review tells the customer what happens next",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Both",
+    "choice": "When a job ends with an unknown video outcome (charged and flagged, Q-19), the customer sees: our team will check it within 2 working days; if no video was made, the credits are returned; and how to contact support. Returns are made by an admin as an audited adjustment (M6, T-602).",
+    "trade_off": "Staff must check flagged jobs within 2 working days. The support address is not decided yet (PLACEHOLDER on the boards); it must be set before launch (M7).",
+    "validation": "The failure board shows the message; the M6 reconciliation report lists flagged jobs (T-604); an adjustment returns the credits (T-602).",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-052",
+    "decision": "Credits never expire",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Both",
+    "choice": "Purchased and granted credits have no expiry date. The Buy-credits screen says \"Credits do not expire.\"",
+    "trade_off": "Unused credits stay on the books indefinitely; a later change would need notice to customers.",
+    "validation": "No expiry code exists; the Buy-credits board states it. The refund policy (rest of Q-05) is still open.",
     "date": "2026-11-17"
   }
 ]

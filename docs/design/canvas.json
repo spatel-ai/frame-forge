@@ -423,7 +423,7 @@
     },
     "n-m5create": {
       "fill": "orange",
-      "text": "Awaiting the owner's approval. Consent (wording is a placeholder, Q-11) now comes before the voice is made (D-045). A saved voice from a video that did not finish can start a new video with no voice charge (D-043). Banners that could not be added are stated plainly (Q-17 default: still charged). Existing boards Create 1, 2 and 3 were updated to match.",
+      "text": "Awaiting the owner's approval. Consent (wording approved, Q-11) comes before the voice is made (D-045). A saved voice from a video that did not finish can start a new video with no voice charge; its script and language are locked (D-043, D-050). Banners that could not be added: full price, told plainly (Q-17). Create 1, 2 and 3 were updated to match.",
       "w": 420,
       "x": 9120,
       "y": 9800
@@ -438,7 +438,7 @@
     },
     "n-m5fail": {
       "fill": "orange",
-      "text": "Awaiting the owner's approval. Every failure says what happened, what was charged and what to do next. Voice failed or unknown: 10 credits returned. Voice made but too long, or the video failed: 10 credits for the voice stay and the voice is saved. Video failed: the 240 held credits return. Unknown video outcome: charged and flagged. The 50-videos-a-day limit exists in development and testing only (D-046). Contact and refund route for unknown outcomes needs your decision.",
+      "text": "Awaiting the owner's approval. Every failure says what happened, what was charged and what to do next. Voice failed or unknown: 10 credits returned. Voice too long, or the video failed: the 10 voice credits stay and the voice is saved for a new video. Video failed: the held credits return. Unknown video outcome: charged, flagged, checked within 2 working days and refunded if no video was made (D-051; support address still to be set). The 50-videos-a-day limit applies in development and testing only (D-046).",
       "w": 420,
       "x": 3040,
       "y": 11600

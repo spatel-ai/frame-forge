@@ -49,7 +49,8 @@
     "escalation": "Cost",
     "handling": "Needs your answer",
     "blocks": "M6",
-    "status": "Open"
+    "status": "Open",
+    "answer": "Partly answered (owner, 2026-11-17): credits never expire (D-052). Still open: the refund policy."
   },
   {
     "id": "Q-06",
@@ -112,7 +113,8 @@
     "escalation": "Consent",
     "handling": "Needs your answer",
     "blocks": "M5",
-    "status": "Open"
+    "status": "Open",
+    "answer": "Partly answered (owner, 2026-11-17): consent wording is \"I am the person in this photo, or I have their permission to use it.\" (D-045; a legal review may replace it later; the version is stored on each job). Still open: who the first admins are."
   },
   {
     "id": "Q-12",
@@ -170,9 +172,10 @@
     "why_it_matters": "By then the company has already paid fal.ai for the AI video. Refunding means the company bears that cost; charging means the customer pays for a video without the banners they chose.",
     "default_if_unanswered": "Deliver the AI video without banners, charge as normal, tell the customer, and flag the job for staff.",
     "escalation": "Cost",
-    "handling": "Needs your answer",
+    "handling": "Answered",
     "blocks": "M5",
-    "status": "Open"
+    "status": "Answered",
+    "answer": "Deliver the AI video without banners, charge the full price, and tell the customer plainly; the job is flagged (D-019). Owner, 2026-11-17."
   },
   {
     "id": "Q-18",

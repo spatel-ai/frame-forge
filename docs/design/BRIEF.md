@@ -60,7 +60,7 @@ the git repository.
   credits for each voice. Use example numbers consistently: a 12-second video costs 240 credits
   for the video and 10 for the voice (250 in all); the example balance is 500 credits. ₹1 = 1
   credit; purchases are expressed in credits, 500 to 10,000 (D-047). "Credits do not expire" is a
-  PLACEHOLDER (Q-05). Do not write a maximum video length as a rule (D-044).
+  Decided: credits never expire (D-052). Do not write a maximum video length as a rule (D-044).
 - Example content: an Indian small business. Example user: Asha Verma, asha@example.com.
   Languages are English, Hindi and Punjabi only.
 - Photos and video frames are grey placeholder boxes with a line icon, as in the examples.

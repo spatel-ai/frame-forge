@@ -312,7 +312,7 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 
 ## D-019 — Banners are joined on our server after the AI video arrives
 
-**Status:** Needs owner (Q-17) · 2026-11-17 · Area: backend
+**Status:** Confirmed (owner answered Q-17, 2026-11-17: delivered without banners, full price, told plainly) · 2026-11-17 · Area: backend
 
 **Choice:** A new job step, `video_assembling`, sits between `video_generating` and `completed`. The server measures the AI video, converts the chosen clips to the same picture size, frame rate and sound format, and joins start clip + AI video + end clip with ffmpeg. The step calls no paid service, so it is retried automatically and re-run after a restart. If it still fails, the customer receives the AI video without banners and is charged as normal, and the job is flagged.
 
@@ -632,7 +632,7 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 
 ## D-039 — Each approval attempt of a job has its own hold reference
 
-**Status:** Proposed (built and tested in T-304; awaiting the owner) · 2026-11-17 · Area: backend
+**Status:** Confirmed (owner, 2026-11-17; built and tested in T-304) · 2026-11-17 · Area: backend
 
 **Choice:** A job carries an approval attempt number, starting at 1 and increased each time the customer approves. The video hold, capture and release use the reference `('job', '<job_id>#<attempt>')` instead of `('job', '<job_id>')`. The voice charge and voice return keep `('job', '<job_id>')`, because a job has one voice. When submission to fal.ai fails cleanly (upload fails or fal.ai refuses), the job returns to `audio_ready` with the hold released, as HLD §5.2 says, and approving again writes a new hold under the next attempt.
 
@@ -792,7 +792,7 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 
 ## D-049 — Buying credits needs a confirmed email
 
-**Status:** Proposed (awaiting the owner) · 2026-11-17 · Area: backend
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: backend
 
 **Choice:** Creating a payment order answers 403 `email_not_verified` until the customer has confirmed their email, as making a voice or video does (D-036).
 
@@ -803,3 +803,51 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 **Trade-off:** One more step before a first purchase.
 
 **Validation:** Access-matrix row: unconfirmed user → 403 on POST /payments/orders (T-402).
+
+---
+
+## D-050 — A saved voice keeps its script and language
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: both
+
+**Choice:** When a new job uses a saved voice (D-043), its script and language are shown but locked: they are the words the voice already says. To change the words, the customer makes a new voice (10 credits).
+
+**Alternatives:** Let the customer edit the text while keeping the old voice (the words shown would not match what is spoken).
+
+**Why:** Owner's decision: the script on a job must always match its voice.
+
+**Trade-off:** A customer who wants a small text change pays for a new voice.
+
+**Validation:** Frontend test: with a saved voice chosen, the script and language fields are read-only. Backend test: a job created from a saved voice copies that job's script and language and ignores any sent text (T-516, T-517).
+
+---
+
+## D-051 — A job flagged for review tells the customer what happens next
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: both
+
+**Choice:** When a job ends with an unknown video outcome (charged and flagged, Q-19), the customer sees: our team will check it within 2 working days; if no video was made, the credits are returned; and how to contact support. Returns are made by an admin as an audited adjustment (M6, T-602).
+
+**Alternatives:** Automatic refund after checking (more work). No refund promise.
+
+**Why:** Owner's decision: keep the Q-19 rule (charge on an unknown outcome) but promise a check and a refund when no video was made.
+
+**Trade-off:** Staff must check flagged jobs within 2 working days. The support address is not decided yet (PLACEHOLDER on the boards); it must be set before launch (M7).
+
+**Validation:** The failure board shows the message; the M6 reconciliation report lists flagged jobs (T-604); an adjustment returns the credits (T-602).
+
+---
+
+## D-052 — Credits never expire
+
+**Status:** Confirmed (owner answered Q-05 in part, 2026-11-17) · 2026-11-17 · Area: both
+
+**Choice:** Purchased and granted credits have no expiry date. The Buy-credits screen says "Credits do not expire."
+
+**Alternatives:** Expire after 12 months (needs notices and an expiry job).
+
+**Why:** Owner's decision: simplest and friendliest to customers.
+
+**Trade-off:** Unused credits stay on the books indefinitely; a later change would need notice to customers.
+
+**Validation:** No expiry code exists; the Buy-credits board states it. The refund policy (rest of Q-05) is still open.
