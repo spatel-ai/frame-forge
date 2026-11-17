@@ -98,9 +98,19 @@ class Settings:
     razorpay_webhook_secret: str = field(
         default_factory=lambda: os.getenv("RAZORPAY_WEBHOOK_SECRET", "").strip(), repr=False
     )
-    # Purchase limits in whole credits (owner, Q-06; D-047). ₹1 = 1 credit (D-007).
-    min_purchase_credits: int = 500
+    # Purchase limits in whole credits (owner, Q-06; D-047; minimum raised to 1,000 by the owner
+    # on 2026-11-17, D-059). ₹1 = 1 credit (D-007).
+    min_purchase_credits: int = 1_000
     max_purchase_credits: int = 10_000
+    # The customer pays the payment fee (owner, 2026-11-17, D-060), in basis points of the
+    # price: 200 = 2%. GST on that fee is off (0) unless the owner sets it. Whole numbers only;
+    # the fee is rounded up to whole paise and never becomes credits.
+    payment_fee_bps: int = field(
+        default_factory=lambda: int(os.getenv("AVATAR_PAYMENT_FEE_BPS", "200"))
+    )
+    payment_fee_gst_bps: int = field(
+        default_factory=lambda: int(os.getenv("AVATAR_PAYMENT_FEE_GST_BPS", "0"))
+    )
     # Shown on failure screens when set (D-055); the owner adds it before launch.
     support_email: str = field(
         default_factory=lambda: os.getenv("AVATAR_SUPPORT_EMAIL", "").strip()
@@ -113,6 +123,10 @@ class Settings:
             raise ValueError(
                 f"Unknown AVATAR_PAYMENTS {self.payments!r}; use 'mock' or 'razorpay'."
             )
+        for name in ("payment_fee_bps", "payment_fee_gst_bps"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ValueError(f"{name} must be a whole number of basis points, 0 or more.")
         if self.payments == "razorpay":
             missing = [
                 name

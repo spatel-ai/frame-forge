@@ -21,10 +21,26 @@ class CreateOrderIn(BaseModel):
     credits: int
 
 
+class QuoteOut(BaseModel):
+    """What a purchase of `credits` costs (D-060): the customer pays the payment fee, and GST on
+    that fee when the owner turns it on. All in paise; the browser shows these, never computes
+    them. amount_paise = price_paise + fee_paise + fee_gst_paise."""
+
+    credits: int
+    price_paise: int  # credits × 100 (₹1 = 1 credit)
+    fee_paise: int
+    fee_gst_paise: int
+    amount_paise: int  # what Razorpay charges
+
+
 class OrderOut(BaseModel):
     order_id: str  # ours
     razorpay_order_id: str
+    # The total charged (price + fee + GST on the fee, D-060); the captured amount must equal it.
     amount_paise: int
+    price_paise: int
+    fee_paise: int
+    fee_gst_paise: int
     credits: int
     # Public key id for Razorpay Checkout; never a secret. In mock mode, "mock".
     key_id: str

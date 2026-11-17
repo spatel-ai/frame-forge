@@ -31,6 +31,7 @@ _entries: Table = LedgerEntry.__table__  # type: ignore[assignment]
 
 JOB = "job"
 GRANT = "grant"
+PAYMENT = "payment"
 
 
 class InsufficientCredits(Exception):
@@ -215,6 +216,20 @@ def grant(
     if existing:
         return _same_or_conflict(existing, credits, 0)
     return _write(conn, user_id, "grant", GRANT, ref_id, credits, 0, created_by)
+
+
+def purchase(conn: Connection, user_id: str, credits: int, ref_id: str) -> Entry:
+    """Add `credits` bought with a Razorpay payment. Reference ('payment', <razorpay payment id>),
+    so one payment is credited once (rule 9). Called only by the payments crediting routine
+    (`app.payments.service.credit_order`, backend rule 7), after it has checked the signature,
+    the `captured` status and the amount."""
+    credits = _amount(credits)
+    _require_transaction(conn)
+    _lock(conn, user_id)
+    existing = _find(conn, user_id, "purchase", PAYMENT, ref_id)
+    if existing:
+        return _same_or_conflict(existing, credits, 0)
+    return _write(conn, user_id, "purchase", PAYMENT, ref_id, credits, 0)
 
 
 def voice_charge(conn: Connection, user_id: str, job_id: str, credits: int) -> Entry:

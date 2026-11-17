@@ -174,3 +174,63 @@ def test_0005_adds_the_charging_columns_with_safe_defaults(empty_schema):
         assert not names & {"price_credits", "approve_attempt", "needs_review"}
     finally:
         engine.dispose()
+
+
+def test_0006_builds_the_payment_tables(empty_schema, admin_engine):
+    """T-402 (R-02, R-03): 0006 creates payment_orders (UNIQUE Razorpay order and payment ids,
+    status and amount CHECKs) and webhook_events (event id key); the database refuses an order
+    whose total is not price + fee + GST, and a paid order with no payment; downgrade to 0005
+    removes both tables."""
+    cfg = empty_schema.alembic_config()
+    schema = empty_schema.name
+    command.upgrade(cfg, "head")
+    insp = inspect(admin_engine)
+    uniques = {
+        u["name"]: u["column_names"] for u in insp.get_unique_constraints("payment_orders", schema)
+    }
+    assert uniques["uq_payment_orders_razorpay_order_id"] == ["razorpay_order_id"]
+    assert uniques["uq_payment_orders_razorpay_payment_id"] == ["razorpay_payment_id"]
+    checks = {c["name"] for c in insp.get_check_constraints("payment_orders", schema=schema)}
+    assert {
+        "ck_payment_orders_status",
+        "ck_payment_orders_positive",
+        "ck_payment_orders_amount_parts",
+        "ck_payment_orders_paid_has_payment",
+    } <= checks
+    assert insp.get_pk_constraint("webhook_events", schema=schema)["constrained_columns"] == [
+        "event_id"
+    ]
+
+    engine = create_engine(empty_schema.url, poolclass=NullPool)
+    try:
+        with engine.begin() as conn:
+            conn.execute(
+                text(
+                    "INSERT INTO users (id, name, email, password_hash, created_at) "
+                    "VALUES ('u1', 'T', 't@example.com', 'x', now())"
+                )
+            )
+        insert = (
+            "INSERT INTO payment_orders (id, user_id, razorpay_order_id, amount_paise, "
+            "price_paise, fee_paise, fee_gst_paise, credits, status, created_at, updated_at) "
+            "VALUES (:id, 'u1', :rid, :amount, 100000, 2000, 0, 1000, :status, now(), now())"
+        )
+        for bad in ({"amount": 100000, "status": "created"}, {"amount": 102000, "status": "paid"}):
+            try:
+                with engine.begin() as conn:
+                    conn.execute(text(insert), {"id": "o1", "rid": "r1", **bad})
+            except Exception as exc:  # IntegrityError from the CHECK
+                assert "ck_payment_orders" in str(exc)
+            else:
+                raise AssertionError(f"accepted {bad}")
+        with engine.begin() as conn:
+            conn.execute(
+                text(insert), {"id": "o2", "rid": "r2", "amount": 102000, "status": "created"}
+            )
+    finally:
+        engine.dispose()
+
+    command.downgrade(cfg, "0005")
+    insp = inspect(admin_engine)
+    assert not insp.has_table("payment_orders", schema=schema)
+    assert not insp.has_table("webhook_events", schema=schema)

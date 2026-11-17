@@ -40,6 +40,19 @@ def test_payment_routes_match_the_contract():
         "502",
     }
     assert set(paths["/api/v1/webhooks/razorpay"]["post"]["responses"]) >= {"200", "400"}
+    # D-060: the browser reads the fee from the server instead of computing money.
+    assert set(paths["/api/v1/payments/quote"]["get"]["responses"]) >= {"200", "401", "422"}
+
+
+def test_order_and_quote_carry_the_fee_in_integer_paise():
+    """R-02, D-060: the order and the quote show price, fee, GST on the fee and the total, all
+    integers."""
+    schemas = _openapi()["components"]["schemas"]
+    parts = {"price_paise", "fee_paise", "fee_gst_paise", "amount_paise"}
+    for name in ("OrderOut", "QuoteOut"):
+        props = schemas[name]["properties"]
+        assert parts <= set(props), name
+        assert {props[k]["type"] for k in parts | {"credits"}} == {"integer"}, name
 
 
 def test_money_fields_are_integers():
@@ -154,11 +167,30 @@ def test_unknown_payments_mode_is_refused():
 def test_config_tells_the_browser_the_payment_mode_and_limits():
     """R-02: config carries the mode, the public key id and the purchase limits (Q-06)."""
     config = _openapi()["components"]["schemas"]["ConfigOut"]["properties"]
-    assert {"payments", "razorpay_key_id", "min_purchase_credits", "max_purchase_credits"} <= set(
-        config
-    )
-    assert Settings().min_purchase_credits == 500
+    assert {
+        "payments",
+        "razorpay_key_id",
+        "min_purchase_credits",
+        "max_purchase_credits",
+        "payment_fee_bps",
+        "payment_fee_gst_bps",
+    } <= set(config)
+    assert Settings().min_purchase_credits == 1_000  # D-059
     assert Settings().max_purchase_credits == 10_000
+
+
+def test_fee_settings_default_and_validation(monkeypatch):
+    """R-02, D-060: the fee defaults to 200 bps (2%) and GST on it to 0; both must be whole numbers
+    of 0 or more."""
+    monkeypatch.delenv("AVATAR_PAYMENT_FEE_BPS", raising=False)
+    monkeypatch.delenv("AVATAR_PAYMENT_FEE_GST_BPS", raising=False)
+    s = Settings()
+    assert (s.payment_fee_bps, s.payment_fee_gst_bps) == (200, 0)
+    monkeypatch.setenv("AVATAR_PAYMENT_FEE_GST_BPS", "1800")
+    assert Settings().payment_fee_gst_bps == 1800
+    for bad in (-1, 2.5, True):
+        with pytest.raises(ValueError, match="basis points"):
+            replace(Settings(), payment_fee_bps=bad)
 
 
 def test_config_hides_the_key_id_in_mock_mode(tmp_path, database_url):
@@ -181,7 +213,7 @@ def test_config_hides_the_key_id_in_mock_mode(tmp_path, database_url):
     assert r.status_code == 200
     body = r.json()
     assert (body["payments"], body["razorpay_key_id"]) == ("mock", None)
-    assert (body["min_purchase_credits"], body["max_purchase_credits"]) == (500, 10_000)
+    assert (body["min_purchase_credits"], body["max_purchase_credits"]) == (1_000, 10_000)
     assert "TOP-SECRET" not in r.text
 
 

@@ -590,3 +590,41 @@ def test_job_charged_credits(database_url, seed_user, store, user):
     assert store.job_charged_credits("job2") == 0
     with store.engine.begin() as conn:  # also inside a caller's transaction
         assert ledger.job_charged_credits(conn, "job1") == 310
+
+
+# ---- purchase (T-403) --------------------------------------------------------------------
+
+
+def test_purchase_credits_once_per_payment(engine, store, user):
+    """R-02, R-04: `purchase` adds credits under ('payment', <payment id>); the same payment
+    again returns the same entry and writes nothing; another amount for it is refused; a second
+    payment is a second entry."""
+    with engine.begin() as conn:
+        first = ledger.purchase(conn, user, 1000, "pay_A")
+    assert (first.kind, first.credits, first.reserved_delta) == ("purchase", 1000, 0)
+    assert (first.ref_type, first.ref_id, first.created_by, first.job_id) == (
+        "payment",
+        "pay_A",
+        None,
+        None,
+    )
+    with engine.begin() as conn:
+        assert ledger.purchase(conn, user, 1000, "pay_A") == first
+    with pytest.raises(LedgerConflict), engine.begin() as conn:
+        ledger.purchase(conn, user, 999, "pay_A")
+    with engine.begin() as conn:
+        ledger.purchase(conn, user, 2000, "pay_B")
+    assert balances(store, user) == (3000, 0, 3000)
+    assert entry_count(engine, user) == 2
+    assert store.invariant_holds(user)
+
+
+def test_purchase_needs_a_positive_int_and_a_transaction(engine, user):
+    """R-04: purchase refuses a float, a bool, zero or a negative, and a connection outside a
+    transaction; nothing is written."""
+    for bad in (10.0, True, 0, -5):
+        with pytest.raises((TypeError, ValueError)), engine.begin() as conn:
+            ledger.purchase(conn, user, bad, "pay_X")  # type: ignore[arg-type]
+    with engine.connect() as conn, pytest.raises(RuntimeError):
+        ledger.purchase(conn, user, 1000, "pay_X")
+    assert entry_count(engine, user) == 0
