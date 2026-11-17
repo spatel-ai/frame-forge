@@ -1,4 +1,3 @@
-import { Navigate } from 'react-router'
 import type { RouteObject } from 'react-router'
 import AppShell from './components/AppShell'
 import NotFound from './components/NotFound'
@@ -7,6 +6,7 @@ import { authRoutes } from './features/auth/routes'
 import AccountPage from './features/account/AccountPage'
 import CreatePage from './features/create/CreatePage'
 import JobPage from './features/create/JobPage'
+import HomePage from './features/home/HomePage'
 import WalletPage from './features/wallet/WalletPage'
 
 // /verify-email and /reset-password work logged in or out; only /login and /signup send a user on.
@@ -25,7 +25,7 @@ export const routes: RouteObject[] = [
       </RequireAuth>
     ),
     children: [
-      { index: true, element: <Navigate to="/create" replace /> },
+      { index: true, element: <HomePage /> },
       { path: 'create', element: <CreatePage /> },
       { path: 'create/:jobId', element: <JobPage /> },
       { path: 'wallet', element: <WalletPage /> },

@@ -12,7 +12,7 @@ export type NavItem = {
 // M1.5: only Create exists. The other designed items stay here, switched off,
 // so a later milestone flips one flag instead of rebuilding the navigation.
 export const navItems: NavItem[] = [
-  { to: '/home', label: 'Home', icon: HomeIcon, enabled: false },
+  { to: '/', label: 'Home', icon: HomeIcon, enabled: true },
   { to: '/create', label: 'Create', icon: PlusCircleIcon, enabled: true },
   { to: '/videos', label: 'Videos', icon: VideoIcon, enabled: false },
   { to: '/scripts', label: 'Scripts', icon: ScriptIcon, enabled: false },

@@ -143,3 +143,17 @@ export const verifyPayment = (orderId: string, razorpayPaymentId: string, razorp
 /** Mock mode only: what Checkout's handler would give the browser. 404 in any other mode. */
 export const mockCompletePayment = (orderId: string, outcome: 'captured' | 'failed') =>
   request<PaymentProof>('/api/v1/payments/mock/complete', json({ order_id: orderId, outcome }))
+
+// Job list (M5 contract, T-501). Home and Videos read it; the server filters and pages.
+export type JobSummary = components['schemas']['JobSummaryOut']
+export type JobsPage = components['schemas']['JobsOut']
+export type JobListParams = { status?: string; q?: string; page?: number; page_size?: number }
+
+export const jobListKey = (params: JobListParams = {}) => ['jobs', params] as const
+
+export function listJobs(params: JobListParams = {}) {
+  const qs = new URLSearchParams()
+  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') qs.set(k, String(v))
+  const query = qs.toString()
+  return request<JobsPage>(`/api/v1/jobs${query ? `?${query}` : ''}`)
+}
