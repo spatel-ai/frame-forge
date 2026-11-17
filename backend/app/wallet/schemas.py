@@ -32,6 +32,9 @@ class LedgerEntryOut(BaseModel):
     # Signed change to the balance: negative for voice_charge and capture, positive for
     # purchase, grant and voice_return, zero for hold and release (they move `reserved` only).
     credits: int
+    # Signed change to the reserved credits: positive for hold, negative for capture and release,
+    # zero otherwise. Lets the wallet page show a hold's amount without computing it.
+    reserved_delta: int
     balance_after: int
     reserved_after: int
     job_id: str | None

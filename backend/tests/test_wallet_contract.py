@@ -44,3 +44,9 @@ def test_wallet_shape():
         "reserved_credits": "integer",
         "available_credits": "integer",
     }
+
+
+def test_ledger_entry_shows_both_changes():
+    """R-13: an entry carries its balance change and its reserved change, so the page never computes."""
+    entry = _openapi()["components"]["schemas"]["LedgerEntryOut"]["properties"]
+    assert {"credits", "reserved_delta", "balance_after", "reserved_after"} <= set(entry)

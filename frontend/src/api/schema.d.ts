@@ -454,6 +454,8 @@ export interface components {
             kind: "purchase" | "grant" | "voice_charge" | "voice_return" | "hold" | "capture" | "release" | "adjustment" | "refund";
             /** Reserved After */
             reserved_after: number;
+            /** Reserved Delta */
+            reserved_delta: number;
         };
         /** LoginIn */
         LoginIn: {

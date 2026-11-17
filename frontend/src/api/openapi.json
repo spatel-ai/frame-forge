@@ -309,12 +309,17 @@
           "reserved_after": {
             "title": "Reserved After",
             "type": "integer"
+          },
+          "reserved_delta": {
+            "title": "Reserved Delta",
+            "type": "integer"
           }
         },
         "required": [
           "id",
           "kind",
           "credits",
+          "reserved_delta",
           "balance_after",
           "reserved_after",
           "job_id",
