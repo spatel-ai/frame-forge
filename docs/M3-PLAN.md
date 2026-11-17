@@ -22,6 +22,7 @@ and shows no overspend, and that the stored balance equals the sum of the ledger
 | Q-01 price | 20 credits per second of voice (600 for a 30-second video), `ceil` to whole credits | D-006 |
 | Q-08 voice | 10 credits per voice, taken at submit, kept if no video is made, returned if the voice itself fails | D-038 (replaces D-015) |
 | Q-19 unknown outcome | The customer is charged (hold captured), job flagged; clear failures return credits | D-005 |
+| Voice longer than the limit (asked 2026-11-17, during T-304) | No refund: the 10 credits are kept and the voice is saved on the job for reuse (reuse is designed in M5) | D-040, amends D-038 |
 
 ## Proactive discovery
 

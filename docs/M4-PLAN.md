@@ -20,6 +20,19 @@ Razorpay test mode that the owner approves (Gate C).
 cases: normal flow, tab closed before verification, webhook delivered twice, webhook before the
 browser's call, failed then successful payment.
 
+## Governing documents
+
+The parent CLAUDE.md wins on any conflict and is never edited.
+
+| Document | What it governs here |
+| --- | --- |
+| Parent [CLAUDE.md](../CLAUDE.md) | §2 protocol for every task; §3 the discovery register; §4 no Razorpay endpoint, parameter or field written from memory; §6 Gates A–D; §7 model routing and nine-part briefs; §8 stop conditions; §10 report with the five statuses |
+| [backend/CLAUDE.md](../backend/CLAUDE.md) | Money rules 1–9 (rule 7: one crediting routine; rule 8: raw-body webhook signature, event-id dedupe; rule 9: idempotent); secrets only from the environment; no new dependency without a decision; cost rule D-021 |
+| [frontend/CLAUDE.md](../frontend/CLAUDE.md) | No Checkout option from memory; "a success in the browser is not a payment"; only the public key id reaches the browser; tests never reach Razorpay |
+| [HLD.md](HLD.md) §4, §5.1 | `payment_orders`, `webhook_events`, ledger kind `purchase`, the purchase sequence |
+| [UX.md](UX.md) §7 | Payment confirming: refetch every 2 s for up to a minute, then "still confirming"; credits pill refetched after payment |
+| [README.md](README.md) | Delegation brief and report templates |
+
 ## Owner answers (Gate A, 2026-11-17)
 
 | Question | Answer |
@@ -109,3 +122,24 @@ Phase 1 and later start after M3 is done.
   4. Failed and cancelled endings appear.
   5. No request leaves the machine.
 - Not verified until T-407: Razorpay's real API, Checkout and webhooks.
+
+## Stop conditions specific to M4
+
+Stop and report instead of guessing when:
+
+- a Razorpay fact cannot be found in the official documentation;
+- the documentation contradicts D-016;
+- a live key appears outside production;
+- any step would call Razorpay without the owner's approval for that run.
+
+## Report (parent CLAUDE.md §10)
+
+At the end of the milestone, the report covers seven points:
+
+- what was built, and why;
+- what was verified, and which tests ran;
+- what remains unverified;
+- known risks;
+- the next step.
+
+Each is given an honest status. Then ask whether to refresh the tracker dashboard.
