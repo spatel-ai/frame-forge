@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ApiError, fetchVideoFile } from '../../api/client'
 import { DownloadIcon } from '../icons'
 import { Button } from './Button'
+import styles from './DownloadVideoButton.module.css'
 
 /** "Download video": saves the file on the same page (no new tab), named after the job. */
 export function DownloadVideoButton({ videoPath, jobId }: { videoPath: string; jobId: string }) {
@@ -32,8 +33,7 @@ export function DownloadVideoButton({ videoPath, jobId }: { videoPath: string; j
         <DownloadIcon size={18} />
         Download video
       </Button>
-      {/* Full-width flex item: wraps within the column even where the page's action row does not shrink its children. */}
-      {error && <p role="alert" style={{ flex: '1 1 100%', minWidth: 0 }}>{error}</p>}
+      {error && <p role="alert" className={styles.message}>{error}</p>}
     </>
   )
 }

@@ -1,0 +1,6 @@
+/* The message takes the full width of its row, so it wraps within the column. The page's
+   action row does not shrink it on desktop (flex: 0 0 auto there), so it must be set here. */
+p.message {
+  flex: 1 1 100%;
+  min-width: 0;
+}
