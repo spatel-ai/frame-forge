@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { fetchVideoFile } from '../../api/client'
+import { ApiError, fetchVideoFile } from '../../api/client'
 import { DownloadIcon } from '../icons'
 import { Button } from './Button'
 
@@ -21,7 +21,7 @@ export function DownloadVideoButton({ videoPath, jobId }: { videoPath: string; j
       a.remove()
       setTimeout(() => URL.revokeObjectURL(url), 1000)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'We could not download the video. Please try again.')
+      setError(e instanceof ApiError ? e.message : 'We could not download the video. Check your connection and try again.')
     } finally {
       setBusy(false)
     }
