@@ -1044,3 +1044,19 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 
 **Validation:** Tests: razorpay mode starts without a webhook secret; with none, a paid but unverified order is not touched at 1 minute and is credited at 3 minutes; a webhook is refused with 400.
 
+---
+
+## D-065 — For the POC, videos are not stored: the fal.ai link is kept and played
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: both
+
+**Choice:** No disk or object storage for finished videos. The job stores the fal.ai video URL and its expiry (`video_url`, `video_expires_at`). The video is requested with `X-Fal-Object-Lifecycle-Preference: {"expiration_duration_seconds": 2592000}` (30 days, matching D-054). `GET /api/v1/jobs/{id}/video` checks the caller owns the job and redirects (302) to the fal URL; after expiry it answers 410 and the screens say the video has expired. Emails link to our page, never to the raw fal URL. Mock mode keeps a local file. Photos and voices stay on local disk (small; the voice is measured locally).
+
+**Alternatives:** Download the video to our disk (no space on the server), object storage such as S3 (T-703, later), proxying the bytes through our server (bandwidth on our side).
+
+**Why:** Owner's instruction for the POC: "save that link into the DB, and every time render the video from that link". fal docs (read 2026-11-17): generated media is "available for at least 7 days by default", the lifetime is set per request with the header above (null = no expiry; expired files are permanently deleted), URLs are public to anyone holding them, and no download count or bandwidth limit is published; the only published limit is generation concurrency (2 for new accounts).
+
+**Trade-off:** The raw fal URL is unguessable but public; anyone the customer gives it to can watch until expiry. If fal loses or deletes a file, there is no copy. Seeking (range requests) and repeated fetches are not documented: Not verified — requires documentation review, execution, or live integration testing (measured in T-556).
+
+**Validation:** Tests: owner gets 302 to the stored URL, another user 404, expired 410, the fal submit carries the lifecycle header (fake transport), mock path unchanged. Live: T-556 records playback, seeking, content type, a fetch after about 24 h, and the expiry.
+

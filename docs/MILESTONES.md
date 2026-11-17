@@ -43,6 +43,7 @@ simpler way exists, change the plan before building.
 | M3 | Wallet and charging | Videos cost credits; the ledger is correct under concurrency (no real payments yet) | M2, Q-01, Q-08, Q-19 |
 | M4 | Razorpay payments | Customers buy credits with Razorpay in test mode | M3, Q-06, Q-10 |
 | M5 | Product completeness | Scripts, banners, history, consent: a product a customer can use unaided | M4, Q-11, Q-15, Q-17 |
+| M5.5 | First customer release (R1) | One stable real flow, deployed: sign up with a Gmail-sent link, buy credits, script, real 10–12 s voice and video, play from the fal.ai link, history, video-ready email | M5 Create flow (T-502, T-505, T-513), owner inputs |
 | M6 | Admin and operations | Staff can see, correct and reconcile money, and manage templates | M5, Q-05, Q-09 |
 | M7 | Hardening and launch | Deployed, secured, verified live with real money | M6, Q-03, Q-07, Q-12, Q-13, Q-18 |
 
@@ -214,6 +215,35 @@ desktop-width screen (D-033). All in mock mode.
 | T-516 | BE | Opus | Correctness | R-83 | Saved voices: start a new job from a failed job's voice (D-043) | No voice charge; the voice is copied to the new job; price from its length; only the caller's failed jobs are offered (404 otherwise); `save_all_voices` setting, default off |
 | T-517 | FE | Sonnet | Acceptance | R-83 | Voice choice on Create and "Make a video with this voice" on failed results | Matches the approved boards; consent still required; server decides the price |
 | T-518 | BE | Fable | Correctness | R-84 | Verify the video model's maximum audio length (D-044) | Dated official source recorded; the owner sets the limit (D-056: 60 s) and the photo rules (D-057) |
+
+## M5.5 — First customer release (R1)
+
+Owner request, 2026-11-17: deploy one stable flow now; the rest of M5 (banners, saved voices,
+polish) resumes after. Test customer: `shubhampatel2024@gmail.com`, onboarded through the normal
+sign-up; every test email goes there. Real videos are 10–12 seconds only (`AVATAR_MAX_AUDIO_SECONDS=12`),
+at most 3 in R1 (about $0.75 each), each announced with its cost first. Videos are not stored:
+the fal.ai link is kept and played (D-065).
+
+**Gate C:** R1-08 (fal.ai), R1-09 (Gmail), R1-10 (Razorpay test), R1-11 (live payment) each need
+the owner's approval for that run. Secrets go into `backend/.env` by the owner only.
+
+**Exit evidence:** on the deployed domain, the test customer signs up, confirms through the Gmail
+email, buys credits, picks a script, gets a real 10–12 s video, plays and downloads it, finds it
+in history, and receives the video-ready email with the job details.
+
+| ID | Area | Owner | Need | Traces to | Task | Accepted when |
+| --- | --- | --- | --- | --- | --- | --- |
+| T-550 | BE | Sonnet | Acceptance | R-01 | Gmail sender over SMTP (App Password; stdlib smtplib; never logs the password) | Patched-SMTP tests; production starts only with SMTP set |
+| T-551 | BE | Sonnet | Acceptance | R-01, R-13 | HTML and plain-text email templates: confirm link, password reset, video ready | Rendering tests; customer text escaped |
+| T-552 | BE | Sonnet | Acceptance | R-13 | Video-ready email after the completed transition, once, outside the money transaction | One mail per completed job; a mail failure changes nothing else |
+| T-553 | BE | Opus | Correctness | R-24, R-74 | Video by link (D-065): store the fal URL and expiry, 30-day lifecycle header, 302 to the owner only, 410 after expiry | Redirect, 404 and 410 tests; mock path unchanged |
+| T-554 | BE | Fable | Safety | R-24 | Real runs capped at 10–12 s (`AVATAR_MAX_AUDIO_SECONDS=12`) | A 13-s voice is refused in that configuration |
+| T-555 | OPS | Sonnet | Acceptance | R-26 | Docker images, `docker-compose.prod.yml` with Caddy (HTTPS), `docs/DEPLOY.md`, nightly backup | The stack runs locally in mock mode; browser flow passes |
+| T-556 | BE | Fable | Acceptance | R-24 | One live fal.ai run, 10–12 s, as the test customer; link behaviour measured | Owner validates the video; D-065 findings recorded |
+| T-557 | BE | Fable | Acceptance | R-01 | Gmail live check to the test inbox | Confirm and video-ready mails received, not in spam |
+| T-558 | BE | Fable | Acceptance | R-02, R-22 | Full flow as the test customer in Razorpay test mode (closes T-407) | Every step recorded |
+| T-559 | OPS | Fable | Acceptance | R-26 | Deploy to the owner's server and domain; repeat the flow there | Works over HTTPS on the domain |
+| T-560 | BE | Owner | Acceptance | R-22 | Go-live: switch to live Razorpay keys, one real purchase (T-706) | Recorded in the R1 report |
 
 ## M6 — Admin and operations
 
@@ -389,13 +419,13 @@ its lane free, can start.
 | T-500 | Contract | T-400 |
 | T-501 | BE-Jobs | T-304, T-500 |
 | T-502 | BE-Jobs | T-501 |
-| T-503 | BE-Jobs | T-502 |
+| T-503 | BE-Jobs | T-502, T-553 |
 | T-504 | BE-Content | T-204, T-500 |
-| T-505 | BE-Jobs | T-503, T-504 |
+| T-505 | BE-Jobs | T-502, T-504 |
 | T-506 | BE-Content | T-504 |
 | T-507 | BE-Media | T-104 |
 | T-508 | BE-Media | T-507 |
-| T-509 | BE-Jobs | T-505, T-506, T-508 |
+| T-509 | BE-Jobs | T-505, T-506, T-508, T-503 |
 | T-510 | FE-Home | T-310, T-500 |
 | T-511 | FE-Videos | T-211, T-500 |
 | T-512 | FE-Shell | T-510, T-511, T-515, T-158 |
@@ -405,6 +435,17 @@ its lane free, can start.
 | T-516 | BE-Jobs | T-509 |
 | T-517 | FE-Create | T-515, T-516 |
 | T-518 | Review | — |
+| T-550 | BE-Auth | T-502, T-206 |
+| T-551 | BE-Auth | T-550 |
+| T-552 | BE-Jobs | T-551, T-505 |
+| T-553 | BE-Jobs | T-552 |
+| T-554 | Review | T-505 |
+| T-555 | Ops | T-505 |
+| T-556 | Review | T-553, T-554 |
+| T-557 | Review | T-552 |
+| T-558 | Review | T-556, T-557 |
+| T-559 | Review | T-555, T-558 |
+| T-560 | Review | T-559 |
 | T-600 | Contract | T-500 |
 | T-601 | BE-Admin | T-202, T-600 |
 | T-602 | BE-Admin | T-601, T-302 |
@@ -416,7 +457,7 @@ its lane free, can start.
 | T-610 | FE-Admin | T-211, T-600 |
 | T-611 | FE-Admin | T-610 |
 | T-701 | Review | T-604, T-607, T-512 |
-| T-702 | Ops | T-701 |
+| T-702 | Ops | T-701, T-555 |
 | T-703 | BE-Core | T-702, T-105 |
 | T-704 | Ops | T-702 |
 | T-705 | Review | T-703, T-509 |

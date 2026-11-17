@@ -279,6 +279,35 @@ def test_row_voice_over_the_limit_keeps_the_charge_and_the_audio(charging):
     asyncio.run(run())
 
 
+def test_r1_cap_refuses_a_13_second_voice(charging, settings, monkeypatch):
+    """R-24 (T-554, owner 2026-11-17): with AVATAR_MAX_AUDIO_SECONDS=12, a 13-second voice is
+    refused before any video can be approved; a 12-second one is accepted."""
+    monkeypatch.setenv("AVATAR_MAX_AUDIO_SECONDS", "12")
+    capped = replace(
+        Settings(), database_url=settings.database_url, data_dir=settings.data_dir, provider="mock"
+    )
+    assert capped.max_audio_seconds == 12
+
+    async def run():
+        c = charging(credits=100, cfg=capped)
+        c.provider.chars_per_second = 10.0
+        too_long = await c.ready_job(script="a" * 130)  # 13 s
+        assert c.job(too_long)["status"] == db.FAILED
+        assert "longer than the allowed 12 seconds" in c.job(too_long)["error"]
+        ok = await c.ready_job(script="b" * 120)  # 12 s
+        assert c.job(ok)["status"] == db.AUDIO_READY
+
+    asyncio.run(run())
+
+
+def test_max_audio_seconds_must_stay_within_1_to_60(monkeypatch):
+    """D-056: the setting can lower the limit, never raise it past 60 s."""
+    for bad in ("0", "61"):
+        monkeypatch.setenv("AVATAR_MAX_AUDIO_SECONDS", bad)
+        with pytest.raises(ValueError, match="between 1 and 60"):
+            Settings()
+
+
 def test_row_voice_ready_fixes_the_price_and_moves_no_money(charging):
     """R-09 (T-303): voice ready → audio_ready with price_credits = ceil(seconds × 20) stored as
     an int; no ledger entry."""

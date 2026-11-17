@@ -49,7 +49,11 @@ class Settings:
 
     # D-044 (owner, 2026-11-17): 60 s for now. fal.ai states no limit for this model; Kling's own
     # API docs say 2-300 s (docs/FAL-VIDEO-FACTS.md). Raise only after an owner-approved live test.
-    max_audio_seconds: float = 60.0
+    # R1 (T-554, owner 2026-11-17): real test runs and the first deployment use 12 s, set with
+    # AVATAR_MAX_AUDIO_SECONDS=12, so a longer voice is refused before any video is paid for.
+    max_audio_seconds: float = field(
+        default_factory=lambda: float(os.getenv("AVATAR_MAX_AUDIO_SECONDS", "60"))
+    )
     # Live MiniMax English runs measured about 14 characters a second, so 800
     # characters stays under 60 seconds instead of paying for unusable audio.
     max_script_chars: int = 800
@@ -140,6 +144,8 @@ class Settings:
                 raise ValueError(f"{name} must be a whole number of basis points, 0 or more.")
         if self.payment_fee_bps * (10_000 + self.payment_fee_gst_bps) >= 100_000_000:
             raise ValueError("The payment fee with its GST must be below 100% of the amount.")
+        if not 1 <= self.max_audio_seconds <= 60:
+            raise ValueError("AVATAR_MAX_AUDIO_SECONDS must be between 1 and 60 (D-056).")
         # D-042: fail closed. The mock gateway signs with a public secret and moves no money,
         # so production never runs it.
         if self.environment == "production" and self.payments == "mock":
