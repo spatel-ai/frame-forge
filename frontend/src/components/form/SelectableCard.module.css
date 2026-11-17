@@ -14,7 +14,13 @@
     border-color var(--motion-fast);
 }
 
-.card:hover {
+@media (hover: hover) {
+  .card:hover {
+    background: var(--color-page);
+  }
+}
+
+.card:active {
   background: var(--color-page);
 }
 

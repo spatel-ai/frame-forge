@@ -3,7 +3,7 @@
 .step { color: var(--color-ink-muted); }
 .item, .link { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--target-min); }
 .link { color: inherit; text-decoration: none; border-radius: var(--radius-control); }
-.link:hover .label { text-decoration: underline; }
+@media (hover: hover) { .link:hover .label { text-decoration: underline; } }
 .link:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
 .marker {
   display: inline-flex; align-items: center; justify-content: center;

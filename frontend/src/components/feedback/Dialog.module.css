@@ -1,22 +1,53 @@
+/* Phone (below 768 px): a full-height sheet. From 768 px: the centred dialog. */
 .dialog {
-  padding: 0; border: 0; border-radius: var(--radius-dialog);
-  width: min(480px, calc(100vw - 2 * var(--space-4)));
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  width: 100%;
+  max-width: none;
+  height: 100vh;
+  height: 100dvh;
+  max-height: none;
   background: var(--color-surface); color: var(--color-ink);
   box-shadow: var(--shadow-float);
+  overflow: hidden;
 }
+.dialog[open] { display: flex; flex-direction: column; animation: pop var(--motion-base) ease-out; }
 .dialog::backdrop { background: var(--color-ink); opacity: 0.5; }
-.dialog[open] { animation: pop var(--motion-base) ease-out; }
-.panel { padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); }
-.header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
-.title { margin: 0; font-size: var(--text-section-size); }
+.panel {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column; gap: var(--space-4);
+  padding-block: max(var(--space-4), env(safe-area-inset-top)) max(var(--space-4), env(safe-area-inset-bottom));
+  padding-inline: max(var(--space-4), env(safe-area-inset-left)) max(var(--space-4), env(safe-area-inset-right));
+}
+.header { flex: none; display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.title { margin: 0; min-width: 0; overflow-wrap: anywhere; font-size: var(--text-section-size); }
 .close {
   flex: none; display: inline-flex; align-items: center; justify-content: center;
   min-width: var(--target-min); min-height: var(--target-min); padding: 0;
   margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) 0 0;
   background: transparent; color: var(--color-ink-soft); border: 0; border-radius: var(--radius-control); cursor: pointer;
 }
-.close:hover { background: var(--color-page); color: var(--color-ink); }
+@media (hover: hover) { .close:hover { background: var(--color-page); color: var(--color-ink); } }
+.close:active { background: var(--color-page); color: var(--color-ink); }
 .close:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
-.body { color: var(--color-ink-soft); }
+.body {
+  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  color: var(--color-ink-soft);
+}
 @keyframes pop { from { opacity: 0; transform: translateY(var(--space-2)); } to { opacity: 1; transform: none; } }
+@media (min-width: 768px) {
+  .dialog {
+    inset: unset;
+    margin: auto;
+    border-radius: var(--radius-dialog);
+    width: min(480px, calc(100vw - 2 * var(--space-4)));
+    height: auto;
+    max-height: calc(100vh - 2 * var(--space-4));
+    max-height: calc(100dvh - 2 * var(--space-4));
+  }
+  .panel { padding: var(--space-5); }
+}
 @media (prefers-reduced-motion: reduce) { .dialog[open] { animation: none; } }

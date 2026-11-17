@@ -4,4 +4,4 @@
 .lg { padding: var(--space-5); }
 .header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
 .none .header { padding: var(--space-4) var(--space-4) 0; }
-.title { margin: 0; font-family: var(--font-body); font-size: var(--text-title-size); font-weight: var(--text-title-weight); }
+.title { margin: 0; min-width: 0; overflow-wrap: anywhere; font-family: var(--font-body); font-size: var(--text-title-size); font-weight: var(--text-title-weight); }

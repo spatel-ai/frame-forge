@@ -5,7 +5,8 @@
   border: var(--line-width) solid var(--color-line); color: var(--color-ink);
   font-weight: var(--text-title-weight); text-decoration: none;
 }
-a.pill:hover { background: var(--color-primary-soft); }
+@media (hover: hover) { a.pill:hover { background: var(--color-primary-soft); } }
+a.pill:active { background: var(--color-primary-soft); }
 a.pill:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
 .low { background: var(--color-warning-soft); color: var(--color-warning); border-color: var(--color-warning); }
 .coin { display: inline-flex; color: var(--color-credit); }

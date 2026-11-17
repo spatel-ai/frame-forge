@@ -17,7 +17,14 @@
     border-color var(--motion-fast);
 }
 
-.zone:hover,
+@media (hover: hover) {
+  .zone:hover {
+    background: var(--color-primary-soft);
+    border-color: var(--color-primary);
+  }
+}
+
+.zone:active,
 .dragging {
   background: var(--color-primary-soft);
   border-color: var(--color-primary);
@@ -51,6 +58,24 @@
   opacity: 0;
 }
 
+.zone {
+  min-width: 0;
+}
+
+.promptTouch {
+  display: none;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .promptMouse {
+    display: none;
+  }
+
+  .promptTouch {
+    display: inline;
+  }
+}
+
 .chosen {
   display: flex;
   flex-wrap: wrap;
@@ -67,6 +92,8 @@
 }
 
 .preview {
+  flex: none;
+  max-width: 100%;
   width: calc(var(--space-7) * 2);
   height: calc(var(--space-7) * 2);
   object-fit: cover;
