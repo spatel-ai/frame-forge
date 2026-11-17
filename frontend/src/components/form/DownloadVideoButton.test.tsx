@@ -35,4 +35,22 @@ describe('DownloadVideoButton', () => {
     expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'This video has expired. Videos are kept for 30 days.')
     expect(screen.getByRole('button', { name: 'Download video' })).toBeTruthy()
   })
+
+  it('a dropped connection shows the friendly network message, not the browser error text', async () => {
+    vi.mocked(fetchVideoFile).mockRejectedValue(new TypeError('Failed to fetch'))
+    render(<DownloadVideoButton videoPath="/api/v1/jobs/j1/video" jobId="j1" />)
+    await userEvent.click(screen.getByRole('button', { name: 'Download video' }))
+    expect(await screen.findByRole('alert')).toHaveProperty(
+      'textContent',
+      'We could not download the video. Check your connection and try again.',
+    )
+    expect(screen.getByRole('button', { name: 'Download video' })).toBeTruthy()
+  })
+
+  it('a server error keeps its own message', async () => {
+    vi.mocked(fetchVideoFile).mockRejectedValue(new ApiError(500, 'We could not download the video. Please try again.', 'download_failed'))
+    render(<DownloadVideoButton videoPath="/api/v1/jobs/j1/video" jobId="j1" />)
+    await userEvent.click(screen.getByRole('button', { name: 'Download video' }))
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'We could not download the video. Please try again.')
+  })
 })
