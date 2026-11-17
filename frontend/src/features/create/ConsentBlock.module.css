@@ -3,5 +3,7 @@
 .note { margin: 0; color: var(--color-ink-soft); font-size: var(--text-caption-size); }
 .cost { display: flex; flex-direction: column; gap: var(--space-2); margin: 0; }
 .row { display: flex; justify-content: space-between; gap: var(--space-4); }
-.row dt, .row dd { margin: 0; }
+.row dt, .row dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .taken { color: var(--color-ink-soft); font-size: var(--text-caption-size); }
+/* The long wording wraps inside the box; the whole label is the tap target. */
+.block label { min-width: 0; overflow-wrap: anywhere; }
