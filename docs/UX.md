@@ -176,7 +176,7 @@ the form needs.
 | --- | --- | --- | --- |
 | Home | `/` | Create a video | Desktop (phone drawn, not built: D-033) |
 | Create 1: photo, script and voice choice | `/create` | Continue | Desktop, phone (built in M1.5); voice choice (D-043) and script picker drawn for M5 |
-| Create 2: banners | `/create/:id/banners` | Continue | Desktop |
+| Create 2: banners | `/create` (no job exists until the voice is made, D-045) | Continue | Desktop |
 | Create 2b: consent | `/create` | Make my voice (10 credits) | Desktop (D-045) |
 | Create 3: review voice and price | `/create/:id` | Approve and generate video | Desktop |
 | Create 4: progress | `/create/:id` | none (waiting) | Desktop |

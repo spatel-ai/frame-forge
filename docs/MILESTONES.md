@@ -179,7 +179,7 @@ only after T-407.
 | T-405 | BE | Sonnet | Correctness | R-03 | Reconcile stale orders | An order paid but never confirmed is credited |
 | T-406 | BE | Sonnet | Correctness | R-03 | Tests with signed fixtures | All five cases above, without network |
 | T-407 | BE | Fable | Acceptance | R-02, R-22 | End-to-end run in Razorpay test mode | Owner-approved run; evidence recorded |
-| T-410 | FE | Sonnet | Acceptance | R-02 | Buy-credits screen with Razorpay Checkout | Amount entry in whole rupees; shows credits to be received |
+| T-410 | FE | Sonnet | Acceptance | R-02 | Buy-credits screen with Razorpay Checkout | Amount entry in whole credits, 500 to 10,000 (D-047); shows the rupees to pay (₹1 = 1 credit) |
 | T-411 | FE | Sonnet | Acceptance | R-02 | After-payment states | Success, still confirming, failed, cancelled |
 
 ## M5 — Product completeness
