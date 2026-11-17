@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -57,14 +57,56 @@ describe('AppShell', () => {
     expect(await within(bar).findByText('Asha Verma')).toBeTruthy()
   })
 
-  it('R-76 renders only enabled items in the sidebar and the phone bar', async () => {
+  it('R-76 renders only enabled items in the sidebar, and five entries in the phone bar', async () => {
     renderAt('/create')
-    for (const name of ['Main', 'Main (phone)']) {
-      const nav = screen.getByRole('navigation', { name })
-      expect(within(nav).getAllByRole('link').map((a) => a.textContent)).toEqual(['Home', 'Create', 'Videos', 'Scripts', 'Banners', 'Wallet', 'Account'])
-    }
+    const side = screen.getByRole('navigation', { name: 'Main' })
+    expect(within(side).getAllByRole('link').map((a) => a.textContent)).toEqual(['Home', 'Create', 'Videos', 'Scripts', 'Banners', 'Wallet', 'Account'])
+    const phone = screen.getByRole('navigation', { name: 'Main (phone)' })
+    expect(within(phone).getAllByRole('link').map((a) => a.textContent)).toEqual(['Home', 'Create', 'Videos', 'Wallet'])
+    expect(within(phone).getByRole('button', { name: 'More' })).toBeTruthy()
     expect(screen.queryByText(/coming soon/i)).toBeNull()
     await screen.findByText(/Mock mode/)
+  })
+
+  it('R-88 More opens a sheet with Scripts, Banners and Account, and choosing one closes it', async () => {
+    renderAt('/create')
+    const phone = screen.getByRole('navigation', { name: 'Main (phone)' })
+    const more = within(phone).getByRole('button', { name: 'More' })
+    expect(more.getAttribute('aria-haspopup')).toBe('dialog')
+    expect(more.getAttribute('aria-expanded')).toBe('false')
+    await userEvent.click(more)
+    expect(more.getAttribute('aria-expanded')).toBe('true')
+    const sheet = await screen.findByRole('dialog', { name: 'More' })
+    expect(within(sheet).getAllByRole('link').map((a) => a.textContent)).toEqual(['Scripts', 'Banners', 'Account'])
+    await userEvent.click(within(sheet).getByRole('link', { name: 'Banners' }))
+    expect(screen.queryByRole('dialog', { name: 'More' })).toBeNull()
+    expect(more.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('R-88 the More sheet closes on Escape and focus returns to the More button', async () => {
+    renderAt('/create')
+    const more = within(screen.getByRole('navigation', { name: 'Main (phone)' })).getByRole('button', { name: 'More' })
+    more.focus()
+    await userEvent.click(more)
+    const sheet = await screen.findByRole('dialog', { name: 'More' })
+    // jsdom does not turn Escape into the native cancel event; the shared Dialog test dispatches it the same way.
+    act(() => { sheet.dispatchEvent(new Event('cancel', { cancelable: true })) })
+    expect(screen.queryByRole('dialog', { name: 'More' })).toBeNull()
+    expect(document.activeElement).toBe(more)
+  })
+
+  it('R-88 More is current only when the route is one of its items', async () => {
+    const { unmount } = renderAt('/create')
+    const phone = () => screen.getByRole('navigation', { name: 'Main (phone)' })
+    expect(within(phone()).getByRole('button', { name: 'More' }).className).not.toMatch(/active/)
+    unmount()
+    renderAt('/account/security')
+    await screen.findByRole('heading', { name: 'Page not found' })
+    expect(within(phone()).getByRole('button', { name: 'More' }).className).toMatch(/active/)
+  })
+
+  it('R-88 flags exactly Home, Create, Videos and Wallet for the phone bar', () => {
+    expect(enabledNavItems().filter((i) => i.phonePrimary).map((i) => i.label)).toEqual(['Home', 'Create', 'Videos', 'Wallet'])
   })
 
   it('R-76 keeps the switched-off items in the data, with Home, Create, Videos, Scripts, Banners, Wallet and Account enabled', () => {
