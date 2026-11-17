@@ -366,13 +366,40 @@ describe('after payment, razorpay mode', () => {
     expect(d.getByText('2,000 credits')).toBeTruthy()
   })
 
-  it('R-02 a payment.failed event shows the failed state; Try again keeps the amount', async () => {
+  it('R-02 our dialog closes while the Razorpay window is open, so Checkout is usable, and reopens after', async () => {
+    renderWallet('razorpay')
+    const d = within(await openDialog())
+    await userEvent.click(await d.findByRole('button', { name: 'Pay ₹1,020' }))
+    await waitFor(() => expect(openCheckout).toHaveBeenCalled())
+    const dialog = document.querySelector('dialog') as HTMLDialogElement
+    await waitFor(() => expect(dialog.open).toBe(false))
+    act(() => args.onDismiss())
+    await waitFor(() => expect(dialog.open).toBe(true))
+    expect(await d.findByRole('heading', { name: 'Payment cancelled' })).toBeTruthy()
+  })
+
+  it('R-02 a failed attempt inside Checkout does not reopen our dialog; a later success inside Checkout is verified', async () => {
+    vi.mocked(verifyPayment).mockResolvedValue(verified(1000, 1000))
+    renderWallet('razorpay')
+    const d = within(await openDialog())
+    await userEvent.click(await d.findByRole('button', { name: 'Pay ₹1,020' }))
+    await waitFor(() => expect(openCheckout).toHaveBeenCalled())
+    const dialog = document.querySelector('dialog') as HTMLDialogElement
+    act(() => args.onFailed({ error: { code: 'BAD_REQUEST_ERROR' } }))
+    expect(dialog.open).toBe(false)
+    act(() => args.onSuccess({ razorpay_payment_id: 'pay_2', razorpay_order_id: 'order_rz1', razorpay_signature: 's2' }))
+    expect(await d.findByText('1,000 credits were added to your wallet.')).toBeTruthy()
+    expect(dialog.open).toBe(true)
+  })
+
+  it('R-02 a payment.failed then closing the window shows the failed state; Try again keeps the amount', async () => {
     renderWallet('razorpay')
     const d = within(await openDialog())
     await userEvent.click(d.getByRole('button', { name: '5,000 credits' }))
     await userEvent.click(await d.findByRole('button', { name: 'Pay ₹5,100' }))
     await waitFor(() => expect(openCheckout).toHaveBeenCalled())
     act(() => args.onFailed({ error: { code: 'BAD_REQUEST_ERROR' } }))
+    act(() => args.onDismiss())
     expect(await d.findByRole('heading', { name: "The payment didn't go through" })).toBeTruthy()
     expect(d.getByText(/No credits were added/)).toBeTruthy()
     await userEvent.click(d.getByRole('button', { name: 'Try again' }))

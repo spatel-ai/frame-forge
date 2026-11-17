@@ -106,11 +106,9 @@ def test_payments_default_to_mock(monkeypatch):
     assert Settings().payments == "mock"
 
 
-@pytest.mark.parametrize(
-    "missing", ["razorpay_key_id", "razorpay_key_secret", "razorpay_webhook_secret"]
-)
+@pytest.mark.parametrize("missing", ["razorpay_key_id", "razorpay_key_secret"])
 def test_razorpay_mode_refuses_to_start_without_every_value(missing):
-    """D-042: razorpay mode with an empty key or secret refuses to start."""
+    """D-042: razorpay mode with an empty key id or key secret refuses to start."""
     values = {
         "razorpay_key_id": TEST_KEY,
         "razorpay_key_secret": "s",
@@ -241,3 +239,15 @@ def test_mock_payments_are_refused_in_production():
     """D-042: production never runs the mock gateway, whose checkout secret is public."""
     with pytest.raises(ValueError, match="not allowed in production"):
         replace(Settings(), environment="production", payments="mock")
+
+
+def test_razorpay_mode_starts_without_a_webhook_secret():
+    """D-064: the webhook is optional; razorpay mode starts with only the key id and secret."""
+    s = replace(
+        Settings(),
+        payments="razorpay",
+        razorpay_key_id=TEST_KEY,
+        razorpay_key_secret="s",
+        razorpay_webhook_secret="",
+    )
+    assert s.payments == "razorpay" and s.razorpay_webhook_secret == ""

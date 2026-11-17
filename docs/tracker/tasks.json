@@ -942,7 +942,7 @@
     "acceptance": "Job cannot be created without it",
     "status": "In progress",
     "verification": "",
-    "evidence": "Agent working in its own worktree (M5 phase 2), launched 2026-11-17."
+    "evidence": "Backend built and reviewed (consent required, 422 consent_required/consent_outdated before any charge; migration renumbered 0009). Staged on branch m5-create with the consent checkbox on Create (in progress); merges to development together so Create never breaks."
   },
   {
     "id": "T-503",
@@ -985,9 +985,9 @@
     "starts_after": "T-503, T-504",
     "task": "Job creation accepts script text or a saved script id",
     "acceptance": "The job stores its own copy; deleting the script leaves the job unchanged",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent working on m5-create: script_id on jobs (migration 0010), save_or_touch in the job transaction."
   },
   {
     "id": "T-506",
@@ -1107,7 +1107,7 @@
     "acceptance": "Paste new or pick saved; delete with confirmation",
     "status": "In progress",
     "verification": "",
-    "evidence": "Agent working in its own worktree (M5 phase 2), launched 2026-11-17."
+    "evidence": "Built (My scripts page, picker on Create, ?script=<id>, sends script_id when unchanged; npm run check 472 passed on staging). Staged on m5-create; merges with T-505."
   },
   {
     "id": "T-514",
