@@ -62,3 +62,11 @@
   --motion-fast: 150ms;
   --motion-base: 200ms;
 }
+
+/* Phones (below 768px): smaller headings. 768px and up keep the values above. */
+@media (max-width: 767px) {
+  :root {
+    --text-page-title-size: 24px;
+    --text-section-size: 18px;
+  }
+}
