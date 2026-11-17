@@ -219,8 +219,8 @@ desktop-width screen (D-033). All in mock mode.
 ## M5.5 — First customer release (R1)
 
 Owner request, 2026-11-17: deploy one stable flow now; the rest of M5 (banners, saved voices,
-polish) resumes after. Test customer: `shubhampatel2024@gmail.com`, onboarded through the normal
-sign-up; every test email goes there. Real videos are 10–12 seconds only (`AVATAR_MAX_AUDIO_SECONDS=12`),
+polish) resumes after. Test customer: `shubhamp.career@gmail.com` (owner, 2026-11-17; `shubhampatel2024@gmail.com` is the
+sending Gmail account), onboarded through the normal sign-up; every test email goes there. Real videos are 10–12 seconds only (`AVATAR_MAX_AUDIO_SECONDS=12`),
 at most 3 in R1 (about $0.75 each), each announced with its cost first. Videos are not stored:
 the fal.ai link is kept and played (D-065).
 

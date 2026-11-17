@@ -1300,9 +1300,9 @@
     "starts_after": "T-552",
     "task": "Gmail live check to the test inbox",
     "acceptance": "Confirm and video-ready mails received, not in spam",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "In progress",
+    "verification": "VERIFIED",
+    "evidence": "2026-11-17: owner ran `python -m app.auth.mailcheck shubhamp.career@gmail.com`: 'Sent to shubhamp.career@gmail.com via smtp.gmail.com:587 as shubhampatel2024@gmail.com'; owner confirmed it arrived in the Inbox. Still to see live: the confirm-link and video-ready emails (in T-556/T-558)."
   },
   {
     "id": "T-558",
