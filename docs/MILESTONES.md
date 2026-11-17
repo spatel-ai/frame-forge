@@ -238,7 +238,7 @@ in history, and receives the video-ready email with the job details.
 | T-552 | BE | Sonnet | Acceptance | R-13 | Video-ready email after the completed transition, once, outside the money transaction | One mail per completed job; a mail failure changes nothing else |
 | T-553 | BE | Opus | Correctness | R-24, R-74 | Video by link (D-065): store the fal URL and expiry, 30-day lifecycle header, 302 to the owner only, 410 after expiry | Redirect, 404 and 410 tests; mock path unchanged |
 | T-554 | BE | Fable | Safety | R-24 | Real runs capped at 10–12 s (`AVATAR_MAX_AUDIO_SECONDS=12`) | A 13-s voice is refused in that configuration |
-| T-555 | OPS | Sonnet | Acceptance | R-26 | Docker images, `docker-compose.prod.yml` with Caddy (HTTPS), `docs/DEPLOY.md`, nightly backup | The stack runs locally in mock mode; browser flow passes |
+| T-555 | OPS | Sonnet | Acceptance | R-26 | Backend Docker image, `docker-compose.server.yml` with Caddy (HTTPS), `server.sh`, `docs/DEPLOY.md`, nightly backup | The stack runs locally in mock mode; browser flow passes |
 | T-556 | BE | Fable | Acceptance | R-24 | One live fal.ai run, 10–12 s, as the test customer; link behaviour measured | Owner validates the video; D-065 findings recorded |
 | T-557 | BE | Fable | Acceptance | R-01 | Gmail live check to the test inbox | Confirm and video-ready mails received, not in spam |
 | T-558 | BE | Fable | Acceptance | R-02, R-22 | Full flow as the test customer in Razorpay test mode (closes T-407) | Every step recorded |

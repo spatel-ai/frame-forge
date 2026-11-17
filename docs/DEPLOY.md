@@ -1,149 +1,88 @@
-# Deploying Frameforge (R-26)
+# Deploying
 
-Three containers on one Linux server: PostgreSQL, the API and Caddy (serves the web app and gets
-the HTTPS certificate by itself). Files: `docker-compose.prod.yml`, `backend/Dockerfile`,
-`frontend/Dockerfile`, `deploy/Caddyfile`.
+Backend: one Linux server with Docker (PostgreSQL + the API + Caddy for free Let's Encrypt HTTPS).
+Frontend: Vercel. Three files do it: `server.sh`, `docker-compose.server.yml`, `Caddyfile`.
 
-Videos are not stored (D-065): the fal.ai link is kept and played. Only photos and voices live on
-the `media` volume, and the database holds everything else.
+## Backend (the server)
 
-## 1. Server requirements
+1. **DNS:** an `A` record for the API domain (for example `api.example.com`) pointing to the
+   server's public IP.
+2. **Firewall:** open ports 80 and 443. Port 8000 stays closed; the API is reached over HTTPS.
+3. **Run the script** on the server (upload `server.sh`, or use the copy in the repository):
 
-- Linux (Ubuntu 22.04+ or Debian 12+), 2 vCPU, 4 GB RAM, 20 GB disk (the first image build needs
-  about 3 GB; ffmpeg joins banners in the API container).
-- A domain you control. Ports 80 and 443 open to the internet (Caddy needs both, 80 for the
-  certificate challenge). Do not open 5432 or 8000: neither is published.
+   ```bash
+   bash server.sh api.example.com https://github.com/<you>/<repo>.git development
+   ```
 
-## 2. DNS
+   The first run installs Docker, clones the code into `~/frameforge`, writes `server.env` (the API
+   domain and a database password generated on the server) and stops after creating a
+   `backend/.env` template. Fill it in (`nano ~/frameforge/backend/.env`) and run the same command
+   again: it builds, starts everything and checks the API.
 
-Create an `A` record for the domain (for example `app.example.com`) pointing at the server's public
-IP, and wait until `dig +short app.example.com` shows it. Caddy cannot get a certificate before.
+4. **Check:** `curl https://api.example.com/healthz` prints `{"status":"ok"}`.
 
-## 3. Install Docker
+**Update later:** `cd ~/frameforge && git pull && bash server.sh api.example.com <repo-url> development`.
+Database migrations run when the API starts. `backend/.env` and the database password are never
+overwritten.
 
-Follow the official guide for your distribution (https://docs.docker.com/engine/install/), which
-installs the Compose plugin. Check: `docker --version` and `docker compose version` (v2.24 or newer).
+**Logs:** `cd ~/frameforge && sudo docker compose --env-file server.env -f docker-compose.server.yml logs -f backend`
+(use `caddy` instead of `backend` for the certificate).
 
-## 4. Copy the repository
+### backend/.env on the server
 
-```bash
-git clone <repository-url> frameforge && cd frameforge
-git checkout main        # or the release branch
+```
+AVATAR_ENV=production
+AVATAR_PROVIDER=fal
+FAL_KEY=...
+AVATAR_MAX_AUDIO_SECONDS=12
+AVATAR_PAYMENTS=razorpay
+RAZORPAY_KEY_ID=...
+RAZORPAY_KEY_SECRET=...
+USER_EMAIL=...
+USER_EMAIL_PASSWORD=...
+AVATAR_SUPPORT_EMAIL=...
+AVATAR_APP_URL=https://<the website address>
+AVATAR_ALLOWED_ORIGINS=https://<the website address>
+AVATAR_BANNERS=on
+AVATAR_S3_BUCKET=<bucket name>
+AWS_REGION=ap-south-1
 ```
 
-## 5. Configure (never commit these files)
+`AVATAR_APP_URL` and `AVATAR_ALLOWED_ORIGINS` are the **website's** address (the Vercel site or
+your own domain on it), exactly as in the browser's address bar, with no slash at the end; several
+addresses are separated by commas. They are not the API domain. A request from any other website
+gets 403 `origin_refused`.
 
-Two files, both git-ignored.
+### S3 without keys (EC2)
 
-**`deploy/prod.env`** (copy `deploy/prod.env.example`; read by Compose only):
+Attach an IAM role to the instance allowing `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject` on
+`arn:aws:s3:::<bucket>/videos/*`, and set the instance's metadata hop limit to 2 (EC2 console >
+instance > Actions > Instance settings > Modify instance metadata options), because the API runs
+inside Docker. The bucket needs public access blocked, a lifecycle rule deleting `videos/` after
+30 days, and CORS allowing `GET` and `HEAD` from the website's address (for the Download button).
 
-| Name | Secret | Meaning |
-| --- | --- | --- |
-| `AVATAR_DOMAIN` | no | the domain, no `https://` |
-| `POSTGRES_PASSWORD` | yes | database password, letters and digits only: `openssl rand -hex 24` |
+## Frontend (Vercel)
 
-**`backend/.env`** (copy `backend/.env.example`; read by the API container). Names only here:
+Import the repository with **Root Directory = `frontend`** and add one environment variable
+(Project > Settings > Environment Variables, Production and Preview):
 
-| Name | Secret | Production value |
-| --- | --- | --- |
-| `AVATAR_ENV` | no | `production` |
-| `AVATAR_APP_URL` | no | `https://<domain>` (emailed links point here) |
-| `AVATAR_ALLOWED_ORIGINS` | no | `https://<domain>` |
-| `AVATAR_PROVIDER` | no | `fal` (paid; needs the owner's approval per run) |
-| `FAL_KEY` | yes | fal.ai API key |
-| `AVATAR_MAX_AUDIO_SECONDS` | no | `12` for R1 |
-| `AVATAR_PAYMENTS` | no | `razorpay` (production refuses `mock`) |
-| `RAZORPAY_KEY_ID` | no (public) | test key until go-live, then live key |
-| `RAZORPAY_KEY_SECRET` | yes | Razorpay secret |
-| `RAZORPAY_WEBHOOK_SECRET` | yes | optional (D-064); empty means polling every minute |
-| `AVATAR_PAYMENT_FEE_BPS`, `AVATAR_PAYMENT_FEE_GST_BPS` | no | `200`, `1800` |
-| `AVATAR_SUPPORT_EMAIL` | no | shown to customers on failure screens |
-| `USER_EMAIL` | no | the Gmail address that sends (also the From address) |
-| `AVATAR_SMTP_HOST`, `AVATAR_SMTP_PORT`, `AVATAR_MAIL_FROM_NAME` | no | defaults smtp.gmail.com, 587, Frameforge |
-| `USER_EMAIL_PASSWORD` | yes | Gmail App Password (2-Step Verification on, then App passwords), not the normal password |
-| `AVATAR_MAIL_FROM_NAME` | no | sender display name |
-
-Set by Compose, do not put in `backend/.env`: `DATABASE_URL` (points at the `db` service) and
-`AVATAR_DATA_DIR=/data`. Also optional: `AVATAR_VOICE`, `AVATAR_POLL_INTERVAL`,
-`AVATAR_VIDEO_TIMEOUT`. The SMTP names are from the parallel task T-550; confirm them against
-`backend/.env.example` once merged. Production refuses to start without an email provider.
-
-Protect the files: `chmod 600 deploy/prod.env backend/.env`.
-
-## 6. First deploy
-
-```bash
-docker compose --env-file deploy/prod.env -f docker-compose.prod.yml up -d --build
-docker compose --env-file deploy/prod.env -f docker-compose.prod.yml ps     # all healthy
-curl https://<domain>/healthz                                                # {"status":"ok"}
-curl https://<domain>/api/v1/config                                          # provider and payments as set
+```
+API_TARGET=https://api.example.com
 ```
 
-The API container runs `alembic upgrade head` on every start, then one uvicorn worker. Keep it at
-one worker: the job poller and payment reconciler run inside that process.
+`frontend/vercel.mjs` reads it at build time and forwards `/api/*` to it. To change the backend,
+change the variable and redeploy.
 
-To avoid typing the flags, add to your shell: `export COMPOSE_FILE=docker-compose.prod.yml COMPOSE_ENV_FILES=deploy/prod.env`.
+## Local frontend against the deployed backend
 
-## 7. Update
+Put the same line in `frontend/.env` and restart `npm run dev`:
 
-```bash
-git pull
-docker compose --env-file deploy/prod.env -f docker-compose.prod.yml up -d --build
+```
+API_TARGET=https://api.example.com
 ```
 
-Back up first (section 9) when the release has a migration. Volumes survive; migrations run on start.
+The dev server forwards `/api` there. Leave it empty to use a backend on your own machine. This
+talks to the real backend: accounts, videos and payments are real.
 
-## 8. Logs and status
-
-```bash
-docker compose --env-file deploy/prod.env -f docker-compose.prod.yml logs -f backend
-docker compose --env-file deploy/prod.env -f docker-compose.prod.yml logs --tail 100 web db
-```
-
-## 9. Nightly backup (14 days) and restore
-
-Create `/usr/local/bin/frameforge-backup.sh` (adjust `REPO`), `chmod +x` it:
-
-```bash
-#!/bin/sh
-set -e
-REPO=/home/deploy/frameforge
-OUT=/var/backups/frameforge
-mkdir -p "$OUT"
-cd "$REPO"
-docker compose --env-file deploy/prod.env -f docker-compose.prod.yml exec -T db \
-  pg_dump -U avatar -d avatar --format=custom > "$OUT/avatar-$(date +%F).dump"
-find "$OUT" -name 'avatar-*.dump' -mtime +14 -delete
-```
-
-Cron (`sudo crontab -e`), 02:30 every night:
-
-```cron
-30 2 * * * /usr/local/bin/frameforge-backup.sh >> /var/log/frameforge-backup.log 2>&1
-```
-
-Copy `/var/backups/frameforge` off the server too (a server loss takes the local copies with it).
-Photos and voices on the `media` volume are not in the dump; losing them only costs saved voice
-reuse, not customers' money or accounts.
-
-**Restore** (tested on the local stack, 2026-11-17: dump 24 KB, restore exit 0, `alembic_version`
-= head, API healthy afterwards). Stops the API, replaces the database, starts the API:
-
-```bash
-C="docker compose --env-file deploy/prod.env -f docker-compose.prod.yml"
-$C stop backend
-$C exec -T db psql -U avatar -d postgres -c 'DROP DATABASE avatar' -c 'CREATE DATABASE avatar'
-$C exec -T db pg_restore -U avatar -d avatar --no-owner < /var/backups/frameforge/avatar-YYYY-MM-DD.dump
-$C start backend
-curl https://<domain>/healthz
-```
-
-## 10. Try the stack locally in mock mode
-
-```bash
-docker compose --env-file deploy/local.env -f docker-compose.prod.yml -f docker-compose.local.yml up --build
-```
-
-Serves http://localhost on host port 80 only (nothing on 5432, 8000 or 5173), development mode,
-mock provider and payments, no `backend/.env` needed. Stop with `down` (add `-v` to delete the
-local volumes). The Compose project is `frameforge-prod`, separate from the local `avatar` database.
+**Not verified:** Vercel's size limit for forwarded requests is not documented; test a photo of
+about 10 MB on the deployed site.

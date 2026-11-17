@@ -1268,7 +1268,7 @@
     "need": "Acceptance",
     "traces_to": "R-26",
     "starts_after": "T-505",
-    "task": "Docker images, `docker-compose.prod.yml` with Caddy (HTTPS), `docs/DEPLOY.md`, nightly backup",
+    "task": "Backend Docker image, `docker-compose.server.yml` with Caddy (HTTPS), `server.sh`, `docs/DEPLOY.md`, nightly backup",
     "acceptance": "The stack runs locally in mock mode; browser flow passes",
     "status": "Done",
     "verification": "MOCK-VERIFIED",

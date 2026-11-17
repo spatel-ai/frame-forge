@@ -1,12 +1,13 @@
 # One-file server setup: PostgreSQL + the backend API + Caddy (free Let's Encrypt HTTPS).
 # For a Linux server with Docker where this repository was cloned with git.
 #
-#   cp deploy/server.env.example deploy/server.env     # set API_DOMAIN and POSTGRES_PASSWORD
-#   nano backend/.env                                   # the app's settings and secrets
-#   docker compose --env-file deploy/server.env -f docker-compose.server.yml up -d --build
+# The easy way is `bash server.sh <api-domain> <git-repo-url>`, which writes server.env (the API
+# domain and a generated database password), checks backend/.env and runs:
+#
+#   docker compose --env-file server.env -f docker-compose.server.yml up -d --build
 #
 # Caddy gets and renews the certificate for API_DOMAIN by itself; the domain's A record must
-# point to this server and ports 80 and 443 must be open. Full steps: docs/DEPLOY-SIMPLE.md.
+# point to this server and ports 80 and 443 must be open. Full steps: docs/DEPLOY.md.
 name: frameforge
 
 services:
@@ -16,7 +17,7 @@ services:
     environment:
       POSTGRES_DB: avatar
       POSTGRES_USER: avatar
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/server.env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in server.env}
     command: postgres -c shared_buffers=128MB -c max_connections=40
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -48,12 +49,12 @@ services:
     image: caddy:2
     restart: unless-stopped
     environment:
-      API_DOMAIN: ${API_DOMAIN:?set API_DOMAIN in deploy/server.env}
+      API_DOMAIN: ${API_DOMAIN:?set API_DOMAIN in server.env}
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./deploy/Caddyfile.aws:/etc/caddy/Caddyfile:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

@@ -2,13 +2,13 @@
 # Frameforge backend: one-shot production setup for a fresh Linux server (Amazon Linux 2023 or
 # Ubuntu/Debian). Safe to run again: it only adds what is missing, then rebuilds and restarts.
 #
-#   bash server-setup.sh <api-domain> <git-repo-url> [branch]
-#   e.g. bash server-setup.sh api.example.com https://github.com/you/frameforge.git development
+#   bash server.sh <api-domain> <git-repo-url> [branch]
+#   e.g. bash server.sh api.example.com https://github.com/you/frameforge.git development
 #
 # What it does:
 #   1. installs Docker, the compose plugin and git; adds 2 GB swap on small servers
 #   2. clones (or updates) the repository into ~/frameforge
-#   3. writes deploy/server.env (API domain + a generated database password, kept on this server)
+#   3. writes server.env (API domain + a generated database password, kept on this server)
 #   4. stops with instructions if backend/.env (your secrets) is not filled in yet
 #   5. starts PostgreSQL, the API and Caddy (free Let's Encrypt certificate) with Docker
 #   6. waits for the API and prints how to check it
@@ -26,7 +26,7 @@ COMPOSE_VERSION="v2.29.7"
 say() { printf '\n==> %s\n' "$*"; }
 die() { printf '\nSTOPPED: %s\n' "$*" >&2; exit 1; }
 
-[ -n "$API_DOMAIN" ] && [ -n "$REPO_URL" ] || die "usage: bash server-setup.sh <api-domain> <git-repo-url> [branch]"
+[ -n "$API_DOMAIN" ] && [ -n "$REPO_URL" ] || die "usage: bash server.sh <api-domain> <git-repo-url> [branch]"
 case "$API_DOMAIN" in
   *.*) ;;
   *) die "'$API_DOMAIN' does not look like a domain (expected something like api.example.com)" ;;
@@ -83,19 +83,26 @@ fi
 cd "$APP_DIR"
 [ -f docker-compose.server.yml ] || die "docker-compose.server.yml is not in this branch ($BRANCH)"
 
+# Older layout: the server's settings lived in deploy/server.env. Keep them (the database
+# password must not change), now next to the compose file.
+if [ -f deploy/server.env ] && [ ! -f server.env ]; then
+  mv deploy/server.env server.env
+  rmdir deploy 2>/dev/null || true
+fi
+
 # ---- 3. server settings (not secrets you typed; the DB password is generated here) ---------
-if [ ! -f deploy/server.env ]; then
-  say "Writing deploy/server.env (database password generated on this server)"
+if [ ! -f server.env ]; then
+  say "Writing server.env (database password generated on this server)"
   umask 077
   {
     echo "API_DOMAIN=$API_DOMAIN"
     echo "POSTGRES_PASSWORD=$(openssl rand -hex 24)"
-  } > deploy/server.env
+  } > server.env
 else
   # Keep the existing database password; only update the domain.
-  sed -i "s/^API_DOMAIN=.*/API_DOMAIN=$API_DOMAIN/" deploy/server.env
+  sed -i "s/^API_DOMAIN=.*/API_DOMAIN=$API_DOMAIN/" server.env
 fi
-chmod 600 deploy/server.env
+chmod 600 server.env
 
 # ---- 4. the app's secrets ----------------------------------------------------------------
 if [ ! -f backend/.env ]; then
@@ -135,7 +142,7 @@ for name in AVATAR_ENV AVATAR_PROVIDER AVATAR_PAYMENTS AVATAR_APP_URL AVATAR_ALL
 done
 
 # ---- 5. run ------------------------------------------------------------------------------
-COMPOSE=(sudo docker compose --env-file deploy/server.env -f docker-compose.server.yml)
+COMPOSE=(sudo docker compose --env-file server.env -f docker-compose.server.yml)
 say "Building and starting PostgreSQL, the API and Caddy (the first build takes several minutes)"
 "${COMPOSE[@]}" up -d --build
 
@@ -163,8 +170,8 @@ DONE. The API is running on this server.
                     (needs the DNS A record for $API_DOMAIN pointing here and ports 80/443 open;
                      the certificate is issued on the first request and can take a minute)
 
-  Logs:             cd $APP_DIR && sudo docker compose --env-file deploy/server.env -f docker-compose.server.yml logs -f backend
-  Update later:     bash $APP_DIR/deploy/server-setup.sh $API_DOMAIN $REPO_URL $BRANCH
+  Logs:             cd $APP_DIR && sudo docker compose --env-file server.env -f docker-compose.server.yml logs -f backend
+  Update later:     bash $APP_DIR/server.sh $API_DOMAIN $REPO_URL $BRANCH
   Certificate log:  ... logs caddy
 
 For S3 without keys: the instance role must allow Put/Get/Delete on <bucket>/videos/*, and the

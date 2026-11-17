@@ -2,20 +2,19 @@ import react from '@vitejs/plugin-react'
 import { loadEnv } from 'vite'
 import { defineConfig } from 'vitest/config'
 
-// Development only. By default `/api` goes to a backend on this machine. To run the local
-// frontend against a deployed backend, put these two lines in frontend/.env.local (git-ignored):
+// Development only. `/api` is forwarded to API_TARGET from frontend/.env (git-ignored), the same
+// variable Vercel uses (vercel.mjs). Empty or missing: a backend on this machine.
 //
-//   API_TARGET=https://api.example.com        the deployed API
-//   API_ORIGIN=https://your-site.example.com  the site address that API allows
-//                                             (its AVATAR_ALLOWED_ORIGINS)
+//   API_TARGET=https://api.example.com
 //
-// The dev server then forwards `/api` there and presents API_ORIGIN as the request's origin, so
-// the API's "other website" check accepts it. Neither value reaches the browser bundle (they
-// are not VITE_ variables), and production builds ignore this file.
+// When the target is another machine, the dev server drops the browser's `Origin` header (which
+// would say http://localhost:5173). A deployed backend refuses origins that are not its own
+// website, and accepts a request that carries none, exactly as it does behind its own proxy.
+// The value never reaches the browser bundle (it is not a VITE_ variable).
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const target = env.API_TARGET || 'http://127.0.0.1:8000'
-  const origin = env.API_ORIGIN
+  const target = (env.API_TARGET || 'http://127.0.0.1:8000').trim().replace(/\/+$/, '')
+  const remote = !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(target)
   return {
     plugins: [react()],
     server: {
@@ -26,7 +25,7 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           configure: (proxy) => {
             proxy.on('proxyReq', (proxyReq) => {
-              if (origin && proxyReq.getHeader('origin')) proxyReq.setHeader('origin', origin)
+              if (remote) proxyReq.removeHeader('origin')
             })
           },
         },
