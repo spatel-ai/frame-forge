@@ -1,7 +1,7 @@
-.error { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-2); padding: var(--space-6) var(--space-4); }
+.error { min-width: 0; display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-2); padding: var(--space-6) var(--space-4); }
 .icon { display: inline-flex; color: var(--color-danger); margin-bottom: var(--space-2); }
-.title { margin: 0; font-size: var(--text-title-size); font-family: var(--font-body); font-weight: var(--text-title-weight); }
-.body { margin: 0; overflow-wrap: anywhere; color: var(--color-ink-soft); max-width: 48ch; }
+.title { margin: 0; min-width: 0; max-width: 100%; overflow-wrap: anywhere; font-size: var(--text-title-size); font-family: var(--font-body); font-weight: var(--text-title-weight); }
+.body { margin: 0; min-width: 0; max-width: min(48ch, 100%); overflow-wrap: anywhere; color: var(--color-ink-soft); }
 .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); margin-top: var(--space-3); }
 .retry {
   min-height: var(--target-min); padding: var(--space-2) var(--space-4);

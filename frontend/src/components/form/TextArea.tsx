@@ -1,13 +1,20 @@
 import { forwardRef, useState, type ChangeEvent, type TextareaHTMLAttributes } from 'react'
+import { countChars } from './countChars'
 import { Field, useFieldA11y, type FieldProps } from './Field'
 import fieldStyles from './Field.module.css'
 import shared from './shared.module.css'
 import styles from './TextArea.module.css'
 
 export interface TextAreaProps extends FieldProps, Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'maxLength'> {
-  /** Character limit shown as `used / max`. Typing is never blocked. */
+  /**
+   * Character limit shown as `used / max`. Typing is never blocked. Counted like the server does
+   * (see `countChars`): characters (code points, so an emoji is 1), with spaces at the start and
+   * end left out because the server trims them.
+   */
   max?: number
 }
+
+const characters = (n: number) => `${n} ${n === 1 ? 'character' : 'characters'}`
 
 type CounterState = 'ok' | 'near' | 'over'
 
@@ -21,8 +28,8 @@ function counterState(used: number, max: number): CounterState {
 }
 
 function announcement(state: CounterState, used: number, max: number): string {
-  if (state === 'over') return `${used - max} characters over the limit of ${max}`
-  if (state === 'near') return `${max - used} characters left`
+  if (state === 'over') return `${characters(used - max)} over the limit of ${max}`
+  if (state === 'near') return `${characters(max - used)} left`
   return ''
 }
 
@@ -46,7 +53,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(function 
 ) {
   const { ids, controlProps } = useFieldA11y(id, { hint, error, success }, describedBy)
   const [inner, setInner] = useState(() => String(defaultValue ?? ''))
-  const used = String(value ?? inner).length
+  const used = countChars(String(value ?? inner))
 
   // The live region text only changes when the counter crosses a threshold,
   // so screen readers are not told about every keystroke.

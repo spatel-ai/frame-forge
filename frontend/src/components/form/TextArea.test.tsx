@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
+import { countChars } from './countChars'
 import { TextArea } from './TextArea'
 
 const counter = () => screen.getByTestId('char-counter')
@@ -53,11 +54,35 @@ describe('TextArea', () => {
     await user.type(area, '12345678')
     expect(live.textContent).toBe('')
     await user.type(area, '9')
-    expect(live.textContent).toBe('1 characters left')
+    expect(live.textContent).toBe('1 character left')
     await user.type(area, '0')
-    expect(live.textContent).toBe('1 characters left')
+    expect(live.textContent).toBe('1 character left')
     await user.type(area, 'x')
-    expect(live.textContent).toBe('1 characters over the limit of 10')
+    expect(live.textContent).toBe('1 character over the limit of 10')
+  })
+
+  it('counts characters as the server does: an emoji is one, leading and trailing spaces are not counted', () => {
+    render(<TextArea label="Script" max={10} value={'😀'.repeat(10)} onChange={() => {}} />)
+    expect(counter().textContent).toBe('10 / 10')
+    expect(counter().dataset.state).toBe('near')
+  })
+
+  it('does not show over the limit for spaces the server trims', () => {
+    render(<TextArea label="Script" max={10} value={'1234567890   \n'} onChange={() => {}} />)
+    expect(counter().textContent).toBe('10 / 10')
+    expect(counter().dataset.state).not.toBe('over')
+  })
+
+  it('countChars matches the server count (code points of the trimmed text)', () => {
+    expect(countChars('')).toBe(0)
+    expect(countChars('  abc  ')).toBe(3)
+    expect(countChars('😀👍🏽')).toBe(3) // 👍🏽 is two code points, as Python counts it
+    expect(countChars('नमस्ते')).toBe(6)
+  })
+
+  it('uses the plural for more than one character over', () => {
+    render(<TextArea label="Script" max={10} value="123456789012" onChange={() => {}} />)
+    expect((document.querySelector('[aria-live="polite"]') as HTMLElement).textContent).toBe('2 characters over the limit of 10')
   })
 
   it('has no counter without max', () => {

@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { useRef, useState } from 'react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { Pagination } from './Pagination'
@@ -30,5 +31,60 @@ describe('Pagination', () => {
     render(<Pagination page={1} pageSize={10} total={0} onPageChange={() => {}} />)
     expect(screen.getByText('Showing 0–0 of 0')).toBeTruthy()
     screen.getAllByRole('button').forEach((b) => expect((b as HTMLButtonElement).disabled).toBe(true))
+  })
+
+  function Paged({ initial = 1, withTarget = true }: { initial?: number; withTarget?: boolean }) {
+    const [page, setPage] = useState(initial)
+    const ref = useRef<HTMLHeadingElement>(null)
+    return (
+      <>
+        <h2 ref={ref}>Your scripts</h2>
+        <button type="button" onClick={() => setPage(1)}>Search</button>
+        <Pagination page={page} pageSize={10} total={45} onPageChange={setPage} scrollTargetRef={withTarget ? ref : undefined} />
+      </>
+    )
+  }
+
+  it('after Next or Previous, scrolls the target to the top and moves focus to it', async () => {
+    const scrollIntoView = vi.fn()
+    Element.prototype.scrollIntoView = scrollIntoView
+    render(<Paged />)
+    await userEvent.click(screen.getByRole('button', { name: /Next/ }))
+    const heading = screen.getByRole('heading', { name: 'Your scripts' })
+    expect(screen.getByText('Showing 11–20 of 45')).toBeTruthy()
+    expect(document.activeElement).toBe(heading)
+    expect(heading.getAttribute('tabindex')).toBe('-1')
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start', behavior: 'smooth' })
+    await userEvent.click(screen.getByRole('button', { name: /Previous/ }))
+    expect(scrollIntoView).toHaveBeenCalledTimes(2)
+  })
+
+  it('uses an instant scroll when the customer prefers reduced motion', async () => {
+    const scrollIntoView = vi.fn()
+    Element.prototype.scrollIntoView = scrollIntoView
+    const original = window.matchMedia
+    window.matchMedia = ((q: string) => ({ matches: q.includes('reduce'), media: q })) as unknown as typeof window.matchMedia
+    render(<Paged />)
+    await userEvent.click(screen.getByRole('button', { name: /Next/ }))
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'start', behavior: 'auto' })
+    window.matchMedia = original
+  })
+
+  it('does not move scroll or focus when the page changes for another reason', async () => {
+    const scrollIntoView = vi.fn()
+    Element.prototype.scrollIntoView = scrollIntoView
+    render(<Paged initial={3} />)
+    const search = screen.getByRole('button', { name: 'Search' })
+    await userEvent.click(search)
+    expect(screen.getByText('Showing 1–10 of 45')).toBeTruthy()
+    expect(scrollIntoView).not.toHaveBeenCalled()
+    expect(document.activeElement).toBe(search)
+  })
+
+  it('without a target it behaves as before', async () => {
+    render(<Paged withTarget={false} />)
+    const next = screen.getByRole('button', { name: /Next/ })
+    await userEvent.click(next)
+    expect(document.activeElement).toBe(next)
   })
 })

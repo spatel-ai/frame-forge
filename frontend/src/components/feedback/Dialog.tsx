@@ -15,14 +15,60 @@ export interface DialogProps {
  * Keeps a dialog's buttons visible at the bottom of the scrolling body (sticky footer) on short
  * screens. Optional: put it inside the dialog's <form>, in place of the actions row, so the
  * buttons still submit the form. A dialog without it still shows a fade while content is below.
+ * On very short screens (max-height 420px, e.g. a phone held sideways with the keyboard open) the
+ * row is not pinned, so it does not cover half the screen; the fade then shows there is more below.
+ *
+ * Space for a pinned footer: the Dialog measures the pinned footer inside its body (DialogActions
+ * is one) while it is `position: sticky`, and sets
+ * `--dialog-footer-space` on the scroll container to its height. The scroll container uses it as
+ * `scroll-padding-bottom`, so a focused field is scrolled clear of the footer instead of sitting
+ * under it, and the Dialog re-checks the focused field when the body shrinks (keyboard opening).
+ * A feature's own button bar pinned with `position: sticky; bottom: 0` is found the same way; mark
+ * it `data-dialog-footer` if it is pinned some other way.
  */
 export function DialogActions({ children }: { children: ReactNode }) {
-  return <div className={styles.actions}>{children}</div>
+  return <div className={styles.actions} data-dialog-footer="">{children}</div>
 }
 
 /** True while the scroll container has content below its visible area. */
 function hasMoreBelow(el: HTMLElement) {
   return el.scrollHeight - el.scrollTop - el.clientHeight > 1
+}
+
+/**
+ * Height of the pinned footer(s) in the body, or 0 when none is pinned. A footer is an element
+ * marked `data-dialog-footer`, or any element pinned with `position: sticky; bottom: 0` (so a
+ * feature's own sticky button bar counts without changes).
+ */
+function footerSpace(body: HTMLElement) {
+  let space = 0
+  for (const el of body.querySelectorAll<HTMLElement>('*')) {
+    const style = getComputedStyle(el)
+    if (style.position !== 'sticky') continue
+    if (el.hasAttribute('data-dialog-footer') || style.bottom === '0px') space = Math.max(space, el.offsetHeight)
+  }
+  return space
+}
+
+/** Extra room kept between a focused field and the pinned footer, in px. */
+const FOOTER_GAP = 8
+
+/**
+ * Backdrop presses in the first moments after opening are ignored, and the second click of the
+ * opening double-click/double-tap is swallowed, so a quick double press on the opener does not
+ * close the dialog again or press whatever is under the finger.
+ */
+const OPEN_GUARD_MS = 300
+/** A press this close to the opener's press (px) during the guard counts as part of the opening gesture. */
+const SAME_SPOT_PX = 24
+
+type Press = { x: number; y: number; time: number }
+
+/** The last real (trusted) pointer press anywhere on the page: where the opener was pressed. */
+let lastPagePress: Press | null = null
+let pressListeners = 0
+const recordPress = (event: PointerEvent) => {
+  if (event.isTrusted) lastPagePress = { x: event.clientX, y: event.clientY, time: performance.now() }
 }
 
 export function Dialog({ open, onClose, title, children, dismissable = true }: DialogProps) {
@@ -34,6 +80,17 @@ export function Dialog({ open, onClose, title, children, dismissable = true }: D
   const scrollerRef = useRef<HTMLDivElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
+  const openedAt = useRef(0)
+  const openerPress = useRef<Press | null>(null)
+  /** The current press inside the dialog: did it start on the backdrop, and was it part of opening? */
+  const press = useRef({ onBackdrop: false, openingGesture: false })
+
+  useEffect(() => {
+    if (pressListeners++ === 0) document.addEventListener('pointerdown', recordPress, true)
+    return () => {
+      if (--pressListeners === 0) document.removeEventListener('pointerdown', recordPress, true)
+    }
+  }, [])
 
   // Show the bottom fade only while more of the body is below the fold. Re-checked on scroll and
   // whenever the body or its content changes size (errors appearing, rotation, keyboard).
@@ -42,16 +99,40 @@ export function Dialog({ open, onClose, title, children, dismissable = true }: D
     const body = bodyRef.current
     if (!open || !scroller || !body) return
     const update = () => scroller.toggleAttribute('data-more-below', hasMoreBelow(body))
-    update()
+    // Keep the scroll padding equal to the pinned footer, and when the body shrinks (the on-screen
+    // keyboard opening, rotation) bring the focused field back above the footer.
+    let space = 0
+    // Engines differ in whether focus scrolling honours scroll-padding, so check it ourselves too.
+    const keepFocusedClear = () => {
+      const focused = document.activeElement
+      if (!space || !(focused instanceof HTMLElement) || !body.contains(focused)) return
+      if (getComputedStyle(focused).position === 'sticky' || focused.closest('[data-dialog-footer]')) return
+      const box = body.getBoundingClientRect()
+      const field = focused.getBoundingClientRect()
+      // Bring its bottom above the footer, but never push its top out of view (a tall textarea).
+      const overlap = Math.min(field.bottom - (box.bottom - space - FOOTER_GAP), field.top - box.top)
+      if (overlap > 0) body.scrollTop += overlap
+    }
+    const relayout = () => {
+      space = footerSpace(body)
+      body.style.setProperty('--dialog-footer-space', `${space ? space + FOOTER_GAP : 0}px`)
+      keepFocusedClear()
+      update()
+    }
+    // After the browser's own focus scrolling has run.
+    const onFocusIn = () => requestAnimationFrame(keepFocusedClear)
+    relayout()
     body.addEventListener('scroll', update, { passive: true })
+    body.addEventListener('focusin', onFocusIn)
     let observer: ResizeObserver | undefined
     if (typeof ResizeObserver !== 'undefined') {
-      observer = new ResizeObserver(update)
+      observer = new ResizeObserver(relayout)
       observer.observe(body)
       if (contentRef.current) observer.observe(contentRef.current)
     }
     return () => {
       body.removeEventListener('scroll', update)
+      body.removeEventListener('focusin', onFocusIn)
       observer?.disconnect()
     }
   }, [open])
@@ -63,6 +144,8 @@ export function Dialog({ open, onClose, title, children, dismissable = true }: D
     if (!dialog) return
     if (open && !dialog.open) {
       opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+      openedAt.current = performance.now()
+      openerPress.current = lastPagePress && openedAt.current - lastPagePress.time < 1000 ? lastPagePress : null
       dialog.showModal()
       if (!dialog.contains(document.activeElement)) closeRef.current?.focus()
     } else if (!open && dialog.open) {
@@ -98,8 +181,35 @@ export function Dialog({ open, onClose, title, children, dismissable = true }: D
       ref={ref}
       className={styles.dialog}
       aria-labelledby={titleId}
+      onPointerDownCapture={(event) => {
+        const inGuard = performance.now() - openedAt.current < OPEN_GUARD_MS
+        const near = openerPress.current
+        press.current = {
+          // A press counts for the backdrop only if it started there, after the guard: a drag that
+          // ends on the backdrop or the tail of the opening double-click never closes the dialog.
+          onBackdrop: !inGuard && event.target === event.currentTarget,
+          openingGesture:
+            inGuard &&
+            event.nativeEvent.isTrusted &&
+            near !== null &&
+            Math.hypot(event.clientX - near.x, event.clientY - near.y) <= SAME_SPOT_PX,
+        }
+      }}
+      onClickCapture={(event) => {
+        // The second click of the double-click/double-tap that opened the dialog: swallow it, so it
+        // neither closes the dialog nor presses the control under the same spot. Keyboard clicks
+        // (detail 0) are never swallowed.
+        const inGuard = performance.now() - openedAt.current < OPEN_GUARD_MS
+        if (inGuard && event.detail > 0 && (event.detail >= 2 || press.current.openingGesture)) {
+          event.preventDefault()
+          event.stopPropagation()
+          press.current = { onBackdrop: false, openingGesture: false }
+        }
+      }}
       onClick={(event) => {
-        if (dismissable && event.target === event.currentTarget) onClose()
+        const fromBackdrop = press.current.onBackdrop
+        press.current = { onBackdrop: false, openingGesture: false }
+        if (dismissable && fromBackdrop && event.target === event.currentTarget) onClose()
       }}
     >
       {open && (
