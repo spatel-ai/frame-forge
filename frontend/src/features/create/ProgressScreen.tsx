@@ -1,12 +1,14 @@
+import { useOutletContext } from 'react-router'
 import type { Job } from '../../api/client'
+import type { ShellContext } from '../../components/AppShell'
 import { ProgressSteps } from '../../components/feedback'
 import type { ProgressStep } from '../../components/feedback'
 import { Card } from '../../components/layout'
 import styles from './screens.module.css'
 
-type InProgress = Extract<Job['status'], 'audio_generating' | 'video_submitting' | 'video_generating'>
+type InProgress = Extract<Job['status'], 'audio_generating' | 'video_submitting' | 'video_generating' | 'video_assembling'>
 
-function stepsFor(status: InProgress): { title: string; steps: ProgressStep[] } {
+function stepsFor(status: InProgress, withBanners: boolean): { title: string; steps: ProgressStep[] } {
   if (status === 'audio_generating') {
     return {
       title: 'Making the voice',
@@ -17,26 +19,34 @@ function stepsFor(status: InProgress): { title: string; steps: ProgressStep[] } 
     }
   }
   const sending = status === 'video_submitting'
-  return {
-    title: 'Making your video',
-    steps: [
-      { label: 'Voice ready', state: 'done', hint: 'You approved the voice.' },
-      {
-        label: 'Sending to the video model',
-        state: sending ? 'current' : 'done',
-        hint: sending ? 'Sending your photo and voice.' : 'Your photo and voice have been sent.',
-      },
-      {
-        label: 'Making the video',
-        state: sending ? 'upcoming' : 'current',
-        hint: sending ? 'Waiting to start.' : 'This can take several minutes.',
-      },
-    ],
+  const assembling = status === 'video_assembling'
+  const steps: ProgressStep[] = [
+    { label: 'Voice ready', state: 'done', hint: 'You approved the voice.' },
+    {
+      label: 'Sending to the video model',
+      state: sending ? 'current' : 'done',
+      hint: sending ? 'Sending your photo and voice.' : 'Your photo and voice have been sent.',
+    },
+    {
+      label: 'Making the video',
+      state: sending ? 'upcoming' : assembling ? 'done' : 'current',
+      hint: sending ? 'Waiting to start.' : assembling ? 'Your talking video is ready.' : 'This can take several minutes.',
+    },
+  ]
+  if (withBanners) {
+    steps.push({
+      label: 'Adding your banners',
+      state: assembling ? 'current' : 'upcoming',
+      hint: 'Joining your start and end banners to the video. Banners are free.',
+    })
   }
+  return { title: 'Making your video', steps }
 }
 
 export function ProgressScreen({ status }: { status: InProgress }) {
-  const { title, steps } = stepsFor(status)
+  const { config } = useOutletContext<ShellContext>()
+  // The banner step is shown when banners are on, and always while the server is adding them.
+  const { title, steps } = stepsFor(status, config?.banners_enabled === true || status === 'video_assembling')
   return (
     <div className={styles.centered}>
       <Card padding="lg">
