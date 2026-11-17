@@ -925,9 +925,9 @@
     "starts_after": "T-304, T-500",
     "task": "Job list with pagination",
     "acceptance": "Only the caller's jobs; newest first",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent working in its own worktree (M5 phase 1), launched 2026-11-17."
   },
   {
     "id": "T-502",
@@ -970,9 +970,9 @@
     "starts_after": "T-204, T-500",
     "task": "`scripts` table and library routes",
     "acceptance": "Saved on first use; no duplicates; only the owner can list, read or delete",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent working in its own worktree (M5 phase 1), launched 2026-11-17."
   },
   {
     "id": "T-505",
@@ -1060,9 +1060,9 @@
     "starts_after": "T-310, T-500",
     "task": "Home screen",
     "acceptance": "Balance, create, in progress, recent",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent working in its own worktree (M5 phase 1), launched 2026-11-17."
   },
   {
     "id": "T-511",
@@ -1075,9 +1075,9 @@
     "starts_after": "T-211, T-500",
     "task": "Video history and detail",
     "acceptance": "Play, download, see what it cost",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent working in its own worktree (M5 phase 1), launched 2026-11-17."
   },
   {
     "id": "T-512",
