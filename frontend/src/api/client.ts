@@ -107,3 +107,16 @@ export const resetPassword = (token: string, password: string) =>
   request<void>('/api/v1/auth/password/reset', json({ token, password }))
 export const changePassword = (currentPassword: string, newPassword: string) =>
   request<void>('/api/v1/auth/password/change', json({ current_password: currentPassword, new_password: newPassword }))
+
+// Wallet (M3 contract, T-300). Amounts are whole credits decided by the server; never compute them here.
+export type Wallet = components['schemas']['WalletOut']
+export type Transactions = components['schemas']['TransactionsOut']
+export type LedgerEntry = components['schemas']['LedgerEntryOut']
+
+/** TanStack Query keys for the wallet. Invalidate `walletKey` after anything that can charge. */
+export const walletKey = ['wallet'] as const
+export const transactionsKey = (page: number, pageSize: number) => ['wallet', 'transactions', page, pageSize] as const
+
+export const getWallet = () => request<Wallet>('/api/v1/wallet')
+export const getTransactions = (page = 1, pageSize = 20) =>
+  request<Transactions>(`/api/v1/wallet/transactions?page=${page}&page_size=${pageSize}`)
