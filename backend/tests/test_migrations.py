@@ -16,6 +16,7 @@ EXPECTED_COLUMNS = {
     "id",
     "consent_version",
     "consent_at",
+    "script_id",
     "user_id",
     "status",
     "language",
@@ -44,7 +45,7 @@ def test_upgrade_and_downgrade_in_throwaway_schema(empty_schema, admin_engine):
     assert insp.has_table("jobs", schema=schema)
     columns = insp.get_columns("jobs", schema=schema)
     assert {c["name"] for c in columns} == EXPECTED_COLUMNS
-    assert len(columns) == 19
+    assert len(columns) == 20
     assert insp.get_pk_constraint("jobs", schema=schema)["constrained_columns"] == ["id"]
     assert any(i["column_names"] == ["status"] for i in insp.get_indexes("jobs", schema=schema))
 
@@ -355,5 +356,38 @@ def test_0009_adds_the_nullable_consent_columns(empty_schema):
         command.downgrade(cfg, "0008")
         names = {c["name"] for c in inspect(engine).get_columns("jobs")}
         assert not names & {"consent_version", "consent_at"}
+    finally:
+        engine.dispose()
+
+
+def test_0010_adds_the_nullable_script_id_with_a_plain_foreign_key(empty_schema):
+    """T-505 (R-43, R-51): 0010 adds jobs.script_id (text, NULL for existing rows) referencing
+    scripts.id with no cascade; downgrade to 0009 removes it."""
+    cfg = empty_schema.alembic_config()
+    command.upgrade(cfg, "0009")
+    engine = create_engine(empty_schema.url, poolclass=NullPool)
+    try:
+        with engine.begin() as conn:
+            conn.execute(
+                text(
+                    "INSERT INTO jobs (id, status, language, script, image_file, created_at, "
+                    "updated_at) VALUES ('old', 'audio_ready', 'English', 'hi', 'image.png', "
+                    "now(), now())"
+                )
+            )
+        command.upgrade(cfg, "0010")
+        with engine.begin() as conn:
+            assert conn.execute(text("SELECT script_id FROM jobs")).scalar_one() is None
+        cols = {c["name"]: c for c in inspect(engine).get_columns("jobs")}
+        assert str(cols["script_id"]["type"]) == "TEXT" and cols["script_id"]["nullable"]
+        fks = [
+            f
+            for f in inspect(engine).get_foreign_keys("jobs")
+            if f["constrained_columns"] == ["script_id"]
+        ]
+        assert len(fks) == 1 and fks[0]["referred_table"] == "scripts"
+        assert not fks[0].get("options", {}).get("ondelete")
+        command.downgrade(cfg, "0009")
+        assert "script_id" not in {c["name"] for c in inspect(engine).get_columns("jobs")}
     finally:
         engine.dispose()

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from ..auth import models as _auth_models  # noqa: F401  (registers `users` for the foreign key)
 from ..core.database import Base
+from ..scripts import models as _script_models  # noqa: F401  (registers `scripts` for the FK)
 
 
 class Job(Base):
@@ -42,3 +43,7 @@ class Job(Base):
     # when. NULL for jobs made before M5.
     consent_version: Mapped[str | None] = mapped_column(Text)
     consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Migration 0010 (T-505, R-43, R-51): the library script this job came from. NULL for jobs made
+    # before M5. No cascade: deleting a script (soft delete) never changes a job, which keeps its
+    # own copy of the text.
+    script_id: Mapped[str | None] = mapped_column(Text, ForeignKey("scripts.id"))

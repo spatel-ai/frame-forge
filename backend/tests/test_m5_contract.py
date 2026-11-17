@@ -188,7 +188,6 @@ def test_unbuilt_routes_need_a_session_then_answer_501(client, sign_up, method, 
 @pytest.mark.parametrize(
     "extra",
     [
-        {"script_id": "s1"},
         {"start_template_id": "t1"},
         {"end_template_id": "t2"},
         {"voice_from_job_id": "j1"},
@@ -227,8 +226,8 @@ def test_today_job_fields_have_real_values(client, sign_up, grant):
     assert job["failure_kind"] is None and job["voice_reusable"] is False
     assert job["needs_review"] is False
     assert job["consent_at"] is not None  # T-502: set from the consent given
+    assert job["script_id"] is not None  # T-505: the script was saved to the library
     for name in (
-        "script_id",
         "voice_from_job_id",
         "start_template",
         "end_template",
