@@ -251,7 +251,9 @@ in history, and receives the video-ready email with the job details.
 ## M5.6 — Voice choice
 
 Plan, owner answers, provider facts and the interface sheet: [M5.6-PLAN.md](M5.6-PLAN.md).
-Backend only, plus designs; no frontend feature code. Cloning is deferred (D-075).
+Backend only, plus designs. Nothing under `frontend/` is changed, not even the generated API
+types: the frontend is being rebuilt on the `responsive` branch, and integration starts only when
+the owner says so (owner, 2026-11-17). Cloning is deferred (D-075).
 
 **Testing:** mock provider only (D-076). **Gate C:** none run by engineering; the real tests the
 owner may choose to run are listed in the plan.
@@ -263,7 +265,7 @@ requests behave as before; the designs are on the canvas for desktop, tablet and
 | ID | Area | Owner | Need | Traces to | Task | Accepted when |
 | --- | --- | --- | --- | --- | --- | --- |
 | T-570 | DOC | Fable | Correctness | R-89, R-95 | Decisions D-071 to D-076, requirements, questions and the M5.6 plan with its interface sheet | Every shared name is written down; the tracker cross-check passes |
-| T-571 | BE | Sonnet | Correctness | R-89, R-90, R-91 | Voice-choice API contract: schemas and 501 stubs; regenerated frontend API types | Routes, bodies and error codes are in the OpenAPI document; contract test passes |
+| T-571 | BE | Sonnet | Correctness | R-89, R-90, R-91 | Voice-choice API contract: schemas and 501 stubs. The frontend API types are not regenerated: the frontend is left untouched until the owner starts integration | Routes, bodies and error codes are in the backend's OpenAPI document; contract test passes; no file under `frontend/` changes |
 | T-572 | BE | Sonnet | Acceptance | R-89, R-92 | Settings (preset catalogue, sample sentences, voice consent, recording limits), the `jobs` voice columns and their migration, router registration | `./check.sh` passes; migration runs up and down |
 | T-573 | BE | Sonnet | Safety | R-91 | Recording intake: check and convert a recorded audio file | Wrong type, too long, too short, too big and no audio are refused; a browser recording becomes a WAV file |
 | T-574 | DOC | Sonnet | Acceptance | R-89, R-90 | Design: gender and voice dropdowns with Play sample on Create | Every state drawn at desktop width with existing tokens and components |

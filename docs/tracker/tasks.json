@@ -1373,8 +1373,8 @@
     "need": "Correctness",
     "traces_to": "R-89, R-90, R-91",
     "starts_after": "T-570, T-500",
-    "task": "Voice-choice API contract: schemas and 501 stubs; regenerated frontend API types",
-    "acceptance": "Routes, bodies and error codes are in the OpenAPI document; contract test passes",
+    "task": "Voice-choice API contract: schemas and 501 stubs. The frontend API types are not regenerated: the frontend is left untouched until the owner starts integration",
+    "acceptance": "Routes, bodies and error codes are in the backend's OpenAPI document; contract test passes; no file under `frontend/` changes",
     "status": "To do",
     "verification": "",
     "evidence": ""
