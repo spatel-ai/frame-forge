@@ -178,6 +178,29 @@ describe('Video detail', () => {
     expect(link.getAttribute('href')).toBe('/create/job-1')
   })
 
+  it('R-53, R-85: Video detail warns about missing banners only when banners_applied is false', async () => {
+    vi.mocked(getJob).mockResolvedValue({ ...job, banners_applied: false })
+    renderAt('/videos/job-1')
+    expect(await screen.findByText('Your video is ready, but without banners')).toBeTruthy()
+    expect(screen.getByText('What it cost')).toBeTruthy()
+  })
+
+  for (const applied of [true, null]) {
+    it(`R-53, R-85: Video detail shows no warning when banners_applied is ${applied}`, async () => {
+      vi.mocked(getJob).mockResolvedValue({ ...job, banners_applied: applied })
+      renderAt('/videos/job-1')
+      await screen.findByText('What it cost')
+      expect(screen.queryByText('Your video is ready, but without banners')).toBeNull()
+    })
+  }
+
+  it('R-53, R-85: the list shows a video_assembling job as In progress', async () => {
+    vi.mocked(listJobs).mockResolvedValue(page([row(1, { status: 'video_assembling' })]))
+    renderAt('/videos')
+    const link = (await screen.findByText('Script number 1')).closest('a')!
+    expect(within(link).getByText('In progress')).toBeTruthy()
+  })
+
   it('R-13: a missing video shows the shared not-found state', async () => {
     vi.mocked(getJob).mockRejectedValue(new ApiError(404, 'Not found', 'not_found'))
     renderAt('/videos/nope')

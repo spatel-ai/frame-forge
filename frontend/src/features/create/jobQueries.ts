@@ -3,7 +3,7 @@ import { ApiError, getJob } from '../../api/client'
 import type { Job } from '../../api/client'
 
 export const POLL_MS = 3000
-const POLLING_STATUSES: readonly Job['status'][] = ['audio_generating', 'video_submitting', 'video_generating']
+const POLLING_STATUSES: readonly Job['status'][] = ['audio_generating', 'video_submitting', 'video_generating', 'video_assembling']
 
 export const jobKey = (id: string) => ['job', id] as const
 

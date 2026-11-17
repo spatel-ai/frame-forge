@@ -159,7 +159,7 @@ describe('polling', () => {
     vi.useFakeTimers()
   })
 
-  for (const status of ['audio_generating', 'video_submitting', 'video_generating'] as const) {
+  for (const status of ['audio_generating', 'video_submitting', 'video_generating', 'video_assembling'] as const) {
     it(`R-55: keeps polling every 3 seconds while the job is ${status}`, async () => {
       vi.mocked(getJob).mockResolvedValue(withStatus(status))
       renderAt('/create/job-1')
@@ -381,6 +381,51 @@ describe('waiting and failure states', () => {
     const making = await screen.findByText('Making the video')
     expect(making.closest('li')?.getAttribute('aria-current')).toBe('step')
   })
+
+  const stepLabels = () => screen.getAllByRole('listitem').map((li) => li.textContent ?? '')
+
+  it('R-53, R-85: video_assembling with banners on shows four steps and "Adding your banners" as current', async () => {
+    vi.mocked(getJob).mockResolvedValue(withStatus('video_assembling'))
+    renderAt('/create/job-1')
+    const adding = await screen.findByText('Adding your banners')
+    expect(adding.closest('li')?.getAttribute('aria-current')).toBe('step')
+    expect(screen.getByText('Joining your start and end banners to the video. Banners are free.')).toBeTruthy()
+    expect(screen.getByText('Making the video').closest('li')?.getAttribute('aria-current')).toBeNull()
+    expect(screen.getByText(/Making your video/)).toBeTruthy()
+  })
+
+  it('R-53, R-85: with banners on, video_generating lists "Adding your banners" as an upcoming fourth step', async () => {
+    vi.mocked(getJob).mockResolvedValue(withStatus('video_generating'))
+    renderAt('/create/job-1')
+    const adding = await screen.findByText('Adding your banners')
+    expect(adding.closest('li')?.getAttribute('aria-current')).toBeNull()
+    expect(screen.getByText('Making the video').closest('li')?.getAttribute('aria-current')).toBe('step')
+  })
+
+  it('R-53, R-85: with banners off, the video progress has three steps and no banner step', async () => {
+    vi.mocked(getConfig).mockResolvedValue({ ...config, banners_enabled: false })
+    vi.mocked(getJob).mockResolvedValue(withStatus('video_generating'))
+    renderAt('/create/job-1')
+    await screen.findByText('Making the video')
+    expect(screen.queryByText('Adding your banners')).toBeNull()
+    expect(stepLabels().filter((t) => /Voice ready|Sending to the video model|Making the video/.test(t))).toHaveLength(3)
+  })
+
+  it('R-53, R-85: the "without banners" warning appears only when banners_applied is false', async () => {
+    vi.mocked(getJob).mockResolvedValue(withStatus('completed', { video_url: 'https://example.test/v.mp4', banners_applied: false }))
+    renderAt('/create/job-1')
+    expect(await screen.findByText('Your video is ready, but without banners')).toBeTruthy()
+    expect(screen.getByText(/we could not add the banners, so this video has no opening or closing banner/i)).toBeTruthy()
+  })
+
+  for (const applied of [true, null]) {
+    it(`R-53, R-85: no warning when banners_applied is ${applied}`, async () => {
+      vi.mocked(getJob).mockResolvedValue(withStatus('completed', { video_url: 'https://example.test/v.mp4', banners_applied: applied }))
+      renderAt('/create/job-1')
+      await screen.findByText('Your video is ready')
+      expect(screen.queryByText('Your video is ready, but without banners')).toBeNull()
+    })
+  }
 
   it('R-08: completed shows the video player, the AI-generated label and a download link', async () => {
     vi.mocked(getJob).mockResolvedValue(withStatus('completed', { video_url: 'https://example.test/v.mp4' }))

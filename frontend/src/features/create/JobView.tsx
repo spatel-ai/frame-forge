@@ -35,6 +35,7 @@ export function JobView({ job, onReset }: { job: Job; onReset: () => void }) {
     case 'audio_generating':
     case 'video_submitting':
     case 'video_generating':
+    case 'video_assembling':
       return <ProgressScreen status={job.status} />
     case 'audio_ready':
       return <ReviewScreen job={job} onReset={onReset} />

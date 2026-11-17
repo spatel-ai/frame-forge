@@ -2,7 +2,7 @@ import { Link, useOutletContext, useParams } from 'react-router'
 import type { Job } from '../../api/client'
 import type { ShellContext } from '../../components/AppShell'
 import NotFound from '../../components/NotFound'
-import { ErrorState, Pill, Skeleton, SkeletonGroup } from '../../components/feedback'
+import { Banner, ErrorState, Pill, Skeleton, SkeletonGroup } from '../../components/feedback'
 import { DownloadVideoButton } from '../../components/form'
 import { Card } from '../../components/layout'
 import { errMsg } from '../../lib/util'
@@ -85,6 +85,11 @@ export default function VideoDetailPage() {
     <section className={styles.page} aria-labelledby="h-video">
       {back}
       <h1 id="h-video" className={styles.title}>Video</h1>
+      {job.banners_applied === false && (
+        <Banner tone="warning" title="Your video is ready, but without banners">
+          We could not add the banners, so this video has no opening or closing banner. The talking video itself is complete, and our team has been told.
+        </Banner>
+      )}
       <div className={styles.detail}>
         <div className={styles.left}>
           {job.video_expired ? (
