@@ -1,0 +1,38 @@
+# AWS EC2 host (R1): extends docker-compose.prod.yml. See docs/DEPLOY-AWS.md.
+#   docker compose --env-file deploy/aws.env --env-file deploy/secrets.env \
+#     -f docker-compose.prod.yml -f docker-compose.aws.yml up -d --build
+# Differences from prod: no `web` (the frontend is on Vercel), Caddy is only a reverse proxy
+# for the API domain, memory limits sized for a 2 GB t3.small, S3 settings for the backend.
+# deploy/aws.env (non-secret, written by the stack) and deploy/secrets.env (POSTGRES_PASSWORD,
+# generated on the instance, root-only) are never committed.
+services:
+  web: !reset null
+
+  db:
+    mem_limit: 512m
+    command: postgres -c shared_buffers=128MB -c max_connections=40 -c effective_cache_size=256MB
+
+  backend:
+    mem_limit: 1100m
+    environment:
+      AVATAR_S3_BUCKET: ${AVATAR_S3_BUCKET:?set AVATAR_S3_BUCKET in deploy/aws.env}
+      AWS_REGION: ${AWS_REGION:?set AWS_REGION in deploy/aws.env}
+      AWS_DEFAULT_REGION: ${AWS_REGION}
+    # No AWS keys: the SDK takes the EC2 instance role from the metadata service (IMDSv2).
+    # The template sets the metadata hop limit to 2 so this also works from inside a container.
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    mem_limit: 128m
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?set API_DOMAIN in deploy/aws.env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile.aws:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
