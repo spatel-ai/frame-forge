@@ -1,7 +1,6 @@
 import { Link, useOutletContext, useParams } from 'react-router'
 import type { Job } from '../../api/client'
 import type { ShellContext } from '../../components/AppShell'
-import NotFound from '../../components/NotFound'
 import { Banner, ErrorState, Pill, Skeleton, SkeletonGroup } from '../../components/feedback'
 import { DownloadVideoButton } from '../../components/form'
 import { Card } from '../../components/layout'
@@ -47,7 +46,20 @@ export default function VideoDetailPage() {
       </SkeletonGroup>
     )
   }
-  if (isNotFound(query.error)) return <NotFound />
+  if (isNotFound(query.error)) {
+    // Same wording as the app's Page not found, plus a way back to the list (a missing video is
+    // usually a stale link, so All videos is the useful next step).
+    return (
+      <section className={styles.page}>
+        <h1 className={styles.title}>Page not found</h1>
+        <p className={styles.note}>The page you asked for does not exist.</p>
+        <div className={styles.actions}>
+          <Link className={styles.linkButton} to="/videos">All videos</Link>
+          <Link className={`${styles.linkButton} ${styles.secondary}`} to="/create">Go to Create</Link>
+        </div>
+      </section>
+    )
+  }
   if (!job) {
     return (
       <section className={styles.page}>

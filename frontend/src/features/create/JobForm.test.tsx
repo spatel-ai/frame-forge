@@ -3,8 +3,8 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, createJob, getWallet, NetworkError } from '../../api/client'
-import type { Config, Job } from '../../api/client'
+import { ApiError, createJob, getWallet, meKey, NetworkError } from '../../api/client'
+import type { Config, Job, User } from '../../api/client'
 import { JobForm } from './JobForm'
 
 vi.mock('../../api/client', async (importOriginal) => ({
@@ -45,9 +45,11 @@ function photo(size = 10): File {
   return new File([new Uint8Array(size)], 'face.jpg', { type: 'image/jpeg' })
 }
 
-function renderForm(onCreated = vi.fn()) {
+function renderForm(onCreated = vi.fn(), me?: User) {
+  const client = new QueryClient()
+  if (me) client.setQueryData(meKey, me)
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={client}>
       <MemoryRouter>
         <JobForm config={config} onCreated={onCreated} />
       </MemoryRouter>
@@ -342,5 +344,15 @@ describe('JobForm submit', () => {
     await user.click(consentBox())
     await user.click(submit())
     expect((await screen.findByRole('alert')).textContent).toContain('Check your connection')
+  })
+
+  it('a 403 email_not_verified while the page believes the account is verified shows the server message', async () => {
+    vi.mocked(createJob).mockRejectedValue(new ApiError(403, 'Confirm your email first.', 'email_not_verified'))
+    const { user } = renderForm(vi.fn(), { email: 'a@example.com', email_verified: true } as User)
+    await user.upload(photoInput(), photo())
+    await user.type(scriptBox(), 'Hello')
+    await user.click(consentBox())
+    await user.click(submit())
+    expect((await screen.findByRole('alert')).textContent).toContain('Confirm your email first.')
   })
 })
