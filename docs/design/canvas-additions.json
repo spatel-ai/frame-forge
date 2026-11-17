@@ -76,6 +76,13 @@
       "w": 1440,
       "h": 960,
       "suggested_section": "Library, wallet and account"
+    },
+    {
+      "file": "Create-3b-Review-Top-Up.dc.html",
+      "title": "Create 3: not enough credits, top up and return",
+      "w": 1440,
+      "h": 1800,
+      "suggested_section": "Buying credits (M4)"
     }
   ],
   "notes": [
@@ -90,6 +97,10 @@
     {
       "section": "Library, wallet and account",
       "text": "Video detail, delete-script confirmation and empty states for a new customer. The video detail page shows what the video cost from the server: voice 10 credits plus video 240 credits in the example."
+    },
+    {
+      "section": "Buying credits (M4)",
+      "text": "Owner change 2026-11-17 (D-059, D-060, D-061): buy 1,000 to 10,000 credits, a 2% payment fee is shown before paying, and a short-of-credits review sends you to buy and back to the same video."
     }
   ]
 }
