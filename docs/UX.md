@@ -1,6 +1,6 @@
 # UX and Design — Frameforge Web
 
-Status: **Confirmed**: the owner approved the designs and the brand on 2026-11-17 (T-152, D-028). Later boards are approved as they are added to the canvas.
+Status: **Confirmed**: the owner approved the designs and the brand on 2026-11-17 (T-152, D-028), and on the same day approved the M5 boards (script picker, voice choice, consent, banners on and off, progress states, results and failures, video detail, delete script, empty states) and the top-up board (D-061).
 
 This document is the standard every screen is built and reviewed against. The screen designs
 themselves are on the design canvas:

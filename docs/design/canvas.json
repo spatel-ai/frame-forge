@@ -440,8 +440,8 @@
       "w": 240
     },
     "n-m5create": {
-      "fill": "orange",
-      "text": "Awaiting the owner's approval. Consent (wording approved, Q-11) comes before the voice is made (D-045). A saved voice from a video that did not finish can start a new video with no voice charge; its script and language are locked (D-043, D-050). Banners that could not be added: full price, told plainly (Q-17). Create 1, 2 and 3 were updated to match.",
+      "fill": "green",
+      "text": "Approved by the owner on 2026-11-17. Consent (wording approved, Q-11) comes before the voice is made (D-045). A saved voice from a video that did not finish can start a new video with no voice charge; its script and language are locked (D-043, D-050). Banners that could not be added: full price, told plainly (Q-17). Create 1, 2 and 3 were updated to match.",
       "w": 420,
       "x": 9120,
       "y": 9800
@@ -455,8 +455,8 @@
       "w": 240
     },
     "n-m5fail": {
-      "fill": "orange",
-      "text": "Awaiting the owner's approval. Every failure says what happened, what was charged and what to do next. Voice failed or unknown: 10 credits returned. Voice too long, or the video failed: the 10 voice credits stay and the voice is saved for a new video. Video failed: the held credits return. Unknown video outcome: charged, flagged, checked within 2 working days and refunded if no video was made (D-051; support address still to be set). The 50-videos-a-day limit applies in development and testing only (D-046).",
+      "fill": "green",
+      "text": "Approved by the owner on 2026-11-17. Every failure says what happened, what was charged and what to do next. Voice failed or unknown: 10 credits returned. Voice too long, or the video failed: the 10 voice credits stay and the voice is saved for a new video. Video failed: the held credits return. Unknown video outcome: charged, flagged, checked within 2 working days and refunded if no video was made (D-051; support address still to be set). The 50-videos-a-day limit applies in development and testing only (D-046).",
       "w": 420,
       "x": 3040,
       "y": 11600
@@ -470,8 +470,8 @@
       "w": 240
     },
     "n-m5lib": {
-      "fill": "orange",
-      "text": "Awaiting the owner's approval. Video detail, delete-script confirmation and empty states for a new customer. The video detail page shows what the video cost from the server: voice 10 credits plus video 240 credits in the example.",
+      "fill": "green",
+      "text": "Approved by the owner on 2026-11-17. Video detail, delete-script confirmation and empty states for a new customer. The video detail page shows what the video cost from the server: voice 10 credits plus video 240 credits in the example.",
       "w": 420,
       "x": 4560,
       "y": 13400
@@ -484,8 +484,8 @@
       "y": 10860
     },
     "n-topup": {
-      "fill": "orange",
-      "text": "Owner change request, 2026-11-17 (D-061), awaiting approval: when the voice is ready but credits are short, \"Add credits\" opens Buy credits at 1,000; after paying, \"Back to your video\" returns here with Approve enabled.",
+      "fill": "green",
+      "text": "Owner change request, 2026-11-17 (D-061), approved by the owner 2026-11-17: when the voice is ready but credits are short, \"Add credits\" opens Buy credits at 1,000; after paying, \"Back to your video\" returns here with Approve enabled.",
       "w": 420,
       "x": 12760,
       "y": 8400
