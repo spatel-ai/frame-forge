@@ -102,7 +102,7 @@ example account imports from auth and create); task T-158 moves that shared code
 | --- | --- | --- |
 | `/login`, `/signup`, `/verify-email`, `/forgot-password`, `/forgot-password/sent`, `/reset-password` | Auth | M2 |
 | `/` | Home: balance, create, in progress, recent | M5 |
-| `/create`, `/create/:jobId` | Photo → script → banners → consent → listen and price → generating → joining → result | M1 (ported), M3 (price), M5 (script picker, banners, consent) |
+| `/create`, `/create/:jobId` | Photo → script or saved voice → banners (optional switch) → consent → listen and price → generating → joining (only with banners) → result | M1 (ported), M3 (price), M5 (script picker, banners, consent) |
 | `/scripts` | My scripts: list, reuse, delete | M5 |
 | `/videos`, `/videos/:jobId` | History and detail | M5 |
 | `/wallet` | Balance, buy credits, transactions | M3, M4 |
@@ -117,12 +117,15 @@ example account imports from auth and create); task T-158 moves that shared code
 2. Send a saved script's id when it is unchanged, the text when it is new or edited. The server
    decides whether it is a duplicate.
 3. Deleting a script asks for confirmation and says past videos are not affected.
-4. **Banners:** start and end are chosen separately, each with "None". Show each template's name
+4. **Banners:** an "Add banners" switch, off by default (D-058). Only when it is on are the start
+   and end lists shown, chosen separately, each with "None"; switching it off clears the choice. Show each template's name
    and a preview that plays on demand, muted by default, never automatically with sound.
 5. Templates come from `GET /templates`. Never hard-code a template list or bundle clips in the
    app.
-6. Show the banner choice on the review screen beside the price, and say that banners are free.
-7. Show `video_assembling` as its own step ("Adding your banners"), and keep polling through it.
+6. When banners were added, show the choice on the review screen beside the price, and say that
+   banners are free. Without banners, show nothing about them.
+7. Show `video_assembling` as its own step ("Adding your banners") only for a job with banners,
+   and keep polling through it. A job without banners shows three steps.
 8. When a completed job has `banners_applied: false` although banners were chosen, say so plainly:
    the video is delivered without banners. Do not present it as a normal success.
 
