@@ -554,3 +554,93 @@ describe('fix round 3', () => {
     expect((await d.findByRole('alert')).textContent).toBe('No credits were added. Try again, or choose another way to pay in the Razorpay window.')
   })
 })
+
+describe('buy-credits fix round 4', () => {
+  it('R-47 a dropped price request ends the busy state, says nothing was charged, and Try again asks for the price again', async () => {
+    let fail = true
+    vi.mocked(getQuote).mockImplementation(async (c) => {
+      if (fail) throw new TypeError('Failed to fetch')
+      return quote(c)
+    })
+    renderWallet()
+    const d = within(await openDialog())
+    expect((await d.findByRole('alert')).textContent).toBe('We could not get the price. Nothing was charged.')
+    const pay = d.getByRole('button', { name: 'Pay' }) as HTMLButtonElement
+    expect(pay.disabled).toBe(true)
+    expect(pay.getAttribute('aria-busy')).toBeNull()
+    fail = false
+    await userEvent.click(d.getByRole('button', { name: 'Try again' }))
+    expect(await d.findByRole('button', { name: 'Pay ₹1,020' })).toBeTruthy()
+    expect(d.queryByRole('button', { name: 'Try again' })).toBeNull()
+  })
+
+  it('R-47 after a price 500 choosing the same quick amount asks again', async () => {
+    let fail = true
+    vi.mocked(getQuote).mockImplementation(async (c) => {
+      if (fail) throw new ApiError(500, 'Something went wrong on our side.', 'server_error')
+      return quote(c)
+    })
+    renderWallet()
+    const d = within(await openDialog())
+    await d.findByRole('button', { name: 'Try again' })
+    fail = false
+    await userEvent.click(d.getByRole('button', { name: '1,000 credits' }))
+    expect(await d.findByRole('button', { name: 'Pay ₹1,020' })).toBeTruthy()
+  })
+
+  it('R-02 two clicks in one task on Pay create one order, and the button works again after a failed order', async () => {
+    vi.mocked(createOrder).mockRejectedValueOnce(new ApiError(500, 'Server error.', 'server_error')).mockResolvedValue(order(1000))
+    renderWallet()
+    const d = within(await openDialog())
+    const pay = await d.findByRole('button', { name: 'Pay ₹1,020' })
+    act(() => { pay.click(); pay.click() })
+    await d.findByText(/You were not charged/)
+    expect(createOrder).toHaveBeenCalledTimes(1)
+    await userEvent.click(d.getByRole('button', { name: 'Pay ₹1,020' }))
+    expect(await d.findByRole('button', { name: 'Fail' })).toBeTruthy()
+    expect(createOrder).toHaveBeenCalledTimes(2)
+  })
+
+  it('R-02 two clicks in one task on the mock Pay send one complete call', async () => {
+    vi.mocked(createOrder).mockResolvedValue(order(1000))
+    vi.mocked(mockCompletePayment).mockRejectedValue(new Error('down'))
+    renderWallet()
+    const d = within(await openDialog())
+    await userEvent.click(await d.findByRole('button', { name: 'Pay ₹1,020' }))
+    const pay = await d.findByRole('button', { name: 'Pay' })
+    act(() => { pay.click(); pay.click() })
+    await d.findByRole('heading', { name: 'Payment not confirmed yet' })
+    expect(mockCompletePayment).toHaveBeenCalledTimes(1)
+    expect(d.getByRole('alert').textContent).toContain('this can take a few minutes')
+  })
+
+  it('R-47 a negative amount gets the minimum message', async () => {
+    renderWallet()
+    const d = within(await openDialog())
+    const input = await d.findByLabelText('Credits to buy')
+    await userEvent.clear(input)
+    await userEvent.type(input, '-5')
+    await userEvent.tab()
+    expect((await d.findByRole('alert')).textContent).toBe('Buy at least 1,000 credits.')
+  })
+
+  it('R-47 the reserved gap of a failed price request is gone when the dialog is reopened', async () => {
+    let fail = true
+    vi.mocked(getQuote).mockImplementation(async (c) => {
+      if (fail) throw new TypeError('Failed to fetch')
+      return quote(c)
+    })
+    renderWallet()
+    let d = within(await openDialog())
+    await d.findByRole('button', { name: 'Try again' })
+    fail = false
+    await userEvent.click(d.getByRole('button', { name: 'Try again' }))
+    await d.findByRole('button', { name: 'Pay ₹1,020' })
+    expect(d.queryByText(/Nothing was charged/)).not.toBeNull() // retry: space still reserved
+    await userEvent.click(d.getAllByRole('button', { name: 'Close' })[0])
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    d = within(await openDialog())
+    await d.findByRole('button', { name: 'Pay ₹1,020' })
+    expect(d.queryByText(/Nothing was charged/)).toBeNull()
+  })
+})
