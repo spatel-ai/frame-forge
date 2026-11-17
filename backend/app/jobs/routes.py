@@ -103,6 +103,10 @@ def get_config(request: Request) -> ConfigOut:
         languages=list(settings.languages),
         credits_per_second=settings.credits_per_second,
         voice_price_credits=settings.voice_price_credits,
+        payments=settings.payments,  # type: ignore[arg-type]  # Settings checks the value
+        razorpay_key_id=settings.razorpay_key_id if settings.payments == "razorpay" else None,
+        min_purchase_rupees=settings.min_purchase_rupees,
+        max_purchase_rupees=settings.max_purchase_rupees,
     )
 
 

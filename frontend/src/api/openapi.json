@@ -64,9 +64,25 @@
             "title": "Max Image Mb",
             "type": "integer"
           },
+          "max_purchase_rupees": {
+            "title": "Max Purchase Rupees",
+            "type": "integer"
+          },
           "max_script_chars": {
             "title": "Max Script Chars",
             "type": "integer"
+          },
+          "min_purchase_rupees": {
+            "title": "Min Purchase Rupees",
+            "type": "integer"
+          },
+          "payments": {
+            "enum": [
+              "mock",
+              "razorpay"
+            ],
+            "title": "Payments",
+            "type": "string"
           },
           "provider": {
             "enum": [
@@ -75,6 +91,17 @@
             ],
             "title": "Provider",
             "type": "string"
+          },
+          "razorpay_key_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Razorpay Key Id"
           },
           "voice_price_credits": {
             "title": "Voice Price Credits",
@@ -88,7 +115,11 @@
           "max_image_mb",
           "languages",
           "credits_per_second",
-          "voice_price_credits"
+          "voice_price_credits",
+          "payments",
+          "razorpay_key_id",
+          "min_purchase_rupees",
+          "max_purchase_rupees"
         ],
         "title": "ConfigOut",
         "type": "object"

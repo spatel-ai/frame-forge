@@ -147,3 +147,37 @@ def test_unknown_payments_mode_is_refused():
     """D-042: a typo in AVATAR_PAYMENTS stops the app instead of guessing."""
     with pytest.raises(ValueError, match="AVATAR_PAYMENTS"):
         replace(Settings(), payments="razorpy")
+
+
+def test_config_tells_the_browser_the_payment_mode_and_limits():
+    """R-02: config carries the mode, the public key id and the purchase limits (Q-06)."""
+    config = _openapi()["components"]["schemas"]["ConfigOut"]["properties"]
+    assert {"payments", "razorpay_key_id", "min_purchase_rupees", "max_purchase_rupees"} <= set(
+        config
+    )
+    assert Settings().min_purchase_rupees == 500
+    assert Settings().max_purchase_rupees == 10_000
+
+
+def test_config_hides_the_key_id_in_mock_mode(tmp_path, database_url):
+    """R-03, D-042: in mock mode the browser gets no Razorpay key id, even if one is set, and no
+    secret ever appears in the config answer."""
+    from fastapi.testclient import TestClient
+
+    settings = replace(
+        Settings(),
+        provider="mock",
+        payments="mock",
+        data_dir=tmp_path,
+        database_url=database_url,
+        razorpay_key_id=TEST_KEY,
+        razorpay_key_secret="TOP-SECRET-KEY",
+        razorpay_webhook_secret="TOP-SECRET-HOOK",
+    )
+    with TestClient(create_app(settings, start_poller=False), base_url="https://testserver") as c:
+        r = c.get("/api/v1/config")
+    assert r.status_code == 200
+    body = r.json()
+    assert (body["payments"], body["razorpay_key_id"]) == ("mock", None)
+    assert (body["min_purchase_rupees"], body["max_purchase_rupees"]) == (500, 10_000)
+    assert "TOP-SECRET" not in r.text

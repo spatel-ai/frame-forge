@@ -123,8 +123,13 @@ ROWS: list[Row] = [
     Row("GET", "/api/v1/jobs/{job_id}/video", "owner", 404, "not_available_yet", job="owner"),
     Row("GET", "/api/v1/jobs/{job_id}/video", "other", 404, "job_not_found", job="owner"),
     Row("GET", "/api/v1/jobs/{job_id}/video", "admin", 404, "job_not_found", job="owner"),
-    # M3 wallet (T-300 contract). Owner and other-user rows arrive with T-306, when the routes
-    # stop answering 501.
+    # M3 wallet (T-306). No resource id: every logged-in caller gets 200 and only ever their
+    # own wallet (test_wallet_routes.py shows another user never sees the owner's entries).
+    *[
+        Row("GET", path, actor, 200)
+        for path in ("/api/v1/wallet", "/api/v1/wallet/transactions")
+        for actor in ("owner", "other", "admin", "unconfirmed")
+    ],
     Row("GET", "/api/v1/wallet", "anonymous", 401, "not_authenticated"),
     Row("GET", "/api/v1/wallet/transactions", "anonymous", 401, "not_authenticated"),
     # M4 payments (T-400 contract). Owner, other-user and unconfirmed rows arrive with T-402/T-403,
@@ -308,6 +313,9 @@ def test_access_matrix(world: World, row: Row) -> None:
     assert r.status_code == row.status, r.text
     if row.code is not None:
         assert r.json()["code"] == row.code, r.text
+    if row.path == "/api/v1/wallet" and row.status == 200 and row.actor == "other":
+        # Their own untouched 1,000, never the owner's wallet (which paid for a voice: 990).
+        assert r.json()["balance_credits"] == 1_000
     if row.path == "/api/v1/auth/me" and row.status == 200:
         body = r.json()
         assert body["email"] == world.emails[row.actor]

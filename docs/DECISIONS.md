@@ -627,7 +627,7 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 
 ## D-039 — Each approval attempt of a job has its own hold reference
 
-**Status:** Proposed · 2026-11-17 · Area: backend
+**Status:** Confirmed (built and tested in T-304) · 2026-11-17 · Area: backend
 
 **Choice:** A job carries an approval attempt number, starting at 1 and increased each time the customer approves. The video hold, capture and release use the reference `('job', '<job_id>#<attempt>')` instead of `('job', '<job_id>')`. The voice charge and voice return keep `('job', '<job_id>')`, because a job has one voice. When submission to fal.ai fails cleanly (upload fails or fal.ai refuses), the job returns to `audio_ready` with the hold released, as HLD §5.2 says, and approving again writes a new hold under the next attempt.
 

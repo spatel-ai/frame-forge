@@ -640,9 +640,9 @@
     "starts_after": "T-204, T-300",
     "task": "Pricing",
     "acceptance": "Price stored on the job when audio is ready (D-006)",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent building in a worktree (T-303/T-304 together on Opus; T-306 in parallel)."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Merged. Price = ceil(seconds × 20) with Decimal, stored on the job at audio_ready (migration 0005 price_credits); JobOut.price_credits and charged_credits from the ledger. tests/test_charging.py price tests. check.sh 383 passed."
   },
   {
     "id": "T-304",
@@ -655,9 +655,9 @@
     "starts_after": "T-302, T-303",
     "task": "Tie job status changes to ledger entries",
     "acceptance": "Each row of the table in HLD §5.2 is one transaction",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent building in a worktree (T-303/T-304 together on Opus; T-306 in parallel)."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Merged. JobStore.create/transition run the ledger step in the same transaction after the compare-and-set; every HLD §5.2 row has a test and a rollback test (tests/test_charging.py); D-039 per-attempt holds; D-040 too-long voice keeps the charge. Fixed at review: one job that cannot be settled no longer stops the poller or startup; an empty voice is a clear failure with voice_return. Dev DB migrated to 0005. check.sh 383 passed; npm run check 352 passed."
   },
   {
     "id": "T-305",
@@ -730,9 +730,9 @@
     "starts_after": "T-300",
     "task": "Agree the payments API contract before building",
     "acceptance": "Routes, bodies and error codes written into the OpenAPI document",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Payment routes as schemas and 501 stubs (app/payments/), settings AVATAR_PAYMENTS and the three Razorpay values with start-up refusals (D-042), access-matrix rows for anonymous callers, tests/test_payments_contract.py; check.sh 313 passed; frontend types regenerated, npm run check 352 passed. Left: ConfigOut additions (payments, razorpay_key_id, limits), after T-303/T-304 merges because they live in app/jobs/."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Payment routes as schemas and 501 stubs (app/payments/), settings AVATAR_PAYMENTS and the three Razorpay values with start-up refusals (D-042), access-matrix rows for anonymous callers, tests/test_payments_contract.py; check.sh 313 passed; frontend types regenerated, npm run check 352 passed. ConfigOut now carries payments, razorpay_key_id (null in mock), min and max purchase rupees."
   },
   {
     "id": "T-401",

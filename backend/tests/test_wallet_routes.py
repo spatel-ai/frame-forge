@@ -51,7 +51,7 @@ def test_wallet_after_grants_and_hold(client, owner, store):
     """R-13: balance, reserved and available follow the ledger."""
     store.grant(owner, 100, uuid.uuid4().hex, "test")
     store.grant(owner, 50, uuid.uuid4().hex, "test")
-    store.hold(owner, uuid.uuid4().hex, 40)
+    store.hold(owner, uuid.uuid4().hex, 40, attempt=1)
     assert client.get("/api/v1/wallet").json() == {
         "balance_credits": 150,
         "reserved_credits": 40,

@@ -459,13 +459,24 @@ export interface components {
             max_audio_seconds: number;
             /** Max Image Mb */
             max_image_mb: number;
+            /** Max Purchase Rupees */
+            max_purchase_rupees: number;
             /** Max Script Chars */
             max_script_chars: number;
+            /** Min Purchase Rupees */
+            min_purchase_rupees: number;
+            /**
+             * Payments
+             * @enum {string}
+             */
+            payments: "mock" | "razorpay";
             /**
              * Provider
              * @enum {string}
              */
             provider: "mock" | "fal";
+            /** Razorpay Key Id */
+            razorpay_key_id: string | null;
             /** Voice Price Credits */
             voice_price_credits: number;
         };

@@ -734,14 +734,12 @@ def test_each_row_rolls_back_when_its_ledger_step_fails(
                 for task in list(c.service._tasks):
                     task.cancel()
                 await c.drain()
-                with pytest.raises(RuntimeError):
-                    c.service.recover_interrupted()
+                c.service.recover_interrupted()  # logged and left for the next start
             else:
                 c.service.approve_audio(c.owner, job_id)
                 await c.drain()
                 if stays == db.VIDEO_GENERATING:
-                    with pytest.raises(RuntimeError):
-                        await c.service.poll_once()
+                    await c.service.poll_once()  # logged; retried next cycle
         before = without_grants(c.entries())
         job = c.job(job_id)
         assert (job["status"], job["needs_review"]) == (stays, False)
@@ -868,3 +866,75 @@ def test_job_out_reports_price_and_charged_credits(
         assert job["price_credits"] == PRICE
         assert job["charged_credits"] == charged
         assert type(job["charged_credits"]) is int and type(job["price_credits"]) is int
+
+
+# ---- fixes made at merge (Fable review of T-303/T-304) --------------------------------------
+
+
+class EmptyVoice(MockProvider):
+    async def synthesize_speech(self, text, language):
+        speech = await super().synthesize_speech(text, language)
+        return replace(speech, duration_seconds=0.0)
+
+
+def test_empty_voice_is_a_clear_failure_and_returns_the_charge(charging, settings):
+    """R-10 (D-038): a voice with no measurable length is no usable voice → failed with
+    voice_return, never audio_ready with a price of 0 that approval could not hold."""
+
+    async def run():
+        c = charging(credits=100, provider=EmptyVoice(settings))
+        job_id = await c.ready_job()
+        job = c.job(job_id)
+        assert (job["status"], job["price_credits"]) == (db.FAILED, None)
+        assert "empty" in job["error"]
+        assert without_grants(c.entries()) == sorted([voice_charge(job_id), voice_return(job_id)])
+        assert c.wallet() == (100, 0)
+        assert c.invariant()
+
+    asyncio.run(run())
+
+
+def test_one_job_that_cannot_be_settled_does_not_stop_the_poller(charging, settings):
+    """R-10, R-56: if one job's capture fails, its status change rolls back and the poller still
+    collects every other finished video in the same cycle."""
+
+    async def run():
+        c = charging(credits=1000, provider=ScriptedPolls(settings, DONE))
+        broken = await c.approved_job()
+        healthy = await c.approved_job()
+        # Remove the broken job's hold so its capture raises LedgerConflict.
+        with c.engine.begin() as conn:
+            conn.execute(text("UPDATE jobs SET approve_attempt = 7 WHERE id = :i"), {"i": broken})
+        await c.service.poll_once()
+        assert c.job(broken)["status"] == db.VIDEO_GENERATING  # rolled back, retried next cycle
+        assert c.job(healthy)["status"] == db.COMPLETED
+        assert capture(healthy) in c.entries()
+        assert c.invariant()
+
+    asyncio.run(run())
+
+
+def test_one_job_that_cannot_be_recovered_does_not_stop_startup(charging):
+    """R-56: a job cut off mid-submission whose hold cannot be captured (as one left in flight
+    from before migration 0005) is logged and left as it was; the other jobs still recover."""
+
+    async def run():
+        c = charging(credits=1000)
+        jobs = []
+        for _ in range(2):
+            job_id = await c.ready_job()
+            c.service.approve_audio(c.owner, job_id)
+            for task in list(c.service._tasks):
+                task.cancel()
+            await c.drain()
+            jobs.append(job_id)
+        broken, healthy = jobs
+        with c.engine.begin() as conn:
+            conn.execute(text("UPDATE jobs SET approve_attempt = 7 WHERE id = :i"), {"i": broken})
+        c.service.recover_interrupted()  # must not raise
+        assert c.job(broken)["status"] == db.VIDEO_SUBMITTING
+        assert (c.job(healthy)["status"], c.job(healthy)["needs_review"]) == (db.FAILED, True)
+        assert capture(healthy) in c.entries()
+        assert c.invariant()
+
+    asyncio.run(run())

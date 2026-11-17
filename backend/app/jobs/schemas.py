@@ -25,6 +25,11 @@ class ConfigOut(BaseModel):
     # Prices in whole credits (D-006, D-038). The company's own cost is never sent.
     credits_per_second: int
     voice_price_credits: int
+    # Payments (M4, D-042). The key id is public; it is null in mock mode. Never a secret.
+    payments: Literal["mock", "razorpay"]
+    razorpay_key_id: str | None
+    min_purchase_rupees: int
+    max_purchase_rupees: int
 
 
 class JobOut(BaseModel):

@@ -193,8 +193,11 @@ Rules, each traced to Razorpay's documentation (checked 2026-11-17):
 | --- | --- | --- | --- |
 | Customer submits photo, script and banner choice | → `audio_generating` | `voice_charge` 10 credits (D-038). Refuse with HTTP 402 if fewer than 10 available | Yes |
 | Voice generation fails | → `failed` | `voice_return` the 10 credits | Yes |
+| Voice call outcome unknown (unexpected error, or a restart while generating) | → `failed`, flagged for review | Voice charge kept (Q-19 rule applied to the voice call) | Yes |
+| Voice comes out empty (no measurable length) | → `failed` | `voice_return` the 10 credits | Yes |
+| Voice longer than the limit | → `failed`; audio kept on the job for reuse | Voice charge kept (D-040) | Yes |
 | Voice is ready | → `audio_ready` | Price fixed: `ceil(audio seconds × rate)`, shown to the customer | — |
-| Customer approves | `audio_ready` → `video_submitting` | `hold` the price. Refuse with HTTP 402 if not enough credits | Yes |
+| Customer approves | `audio_ready` → `video_submitting`, approval attempt + 1 | `hold` the price under `job#attempt` (D-039). Refuse with HTTP 402 if not enough credits | Yes |
 | Upload to fal.ai fails, or fal.ai definitely refuses | → `audio_ready` | `release` | Yes |
 | Submission outcome unknown (timeout, crash mid-call) | → `failed`, flagged for review | `capture` (owner's decision on Q-19, D-005) | Yes |
 | fal.ai accepts | → `video_generating` | Hold stays | — |

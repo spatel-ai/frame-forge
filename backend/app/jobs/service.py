@@ -33,7 +33,7 @@ _IMAGE_FORMATS = {"JPEG": "jpg", "PNG": "png", "WEBP": "webp"}
 
 # Letters of the alphabets used by the non-English languages. Letters only:
 # Punjabi text shares its full stop (the danda) with the Hindi Unicode block.
-_SCRIPT_RANGES = {"Hindi": ("ऄ", "ह"), "Punjabi": ("ਅ", "ਹ")}
+_SCRIPT_RANGES = {"Hindi": ("\u0904", "\u0939"), "Punjabi": ("\u0a05", "\u0a39")}
 
 
 class ValidationError(Exception):
@@ -251,6 +251,18 @@ class JobService:
         audio_file = f"audio.{speech.extension}"
         (self.job_dir(job_id) / audio_file).write_bytes(speech.data)
         limit = self.settings.max_audio_seconds
+        if not speech.duration_seconds > 0:
+            # No usable voice was delivered (it would also price the video at 0 credits, which
+            # cannot be held). Treated as a clear failure: the voice charge is returned (D-038).
+            log.error("voice for %s has no measurable length", job_id)
+            self.store.transition(
+                job_id,
+                db.AUDIO_GENERATING,
+                db.FAILED,
+                ledger=_wallet(job_id, _voice_return),
+                error="The voice came out empty. Nothing was charged for it; please try again.",
+            )
+            return
         if speech.duration_seconds > limit:
             # Owner decision D-040 (amends D-038): a voice longer than the limit was delivered,
             # so its charge is KEPT (no voice_return), and its audio file stays on the job.
@@ -393,58 +405,72 @@ class JobService:
         )
         for status, message, step in steps:
             for job in self.store.list_by_status(status):
-                self.store.transition(
-                    job["id"],
-                    status,
-                    db.FAILED,
-                    ledger=_wallet(job["id"], step) if step else None,
-                    needs_review=True,
-                    error=message,
-                )
+                # One job that cannot be settled (for example one left in flight from before
+                # migration 0005, with no hold) must not stop the server from starting. Its
+                # change rolled back; it is logged and tried again at the next start.
+                try:
+                    self.store.transition(
+                        job["id"],
+                        status,
+                        db.FAILED,
+                        ledger=_wallet(job["id"], step) if step else None,
+                        needs_review=True,
+                        error=message,
+                    )
+                except Exception:
+                    log.exception("could not recover interrupted job %s", job["id"])
 
     async def poll_once(self) -> None:
         for job in self.store.list_by_status(db.VIDEO_GENERATING):
-            job_id = job["id"]
+            # One job's failure (for example a ledger error) must not stop the others from being
+            # collected. Its status change rolled back, so it is simply tried again next cycle.
             try:
-                poll = await self.provider.poll_video(job["provider_request_id"])
+                await self._poll_job(job)
             except Exception:
-                log.exception("polling failed for %s; will retry", job_id)
-                poll = None
-            if poll is not None and poll.state == "done":
-                (self.job_dir(job_id) / "video.mp4").write_bytes(poll.data or b"")
-                # Delivered: take the held price. A repeated or concurrent poll finds the job
-                # no longer video_generating, so the capture happens once.
-                self.store.transition(
-                    job_id,
-                    db.VIDEO_GENERATING,
-                    db.COMPLETED,
-                    ledger=_wallet(job_id, _capture),
-                    video_file="video.mp4",
-                )
-            elif poll is not None and poll.state == "failed":
-                # A clear failure reported by the provider: release the hold.
+                log.exception("collecting the video failed for %s; will retry", job["id"])
+
+    async def _poll_job(self, job: dict) -> None:
+        job_id = job["id"]
+        try:
+            poll = await self.provider.poll_video(job["provider_request_id"])
+        except Exception:
+            log.exception("polling failed for %s; will retry", job_id)
+            poll = None
+        if poll is not None and poll.state == "done":
+            (self.job_dir(job_id) / "video.mp4").write_bytes(poll.data or b"")
+            # Delivered: take the held price. A repeated or concurrent poll finds the job
+            # no longer video_generating, so the capture happens once.
+            self.store.transition(
+                job_id,
+                db.VIDEO_GENERATING,
+                db.COMPLETED,
+                ledger=_wallet(job_id, _capture),
+                video_file="video.mp4",
+            )
+        elif poll is not None and poll.state == "failed":
+            # A clear failure reported by the provider: release the hold.
+            self.store.transition(
+                job_id,
+                db.VIDEO_GENERATING,
+                db.FAILED,
+                ledger=_wallet(job_id, _release),
+                error=poll.error,
+            )
+        else:
+            started = datetime.fromisoformat(job["video_started_at"])
+            waited = (datetime.now(timezone.utc) - started).total_seconds()
+            if waited > self.settings.video_timeout_seconds:
+                # A timeout is a clear failure (HLD §5.2): release the hold.
                 self.store.transition(
                     job_id,
                     db.VIDEO_GENERATING,
                     db.FAILED,
                     ledger=_wallet(job_id, _release),
-                    error=poll.error,
+                    error=(
+                        f"No video after {waited / 60:.0f} minutes. Provider request id: "
+                        f"{job['provider_request_id']}."
+                    ),
                 )
-            else:
-                started = datetime.fromisoformat(job["video_started_at"])
-                waited = (datetime.now(timezone.utc) - started).total_seconds()
-                if waited > self.settings.video_timeout_seconds:
-                    # A timeout is a clear failure (HLD §5.2): release the hold.
-                    self.store.transition(
-                        job_id,
-                        db.VIDEO_GENERATING,
-                        db.FAILED,
-                        ledger=_wallet(job_id, _release),
-                        error=(
-                            f"No video after {waited / 60:.0f} minutes. Provider request id: "
-                            f"{job['provider_request_id']}."
-                        ),
-                    )
 
     async def run_poller(self) -> None:
         while True:
