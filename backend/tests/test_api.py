@@ -105,8 +105,7 @@ def test_missing_form_field_gives_validation_error(client):
         data={**CONSENT_FORM, "language": "English"},
     )
     body = assert_error(r, 422, "validation_error")
-    assert "script" in body["detail"]
-    assert body["fields"] == {"script": "This is required."}
+    assert body["fields"] == {"script": "Write a script, or choose one from My scripts."}
 
 
 def test_unknown_route_and_wrong_method(client):

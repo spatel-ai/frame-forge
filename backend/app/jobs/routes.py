@@ -223,16 +223,11 @@ async def create_job(
             raise ApiError(404, "Script not found.", "script_not_found")
         script, language = saved.text, saved.language
     elif script is None:
-        raise ApiError(
-            422, "script: This is required.", "validation_error", {"script": "This is required."}
-        )
+        message = "Write a script, or choose one from My scripts."
+        raise ApiError(422, message, "validation_error", {"script": message})
     if language is None:
-        raise ApiError(
-            422,
-            "language: This is required.",
-            "validation_error",
-            {"language": "This is required."},
-        )
+        message = "Choose the language of the script."
+        raise ApiError(422, message, "validation_error", {"language": message})
     limit = settings.max_image_mb * 1024 * 1024
     raw = await image.read(limit + 1)  # never buffer more than the limit
     job = _service(request).create_job(user.id, raw, script, language or "", consent_version)
