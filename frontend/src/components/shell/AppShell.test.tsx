@@ -3,8 +3,8 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getConfig } from '../../api/client'
-import type { Config } from '../../api/client'
+import { getConfig, getMe } from '../../api/client'
+import type { Config, User } from '../../api/client'
 import AppShell from '../AppShell'
 import NotFound from '../NotFound'
 import { enabledNavItems, navItems } from './navItems'
@@ -12,7 +12,10 @@ import { enabledNavItems, navItems } from './navItems'
 vi.mock('../../api/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../api/client')>()),
   getConfig: vi.fn(),
+  getMe: vi.fn(),
 }))
+
+const user = { id: 'u1', name: 'Asha Verma', email: 'asha@example.com', email_verified: true, role: 'user', active_sessions: 1 } as User
 
 const config = (provider: string): Config => ({
   provider,
@@ -41,9 +44,19 @@ function renderAt(path: string, provider = 'mock') {
   return render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
 }
 
-beforeEach(() => vi.mocked(getConfig).mockReset())
+beforeEach(() => {
+  vi.mocked(getConfig).mockReset()
+  vi.mocked(getMe).mockReset()
+  vi.mocked(getMe).mockResolvedValue(user)
+})
 
 describe('AppShell', () => {
+  it('R-01 shows the logged-in user name in the top bar', async () => {
+    renderAt('/create')
+    const bar = screen.getByRole('banner')
+    expect(await within(bar).findByText('Asha Verma')).toBeTruthy()
+  })
+
   it('R-76 renders only enabled items in the sidebar and the phone bar', async () => {
     renderAt('/create')
     for (const name of ['Main', 'Main (phone)']) {

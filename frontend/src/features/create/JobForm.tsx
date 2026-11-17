@@ -1,7 +1,7 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ApiError, createJob, NetworkError } from '../../api/client'
+import { ApiError, createJob, meKey, NetworkError } from '../../api/client'
 import type { Config, Job } from '../../api/client'
 import { Banner } from '../../components/feedback'
 import { Button, FileDropZone, Select, TextArea } from '../../components/form'
@@ -34,7 +34,17 @@ function validateImage(file: File | null, maxMb: number): string | undefined {
   return undefined
 }
 
-export function JobForm({ config, onCreated }: { config: Config; onCreated: (j: Job) => void }) {
+export function JobForm({
+  config,
+  onCreated,
+  canGenerate = true,
+}: {
+  config: Config
+  onCreated: (j: Job) => void
+  /** False while the email is not confirmed: the form stays usable but Generate is off. */
+  canGenerate?: boolean
+}) {
+  const queryClient = useQueryClient()
   const [file, setFile] = useState<File | null>(null)
   const [script, setScript] = useState('')
   const [language, setLanguage] = useState(config.languages[0] ?? 'English')
@@ -99,6 +109,11 @@ export function JobForm({ config, onCreated }: { config: Config; onCreated: (j: 
       {
         onSuccess: (j) => onCreated(j),
         onError: (err) => {
+          if (err instanceof ApiError && err.status === 403 && err.code === 'email_not_verified') {
+            // Confirmed or unconfirmed elsewhere: reload who we are; the notice follows from that.
+            void queryClient.invalidateQueries({ queryKey: meKey })
+            return
+          }
           const fields: FieldErrors = {}
           if (err instanceof ApiError) {
             for (const [key, msg] of Object.entries(err.fields)) if (isFieldName(key)) fields[key] = msg
@@ -189,7 +204,10 @@ export function JobForm({ config, onCreated }: { config: Config; onCreated: (j: 
             {formError} Your photo and script are kept.
           </Banner>
         )}
-        <Button type="submit" size="large" busy={busy} busyLabel="Generating voice…">
+        {!canGenerate && (
+          <p className={styles.unconfirmed}>You can fill this in now. Generating needs a confirmed email.</p>
+        )}
+        <Button type="submit" size="large" busy={busy} busyLabel="Generating voice…" disabled={!canGenerate}>
           Generate voice
         </Button>
       </div>

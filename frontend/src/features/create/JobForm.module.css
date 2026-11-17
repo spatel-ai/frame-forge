@@ -11,3 +11,4 @@
   .footer > button { width: auto; }
 }
 .cardBody { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.unconfirmed { margin: 0; color: var(--color-ink-soft); }

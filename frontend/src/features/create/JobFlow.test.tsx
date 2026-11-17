@@ -3,13 +3,14 @@ import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, approveJob, getConfig, getJob, NetworkError } from '../../api/client'
-import type { Config, Job } from '../../api/client'
+import { ApiError, approveJob, getConfig, getJob, getMe, NetworkError } from '../../api/client'
+import type { Config, Job, User } from '../../api/client'
 import { routes } from '../../routes'
 
 vi.mock('../../api/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../api/client')>()),
   getConfig: vi.fn(),
+  getMe: vi.fn(),
   getJob: vi.fn(),
   approveJob: vi.fn(),
   createJob: vi.fn(),
@@ -65,6 +66,7 @@ beforeEach(() => {
   vi.resetAllMocks()
   localStorage.clear()
   vi.mocked(getConfig).mockResolvedValue(config)
+  vi.mocked(getMe).mockResolvedValue({ id: 'u1', name: 'Asha Verma', email: 'asha@example.com', email_verified: true, role: 'user', active_sessions: 1 } as User)
 })
 
 afterEach(() => {
