@@ -3,7 +3,7 @@ import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, approveJob, createJob, getConfig, getJob, getMe, getWallet } from '../../api/client'
+import { ApiError, approveJob, listBanners, createJob, getConfig, getJob, getMe, getWallet } from '../../api/client'
 import type { Config, Job, User, Wallet } from '../../api/client'
 import { routes } from '../../routes'
 
@@ -14,6 +14,7 @@ vi.mock('../../api/client', async (importOriginal) => ({
   getJob: vi.fn(),
   getWallet: vi.fn(),
   approveJob: vi.fn(),
+  listBanners: vi.fn(),
   createJob: vi.fn(),
 }))
 
@@ -72,8 +73,14 @@ async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
   await user.click(generateButton())
 }
 
+const banner = { id: 'b1', name: 'Logo', image_url: '/api/v1/banners/b1/image', created_at: '2026-11-10T10:00:00Z' }
+const chooseBanner = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.click(await screen.findByRole('radio', { name: /Logo/ }))
+}
+
 beforeEach(() => {
   vi.resetAllMocks()
+  vi.mocked(listBanners).mockResolvedValue({ items: [banner] })
   localStorage.clear()
   URL.createObjectURL = vi.fn(() => 'blob:test')
   URL.revokeObjectURL = vi.fn()
@@ -140,6 +147,7 @@ describe('review price card', () => {
     expect(screen.getByText('Available')).toBeTruthy()
     expect(screen.queryByText(/balance after/i)).toBeNull()
     expect(screen.getByText(/Credits are reserved now and only taken when your video is ready/)).toBeTruthy()
+    await userEvent.click(await screen.findByRole('radio', { name: /Logo/ }))
     expect(approveButton().disabled).toBe(false)
   })
 
@@ -165,6 +173,7 @@ describe('review price card', () => {
     const { user } = renderAt('/create/job-1')
     await screen.findByText('240 credits')
     const base = await settledWalletCalls()
+    await chooseBanner(user)
     await user.click(approveButton())
     expect(await screen.findByText('Need 240 credits, you have 230.')).toBeTruthy()
     expect(screen.queryByText('We could not start your video')).toBeNull()
@@ -177,6 +186,7 @@ describe('review price card', () => {
     const { user } = renderAt('/create/job-1')
     await screen.findByText('240 credits')
     const base = await settledWalletCalls()
+    await chooseBanner(user)
     await user.click(approveButton())
     await vi.waitFor(() => expect(vi.mocked(getWallet).mock.calls.length).toBeGreaterThan(base))
   })

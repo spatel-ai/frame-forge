@@ -1,11 +1,16 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ApiError, approveJob, meKey } from '../../api/client'
+import { useState } from 'react'
+import { useOutletContext } from 'react-router'
+import { ApiError, approveJob, bannersKey, meKey } from '../../api/client'
+import type { ShellContext } from '../../components/AppShell'
 import type { Job } from '../../api/client'
 import { Banner } from '../../components/feedback'
 import { Button } from '../../components/form'
 import { Card } from '../../components/layout'
+import { useBanners } from '../../lib/banners'
 import { errMsg } from '../../lib/util'
 import { invalidateWallet, useWallet } from '../../lib/wallet'
+import { BannerPicker } from './BannerPicker'
 import { formatCredits } from './credits'
 import { jobKey } from './jobQueries'
 import { NotEnoughCredits } from './NotEnoughCredits'
@@ -15,15 +20,31 @@ const isNotVerified = (e: unknown) => e instanceof ApiError && e.status === 403 
 
 const isInsufficient = (e: unknown) => e instanceof ApiError && e.code === 'insufficient_credits'
 
+/** A banner the server no longer accepts: 422 on `banner_id`, or 404 `banner_not_found` (D-067). */
+const isBannerError = (e: unknown) =>
+  e instanceof ApiError && ((e.status === 422 && !!e.fields.banner_id) || (e.status === 404 && e.code === 'banner_not_found'))
+
 export function ReviewScreen({ job, onReset }: { job: Job; onReset: () => void }) {
   const queryClient = useQueryClient()
+  const { config } = useOutletContext<ShellContext>()
+  const bannersOn = config?.banners_enabled === true
+  const banners = useBanners(bannersOn)
+  // Remembered for this job in component state only (D-067).
+  const [bannerId, setBannerId] = useState<string | null>(null)
+  const [bannerError, setBannerError] = useState<string | null>(null)
   const approveMutation = useMutation({
-    mutationFn: () => approveJob(job.id),
+    mutationFn: (id: string | null) => approveJob(job.id, id ?? undefined),
     onSuccess: (j) => {
       queryClient.setQueryData(jobKey(job.id), j)
       void invalidateWallet(queryClient)
     },
     onError: (e) => {
+      if (isBannerError(e)) {
+        setBannerError(e instanceof ApiError ? e.fields.banner_id || e.message : '')
+        setBannerId(null)
+        void queryClient.invalidateQueries({ queryKey: bannersKey })
+        return
+      }
       if (isInsufficient(e)) {
         void invalidateWallet(queryClient)
         return
@@ -42,11 +63,14 @@ export function ReviewScreen({ job, onReset }: { job: Job; onReset: () => void }
   const notEnough = !!wallet && price !== null && wallet.available_credits < price
   const creditsError = isInsufficient(approveMutation.error) ? errMsg(approveMutation.error) : null
   const approveError =
-    approveMutation.error && !isNotVerified(approveMutation.error) && !creditsError ? errMsg(approveMutation.error) : null
+    approveMutation.error && !isNotVerified(approveMutation.error) && !isBannerError(approveMutation.error) && !creditsError ? errMsg(approveMutation.error) : null
+
+  const needsBanner = bannersOn && !bannerId
 
   const approve = () => {
     if (approving) return
-    approveMutation.mutate()
+    if (bannersOn && !bannerId) return
+    approveMutation.mutate(bannersOn ? bannerId : null)
   }
 
   return (
@@ -73,6 +97,20 @@ export function ReviewScreen({ job, onReset }: { job: Job; onReset: () => void }
       </div>
 
       <div className={styles.panel}>
+        {bannersOn && (
+          <Card padding="lg">
+            <BannerPicker
+              banners={banners}
+              selected={bannerId}
+              onSelect={(id) => {
+                setBannerId(id)
+                setBannerError(null)
+              }}
+              error={bannerError}
+              disabled={approving}
+            />
+          </Card>
+        )}
         <Card padding="lg">
           <section className={styles.cardBody} aria-labelledby="h-approve">
             <h2 id="h-approve" className={styles.heading}>Approve</h2>
@@ -99,13 +137,14 @@ export function ReviewScreen({ job, onReset }: { job: Job; onReset: () => void }
             )}
             {approveError && <Banner tone="danger" title="We could not start your video">{approveError}</Banner>}
             <div className={styles.actions}>
-              <Button size="large" busy={approving} busyLabel="Starting your video…" disabled={price === null || notEnough} onClick={approve}>
+              <Button size="large" busy={approving} busyLabel="Starting your video…" disabled={price === null || notEnough || needsBanner} onClick={approve}>
                 Approve and make video
               </Button>
               <Button variant="secondary" size="large" disabled={approving} onClick={onReset}>
                 Start over
               </Button>
             </div>
+            {needsBanner && <p className={styles.note}>Choose a banner to continue.</p>}
             <p className={styles.note}>Credits are reserved now and only taken when your video is ready. If it fails, they are returned.</p>
           </section>
         </Card>
