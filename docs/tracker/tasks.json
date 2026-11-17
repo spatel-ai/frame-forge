@@ -610,9 +610,9 @@
     "starts_after": "T-202, T-300",
     "task": "`wallets` and `ledger_entries` with constraints",
     "acceptance": "The database itself rejects a negative available balance and a duplicate entry",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent building in a worktree."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Migration 0004: wallets (CHECK reserved >= 0 AND balance >= reserved) and ledger_entries (UNIQUE kind, ref_type, ref_id; kind CHECK equals LedgerKind; reserved_delta). Direct SQL that breaks either constraint is refused (tests). alembic check clean."
   },
   {
     "id": "T-302",
@@ -625,9 +625,9 @@
     "starts_after": "T-301",
     "task": "Ledger service: credit, hold, capture, release",
     "acceptance": "Row-locked; idempotent on `(kind, ref_type, ref_id)`",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent building in a worktree."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "app/wallet/ledger.py: grant, voice_charge, voice_return, hold, capture, release inside the caller's transaction; wallet row locked FOR UPDATE; relative updates; idempotent repeats; mismatched repeats refused; capture/release use the hold's amount and exclude each other. Race test: two holds on a wallet that affords one, exactly one wins; with the lock removed both won (proves the test). 38 tests; backend 276 passed. Found the one-hold-per-job limit, resolved by D-039."
   },
   {
     "id": "T-303",

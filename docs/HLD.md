@@ -120,7 +120,7 @@ All money columns are integers: credits as whole credits, rupee amounts in paise
 | `sessions` | id, user_id, token_hash, expires_at, revoked_at | Only the hash of the session token is stored |
 | `email_tokens` | id, user_id, purpose (`verify`/`reset`), token_hash, expires_at, used_at | Single use |
 | `wallets` | user_id, balance_credits, reserved_credits | `CHECK (reserved_credits >= 0 AND balance_credits >= reserved_credits)` |
-| `ledger_entries` | id, user_id, kind, credits, balance_after, reserved_after, ref_type, ref_id, created_by, created_at | Append-only. `UNIQUE (kind, ref_type, ref_id)` |
+| `ledger_entries` | id, user_id, kind, credits (balance change), reserved_delta, balance_after, reserved_after, ref_type, ref_id, created_by, created_at | Append-only. `UNIQUE (kind, ref_type, ref_id)`. Hold, capture and release use the reference `job_id#attempt` (D-039) |
 | `payment_orders` | id, user_id, razorpay_order_id (unique), amount_paise, credits, status, razorpay_payment_id (unique) | |
 | `webhook_events` | event_id (primary key), event_type, payload, received_at, processed_at | Dedupes Razorpay deliveries |
 | `scripts` | id, user_id, language, text, text_hash, created_at, last_used_at, deleted_at | One live row per `(user_id, language, text_hash)` |

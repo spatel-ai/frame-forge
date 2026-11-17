@@ -622,3 +622,19 @@ Keep the status here and in [tracker/decisions.json](tracker/decisions.json) the
 **Trade-off:** Customers pay for every retry of a script. Two new ledger kinds are needed: `voice_charge` and `voice_return`.
 
 **Validation:** Tests: submit takes 10 credits with the job in one transaction; a failed voice returns them once; fewer than 10 credits gives 402 and creates no job.
+
+---
+
+## D-039 — Each approval attempt of a job has its own hold reference
+
+**Status:** Proposed · 2026-11-17 · Area: backend
+
+**Choice:** A job carries an approval attempt number, starting at 1 and increased each time the customer approves. The video hold, capture and release use the reference `('job', '<job_id>#<attempt>')` instead of `('job', '<job_id>')`. The voice charge and voice return keep `('job', '<job_id>')`, because a job has one voice. When submission to fal.ai fails cleanly (upload fails or fal.ai refuses), the job returns to `audio_ready` with the hold released, as HLD §5.2 says, and approving again writes a new hold under the next attempt.
+
+**Alternatives:** End the job on a clean submission failure (failed and released), so the customer must start again and pay for a new voice. One hold per job ever, so a second approval is impossible.
+
+**Why:** Found in T-302: `UNIQUE (kind, ref_type, ref_id)` allows one hold per reference, which made the retry in HLD §5.2 impossible. A reference per attempt keeps the retry, keeps the voice the customer already paid for, and keeps the uniqueness guard within each attempt.
+
+**Trade-off:** One more job column, and the ledger reads the job id from the reference by cutting at `#`.
+
+**Validation:** Tests: approve, clean failure, release, approve again, capture; each attempt has exactly one hold and one capture or release; repeating an attempt's operation is a no-op.
