@@ -54,6 +54,8 @@ const verified = (credits: number, balance: number): PaymentVerified => ({
   order_id: 'o1', status: 'paid', credits, wallet: wallet(balance),
 })
 const proof = { razorpay_order_id: 'order_rz1', razorpay_payment_id: 'pay_1', razorpay_signature: 'sig' }
+/** Matches a paragraph by its whole text; amounts inside it sit in their own no-wrap spans. */
+const paragraph = (text: string) => (_: string, el: Element | null) => el?.tagName === 'P' && el.textContent === text
 const notCaptured = () => new ApiError(409, 'Not captured yet.', 'payment_not_captured')
 
 function renderWallet(payments: 'mock' | 'razorpay' = 'mock') {
@@ -125,7 +127,9 @@ describe('buy-credits form', () => {
     await userEvent.clear(input)
     await userEvent.type(input, '3000')
     expect(d.queryByRole('button', { name: 'Pay ₹1,020' })).toBeNull() // old quote is not shown for a new amount
-    expect((d.getByRole('button', { name: 'Pay' }) as HTMLButtonElement).disabled).toBe(true)
+    const waiting = d.getByRole('button', { name: 'Getting the price…' }) as HTMLButtonElement // busy sign while the quote is pending
+    expect(waiting.disabled).toBe(true)
+    expect(waiting.getAttribute('aria-busy')).toBe('true')
     expect(await d.findByRole('button', { name: 'Pay ₹3,060' })).toBeTruthy()
     expect(getQuote).toHaveBeenLastCalledWith(3000)
   })
@@ -223,12 +227,12 @@ describe('after payment, mock mode', () => {
     expect(openCheckout).not.toHaveBeenCalled() // no external script in mock mode
     const walletCalls = vi.mocked(getWallet).mock.calls.length
     await userEvent.click(d.getByRole('button', { name: 'Pay' }))
-    expect(await d.findByText('1,000 credits were added to your wallet.')).toBeTruthy()
+    expect(await d.findByText(paragraph('1,000 credits were added to your wallet.'))).toBeTruthy()
     expect(mockCompletePayment).toHaveBeenCalledWith('o1', 'captured')
     expect(verifyPayment).toHaveBeenCalledWith('o1', 'pay_1', 'sig')
     expect(d.getByText('2,000 credits')).toBeTruthy()
     // The success state breaks the order's own figures into price and payment fee.
-    expect(d.getByText('You paid (₹1,000 plus ₹20 payment fee)')).toBeTruthy()
+    expect(d.getByText((_, el) => el?.tagName === 'DT' && el.textContent === 'You paid (₹1,000 plus ₹20 payment fee)')).toBeTruthy()
     expect(d.getByText('₹1,020', { selector: 'dd' })).toBeTruthy()
     expect(d.getByRole('button', { name: 'Done' })).toBeTruthy()
     await waitFor(() => expect(vi.mocked(getWallet).mock.calls.length).toBeGreaterThan(walletCalls))
@@ -291,7 +295,7 @@ describe('after payment, mock mode', () => {
     expect(d.queryByText(/added to your wallet/)).toBeNull() // still created
     await act(async () => { await vi.advanceTimersByTimeAsync(2100) })
     expect(getOrder).toHaveBeenCalledTimes(2)
-    expect(await d.findByText('1,000 credits were added to your wallet.')).toBeTruthy()
+    expect(await d.findByText(paragraph('1,000 credits were added to your wallet.'))).toBeTruthy()
     expect(d.getByText('2,000 credits')).toBeTruthy()
   })
 
@@ -362,7 +366,7 @@ describe('after payment, razorpay mode', () => {
     expect(d.queryByText(/added to your wallet/)).toBeNull()
     expect(verifyPayment).toHaveBeenCalledWith('o1', 'pay_9', 's9')
     await act(async () => resolve(verified(1000, 2000)))
-    expect(await d.findByText('1,000 credits were added to your wallet.')).toBeTruthy()
+    expect(await d.findByText(paragraph('1,000 credits were added to your wallet.'))).toBeTruthy()
     expect(d.getByText('2,000 credits')).toBeTruthy()
   })
 
@@ -388,7 +392,7 @@ describe('after payment, razorpay mode', () => {
     act(() => args.onFailed({ error: { code: 'BAD_REQUEST_ERROR' } }))
     expect(dialog.open).toBe(false)
     act(() => args.onSuccess({ razorpay_payment_id: 'pay_2', razorpay_order_id: 'order_rz1', razorpay_signature: 's2' }))
-    expect(await d.findByText('1,000 credits were added to your wallet.')).toBeTruthy()
+    expect(await d.findByText(paragraph('1,000 credits were added to your wallet.'))).toBeTruthy()
     expect(dialog.open).toBe(true)
   })
 
@@ -431,5 +435,121 @@ describe('after payment, razorpay mode', () => {
     const d = within(await openDialog())
     await userEvent.click(await d.findByRole('button', { name: 'Pay ₹1,020' }))
     expect((await d.findByRole('alert')).textContent).toContain('You were not charged')
+  })
+})
+
+describe('fix round 3', () => {
+  it('R-02 closing the dialog while the server confirms still refreshes the balance and transactions when verify answers', async () => {
+    vi.mocked(createOrder).mockResolvedValue(order(1000))
+    vi.mocked(mockCompletePayment).mockResolvedValue(proof)
+    let answer: (v: PaymentVerified) => void = () => {}
+    vi.mocked(verifyPayment).mockImplementation(() => new Promise((r) => { answer = r }))
+    renderWallet('mock')
+    const dialog = await openDialog()
+    const d = within(dialog)
+    await userEvent.click(await d.findByRole('button', { name: 'Pay ₹1,020' }))
+    await userEvent.click(d.getByRole('button', { name: 'Pay' }))
+    expect(await d.findByRole('heading', { name: 'Confirming your payment' })).toBeTruthy()
+    await userEvent.click(d.getAllByRole('button', { name: 'Close' }).at(-1)!) // the "Close" button under the message
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    // The close itself refetches once; then nothing else is pending.
+    await waitFor(() => expect(getTransactions).toHaveBeenCalled())
+    const walletCalls = vi.mocked(getWallet).mock.calls.length
+    const txCalls = vi.mocked(getTransactions).mock.calls.length
+    vi.mocked(getWallet).mockResolvedValue(wallet(2000)) // the server's balance after confirming
+    await act(async () => { answer(verified(1000, 2000)) })
+    await waitFor(() => expect(vi.mocked(getWallet).mock.calls.length).toBeGreaterThan(walletCalls))
+    await waitFor(() => expect(vi.mocked(getTransactions).mock.calls.length).toBeGreaterThan(txCalls))
+    // The page shows the refetched server balance, never the verify answer from component state.
+    expect(await screen.findByText('2,000')).toBeTruthy()
+    expect(screen.queryByText(/added to your wallet/)).toBeNull()
+  })
+
+  it('R-02 reopening the dialog before verify answers still refreshes the wallet once verify settles (even with an error)', async () => {
+    vi.mocked(createOrder).mockResolvedValue(order(1000))
+    vi.mocked(mockCompletePayment).mockResolvedValue(proof)
+    let fail: (e: unknown) => void = () => {}
+    vi.mocked(verifyPayment).mockImplementation(() => new Promise((_, rej) => { fail = rej }))
+    renderWallet('mock')
+    const d = within(await openDialog())
+    await userEvent.click(await d.findByRole('button', { name: 'Pay ₹1,020' }))
+    await userEvent.click(d.getByRole('button', { name: 'Pay' }))
+    expect(await d.findByRole('heading', { name: 'Confirming your payment' })).toBeTruthy()
+    await userEvent.click(d.getAllByRole('button', { name: 'Close' }).at(-1)!)
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    const reopened = within(await openDialog()) // a new instance (new key); the old one is unmounted
+    expect(await reopened.findByRole('button', { name: 'Pay ₹1,020' })).toBeTruthy()
+    const walletCalls = vi.mocked(getWallet).mock.calls.length
+    await act(async () => { fail(new Error('Network error')) })
+    await waitFor(() => expect(vi.mocked(getWallet).mock.calls.length).toBeGreaterThan(walletCalls))
+    expect(reopened.getByRole('heading', { name: 'Buy credits' })).toBeTruthy() // the new dialog is not disturbed
+    expect(getOrder).not.toHaveBeenCalled() // the closed instance does not start polling
+  })
+
+  it('R-47 asks for one quote when the dialog opens and none while it is closed', async () => {
+    renderWallet()
+    await screen.findByRole('button', { name: 'Buy credits' })
+    await new Promise((r) => setTimeout(r, 50))
+    expect(getQuote).not.toHaveBeenCalled()
+    const d = within(await openDialog())
+    await d.findByRole('button', { name: 'Pay ₹1,020' })
+    await new Promise((r) => setTimeout(r, 400))
+    expect(getQuote).toHaveBeenCalledTimes(1)
+  })
+
+  it('R-47 keeps the GST line in place (with a dash) while the price loads when config has GST on the fee', async () => {
+    vi.mocked(getConfig).mockResolvedValue({ ...config('mock'), payment_fee_gst_bps: 1800 })
+    let give: (q: PaymentQuote) => void = () => {}
+    vi.mocked(getQuote).mockImplementation(() => new Promise((r) => { give = r }))
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(<QueryClientProvider client={client}><RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/wallet'] })} /></QueryClientProvider>)
+    const dialog = await openDialog()
+    const d = within(dialog)
+    const gst = d.getByText('GST on the fee').closest('div') as HTMLElement
+    expect(within(gst).getByText('—')).toBeTruthy()
+    expect(dialog.querySelector('dl')?.getAttribute('aria-busy')).toBe('true')
+    await waitFor(() => expect(getQuote).toHaveBeenCalled())
+    await act(async () => { give({ credits: 1000, price_paise: 100000, fee_paise: 2050, fee_gst_paise: 368, amount_paise: 102418 }) })
+    expect(await d.findByRole('button', { name: 'Pay ₹1,024.18' })).toBeTruthy()
+    expect(within(d.getByText('GST on the fee').closest('div') as HTMLElement).getByText('₹3.68')).toBeTruthy()
+    expect(dialog.querySelector('dl')?.getAttribute('aria-busy')).toBeNull()
+  })
+
+  it('R-02 mock mode: a failed payment does not mention the Razorpay window', async () => {
+    vi.mocked(createOrder).mockResolvedValue(order(1000))
+    vi.mocked(mockCompletePayment).mockResolvedValue(proof)
+    renderWallet('mock')
+    const d = within(await openDialog())
+    await userEvent.click(await d.findByRole('button', { name: 'Pay ₹1,020' }))
+    await userEvent.click(d.getByRole('button', { name: 'Fail' }))
+    expect((await d.findByRole('alert')).textContent).toBe('No credits were added. Try again.')
+  })
+
+  it('R-02 mock mode: when the mock completion call itself fails, it never says no credits were added', async () => {
+    vi.mocked(createOrder).mockResolvedValue(order(1000))
+    vi.mocked(mockCompletePayment).mockRejectedValue(new ApiError(500, 'Internal Server Error', 'unknown'))
+    renderWallet('mock')
+    const d = within(await openDialog())
+    await userEvent.click(await d.findByRole('button', { name: 'Pay ₹1,020' }))
+    const walletCalls = vi.mocked(getWallet).mock.calls.length
+    await userEvent.click(d.getByRole('button', { name: 'Pay' }))
+    expect(await d.findByRole('heading', { name: 'Payment not confirmed yet' })).toBeTruthy()
+    expect(d.getByRole('alert').textContent).toContain('could not confirm this payment yet')
+    expect(d.queryByText(/No credits were added/)).toBeNull()
+    await waitFor(() => expect(vi.mocked(getWallet).mock.calls.length).toBeGreaterThan(walletCalls))
+  })
+
+  it('R-02 live mode keeps its failed wording exactly', async () => {
+    let args = {} as OpenCheckoutArgs
+    vi.mocked(getConfig).mockResolvedValue(config('razorpay'))
+    vi.mocked(createOrder).mockResolvedValue(order(1000))
+    vi.mocked(openCheckout).mockImplementation(async (a) => { args = a })
+    renderWallet('razorpay')
+    const d = within(await openDialog())
+    await userEvent.click(await d.findByRole('button', { name: 'Pay ₹1,020' }))
+    await waitFor(() => expect(openCheckout).toHaveBeenCalled())
+    act(() => args.onFailed({ error: {} }))
+    act(() => args.onDismiss())
+    expect((await d.findByRole('alert')).textContent).toBe('No credits were added. Try again, or choose another way to pay in the Razorpay window.')
   })
 })

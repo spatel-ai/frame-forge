@@ -4,10 +4,19 @@
 .headRow > button { width: 100%; }
 .headRow .heading { margin: 0; }
 .heading { margin: 0 0 var(--space-4); font-size: var(--text-section-size); font-weight: var(--text-section-weight); }
-.balance { margin: 0 0 var(--space-2); font-size: var(--text-page-title-size); font-weight: var(--text-page-title-weight); font-variant-numeric: tabular-nums; color: var(--color-credit); }
+/* The number is ink (17.6:1 on white); amber (1.8:1) is kept only for the decorative coin, as in the credits pill. */
+.balance {
+  margin: 0 0 var(--space-2); display: flex; flex-wrap: wrap; align-items: baseline; column-gap: var(--space-2);
+  font-size: var(--text-page-title-size); font-weight: var(--text-page-title-weight); font-variant-numeric: tabular-nums; color: var(--color-ink);
+}
+.coin { display: inline-flex; align-self: center; color: var(--color-credit); }
 .unit { font-size: var(--text-body-size); font-weight: var(--text-body-weight); color: var(--color-ink-soft); }
 .note { margin: 0; color: var(--color-ink-soft); font-size: var(--text-caption-size); }
 .linkButton { background: none; border: 0; padding: 0; color: var(--color-primary-strong); text-decoration: underline; cursor: pointer; font: inherit; display: inline-flex; align-items: center; min-height: var(--target-min); }
+/* A page change scrolls here and focuses the heading (tabIndex -1). */
+.listHeading { scroll-margin-top: var(--space-4); }
+.listHeading:focus { outline: none; }
+.listHeading:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-ring-offset); }
 .skeletons { display: flex; flex-direction: column; gap: var(--space-3); }
 .table { width: 100%; border-collapse: collapse; margin-bottom: var(--space-4); }
 .table th { text-align: left; color: var(--color-ink-soft); font-size: var(--text-caption-size); font-weight: var(--text-caption-weight); }
