@@ -40,7 +40,10 @@
 .skelMedia { aspect-ratio: 16 / 9; }
 .skelMedia > * { height: 100%; }
 .skelCard:nth-child(n + 3) { display: none; }
-.wait { margin: 0; color: var(--color-ink-soft); font-size: var(--text-caption-size); }
+.waitBox { display: grid; }
+.waitBox > * { grid-area: 1 / 1; margin: 0; color: var(--color-ink-soft); font-size: var(--text-caption-size); }
+.waitSizer { visibility: hidden; }
+.wait { }
 .confirmText { margin: 0; overflow-wrap: anywhere; }
 .actions {
   display: flex; flex-direction: column-reverse; gap: var(--space-3);
@@ -53,7 +56,8 @@
 @media (min-width: 768px) {
   .head { flex-direction: row; align-items: center; justify-content: space-between; gap: var(--space-4); }
   .head > button { width: auto; }
-  .actions { flex-direction: row; justify-content: flex-end; }
+  .actions { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; }
+  .waitBox { order: -1; flex-basis: 100%; }
   .actions > button { width: auto; }
 }
 
@@ -65,7 +69,7 @@
   .form { gap: var(--space-2); }
   .actions { flex-direction: row; justify-content: flex-end; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding-top: var(--space-1); }
   .actions > button { width: auto; flex: 1 1 0; }
-  .wait { flex-basis: 100%; }
+  .waitBox { order: -1; flex-basis: 100%; }
 }
 /* Very short: the bar is not pinned, it follows the form. */
 @media (max-height: 420px) {
