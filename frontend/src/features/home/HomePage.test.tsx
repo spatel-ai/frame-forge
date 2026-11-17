@@ -48,7 +48,7 @@ describe('Home page', () => {
   it('R-13 renders Home at / inside the shell, with the server balance in the header', async () => {
     renderHome()
     expect(await screen.findByRole('heading', { name: 'Home', level: 1 })).toBeTruthy()
-    expect(await within(screen.getByRole('banner')).findByText(/500/)).toBeTruthy()
+    expect(await within(screen.getByRole('banner')).findByText('500 credits')).toBeTruthy()
     expect(screen.getByRole('link', { name: /Create a video/ }).getAttribute('href')).toBe('/create')
   })
 

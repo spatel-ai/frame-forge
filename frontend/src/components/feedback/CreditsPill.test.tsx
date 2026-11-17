@@ -20,6 +20,15 @@ describe('CreditsPill', () => {
     expect(screen.queryByText(/^\d[\d,]* credits$/)).toBeNull()
   })
 
+  it('draws the figure as real text, hidden from screen readers, so it can be selected and found in the page', () => {
+    const { container } = render(<CreditsPill balance={1240} />)
+    const hidden = [...container.querySelectorAll('[aria-hidden="true"]')].map((el) => el.textContent)
+    expect(hidden).toContain('1,240')
+    expect(hidden).toContain(' credits')
+    // One accessible sentence only.
+    expect(screen.getAllByText('1,240 credits')).toHaveLength(1)
+  })
+
   it('renders a link when href is given', () => {
     render(<CreditsPill balance={5} href="/wallet" />)
     expect(screen.getByRole('link', { name: '5 credits' }).getAttribute('href')).toBe('/wallet')

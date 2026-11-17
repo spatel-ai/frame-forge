@@ -32,11 +32,12 @@ export function CreditsPill({ balance, loading = false, low = false, href }: Cre
         </span>
       ) : (
         <span className={`${styles.amount} ${size}`} title={`${exact} credits`}>
-          {/* The visible figure is drawn from data-v so the text exists once in the document (for screen readers). */}
+          {/* Screen readers get the one sentence; the visible parts (real text, so it can be selected and found
+              in the page) are hidden from them, and CSS chooses between the full and the shortened figure. */}
           <span className={styles.srOnly}>{exact} credits</span>
-          <span aria-hidden="true" className={styles.full} data-v={exact} />
-          <span aria-hidden="true" className={styles.short} data-v={compact} />
-          <span aria-hidden="true" className={styles.word} data-v=" credits" />
+          <span aria-hidden="true" className={styles.full}>{exact}</span>
+          <span aria-hidden="true" className={styles.short}>{compact}</span>
+          <span aria-hidden="true" className={styles.word}>{' credits'}</span>
         </span>
       )}
     </>

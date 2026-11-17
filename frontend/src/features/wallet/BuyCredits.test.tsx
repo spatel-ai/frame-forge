@@ -461,7 +461,8 @@ describe('fix round 3', () => {
     await waitFor(() => expect(vi.mocked(getWallet).mock.calls.length).toBeGreaterThan(walletCalls))
     await waitFor(() => expect(vi.mocked(getTransactions).mock.calls.length).toBeGreaterThan(txCalls))
     // The page shows the refetched server balance, never the verify answer from component state.
-    expect(await screen.findByText('2,000')).toBeTruthy()
+    // (The header pill repeats the figure as hidden visible text; this is the page's own balance.)
+    expect(await screen.findByText('2,000', { ignore: 'script, style, [aria-hidden="true"]' })).toBeTruthy()
     expect(screen.queryByText(/added to your wallet/)).toBeNull()
   })
 

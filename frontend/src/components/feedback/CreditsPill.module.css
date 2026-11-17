@@ -12,7 +12,7 @@ a.pill:focus-visible { outline: var(--focus-ring); outline-offset: var(--focus-r
 .coin { display: inline-flex; color: var(--color-credit); }
 .pill { max-width: 100%; min-width: 0; }
 .amount { font-variant-numeric: tabular-nums; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.full::before, .short::before, .word::before { content: attr(data-v); white-space: pre; }
+.full, .short, .word { white-space: pre; }
 .short { display: none; }
 /* The word goes first, then (very large balances on narrow screens) the figure is shortened. The exact
    number stays in the accessible name and the title. */
