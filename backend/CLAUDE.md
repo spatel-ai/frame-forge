@@ -86,6 +86,7 @@ app/payments/          Razorpay orders, verify, webhook (M4; contract stubs toda
 app/providers.py       fal and mock
 app/export_openapi.py  prints the API contract
 migrations/            Alembic; one chain, ordered by the BE-Core lane
+scripts/               developer scripts, e.g. make_banner_clips.py (starter banners, Q-14)
 tests/                 conftest.py gives each test a fresh schema
 ```
 

@@ -24,3 +24,17 @@ Third-party (not official, do not rely on): other sites quote 60 s, 5 min, 10 mi
 
 ## Implication for D-044
 No official fal statement of a maximum audio length. Only Kling's own API doc states 2-300 s. Raising our limit above 30 s needs a decision: either cap at 300 s on the Kling figure (unverified for fal), or run one small paid test, with fresh owner approval, at the target length. Cost at $0.0562/s: 60 s = $3.37, 300 s = $16.86 per video (arithmetic, not provider data).
+
+## Voice model prices (checked 2026-11-17, official fal.ai model pages)
+
+| Model | Price | Source |
+| --- | --- | --- |
+| `fal-ai/minimax/speech-02-hd` (default voice) | $0.10 per 1,000 characters | https://fal.ai/models/fal-ai/minimax/speech-02-hd |
+| `fal-ai/gemini-3.1-flash-tts` (Punjabi) | $0.05 per 1,000 characters | https://fal.ai/models/fal-ai/gemini-3.1-flash-tts |
+| `fal-ai/kokoro/american-english` | $0.02 per 1,000 characters | https://fal.ai/models/fal-ai/kokoro/american-english |
+
+Company cost of one 60-second English video at the longest script (800 characters): voice
+800 / 1,000 × $0.10 = $0.08, video 60 × $0.0562 = $3.37, total about $3.45. The customer pays
+1,210 credits (₹1,210). Razorpay's fee is **not verified**: the pricing page read on 2026-11-17
+gave conflicting UPI figures and contained text addressed to automated agents, so the owner should
+read https://razorpay.com/pricing/ directly.
