@@ -234,3 +234,49 @@ def test_0006_builds_the_payment_tables(empty_schema, admin_engine):
     insp = inspect(admin_engine)
     assert not insp.has_table("payment_orders", schema=schema)
     assert not insp.has_table("webhook_events", schema=schema)
+
+
+def test_0007_builds_the_scripts_table(empty_schema, admin_engine):
+    """T-504 (R-43, R-50): 0007 creates scripts with a partial UNIQUE index on live rows
+    (user, language, text hash) and a recency index; the database refuses a second live row with
+    the same text but allows one once the first is deleted; downgrade to 0006 removes the table."""
+    cfg = empty_schema.alembic_config()
+    schema = empty_schema.name
+    command.upgrade(cfg, "head")
+    insp = inspect(admin_engine)
+    indexes = {i["name"]: i for i in insp.get_indexes("scripts", schema)}
+    live = indexes["uq_scripts_live_text"]
+    assert live["unique"] and live["column_names"] == ["user_id", "language", "text_hash"]
+    assert "deleted_at IS NULL" in live["dialect_options"]["postgresql_where"]
+    assert "ix_scripts_user_last_used" in indexes
+
+    engine = create_engine(empty_schema.url, poolclass=NullPool)
+    try:
+        with engine.begin() as conn:
+            conn.execute(
+                text(
+                    "INSERT INTO users (id, name, email, password_hash, created_at) "
+                    "VALUES ('u1', 'T', 't@example.com', 'x', now())"
+                )
+            )
+        insert = (
+            "INSERT INTO scripts (id, user_id, language, text, text_hash, created_at, "
+            "last_used_at) VALUES (:id, 'u1', 'English', 'hi', 'h1', now(), now())"
+        )
+        with engine.begin() as conn:
+            conn.execute(text(insert), {"id": "s1"})
+        try:
+            with engine.begin() as conn:
+                conn.execute(text(insert), {"id": "s2"})
+        except Exception as exc:
+            assert "uq_scripts_live_text" in str(exc)
+        else:
+            raise AssertionError("accepted a second live row with the same text")
+        with engine.begin() as conn:
+            conn.execute(text("UPDATE scripts SET deleted_at = now() WHERE id = 's1'"))
+            conn.execute(text(insert), {"id": "s3"})
+    finally:
+        engine.dispose()
+
+    command.downgrade(cfg, "0006")
+    assert not inspect(admin_engine).has_table("scripts", schema=schema)

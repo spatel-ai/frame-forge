@@ -174,9 +174,6 @@ def client(tmp_path, database_url):
     [
         ("get", "/api/v1/jobs"),
         ("get", "/api/v1/voices"),
-        ("get", "/api/v1/scripts"),
-        ("get", "/api/v1/scripts/abc"),
-        ("delete", "/api/v1/scripts/abc"),
         ("get", "/api/v1/templates"),
         ("get", "/api/v1/templates/abc/preview"),
     ],
