@@ -69,6 +69,8 @@ def fal(settings, monkeypatch):  # noqa: F811
     """A FalProvider whose fal client sends every request to a FakeFal, and that cannot
     download anything."""
     fake = FakeFal()
+    # FalProvider sets fal_client's MAX_ATTEMPTS to 1; restore the library value after the test.
+    monkeypatch.setattr(fal_client.client, "MAX_ATTEMPTS", fal_client.client.MAX_ATTEMPTS)
     # AsyncClient._client builds its transport from this name at first use.
     monkeypatch.setattr(
         fal_client.client, "AsyncBackupDomainTransport", lambda: httpx.MockTransport(fake)
@@ -97,6 +99,27 @@ def test_d065_fal_submit_sends_the_30_day_lifecycle_header(fal):
     header = submit.headers["X-Fal-Object-Lifecycle-Preference"]
     assert json.loads(header) == {"expiration_duration_seconds": 2592000}
     assert json.loads(submit.content) == {"image_url": "https://img", "audio_url": "https://aud"}
+
+
+@pytest.mark.parametrize("failure", ["timeout", "502"])
+def test_money_rule_5_a_failed_paid_submission_is_never_retried(fal, failure):
+    """R-10, money rule 5 (D-005/Q-19): fal-client would retry a submit up to 10 times on a
+    timeout or a 5xx, which could start a second paid video. FalProvider allows one attempt:
+    exactly one POST is sent and the error reaches our code (which flags the job)."""
+    provider, fake = fal
+
+    def failing(request: httpx.Request) -> httpx.Response:
+        fake.requests.append(request)
+        if failure == "timeout":
+            raise httpx.ReadTimeout("no answer", request=request)
+        return httpx.Response(502, json={"detail": "bad gateway"})
+
+    fake.__class__ = type("FailingFal", (FakeFal,), {"__call__": lambda self, r: failing(r)})
+    # An unknown outcome, not a definite refusal: it must not become ProviderError (which would
+    # release the hold as if nothing had started).
+    with pytest.raises((httpx.HTTPError, fal_client.client.FalClientHTTPError)):
+        asyncio.run(provider.submit_video("https://img", "https://aud"))
+    assert [r.method for r in fake.requests] == ["POST"]
 
 
 def test_d065_fal_poll_returns_the_link_without_downloading(fal):

@@ -92,7 +92,14 @@ class FalProvider:
 
     def __init__(self, settings: Settings):
         import fal_client  # reads the FAL_KEY environment variable
+        import fal_client.client as fal_client_internals
 
+        # Money rule 5: never retry a paid call whose outcome is unknown. fal-client 1.0.3 retries
+        # any request up to MAX_ATTEMPTS (10) on timeouts, transport errors and 408/409/429/5xx
+        # (fal_client/client.py `_should_retry`, `_async_maybe_retry_request`), which could start a
+        # second paid video or voice. One attempt only: an unknown outcome reaches our own code,
+        # which flags the job (D-048, Q-19); polling is retried by our poller every cycle anyway.
+        fal_client_internals.MAX_ATTEMPTS = 1
         self._fal = fal_client
         self._settings = settings
 

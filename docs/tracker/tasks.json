@@ -1240,9 +1240,9 @@
     "starts_after": "T-552",
     "task": "Video by link (D-065): store the fal URL and expiry, 30-day lifecycle header, 302 to the owner only, 410 after expiry",
     "acceptance": "Redirect, 404 and 410 tests; mock path unchanged",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Migration 0011 video_url + video_expires_at; FalProvider submit sends X-Fal-Object-Lifecycle-Preference 30 days (fal-client 1.0.3 AsyncClient.submit headers, asserted on the wire), poll returns the URL without downloading; completed stores url + expiry, one capture; GET /jobs/{id}/video: 404 others, 302 owner, 410 video_expired; frontend shows the expired message. Review fix: fal-client retried paid requests up to 10 times on timeouts/5xx (money rule 5); FalProvider now sets one attempt; a test proves a timed-out submit sends exactly one POST (fails with retries on). backend 600 passed, frontend 482. Open for T-556: whether fal honours the header on queue submit; Download on a cross-origin redirect probably opens instead of saving; expiry stamped at completion (slightly after fal's clock)."
   },
   {
     "id": "T-554",
