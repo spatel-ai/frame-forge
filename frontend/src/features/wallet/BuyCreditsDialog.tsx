@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router'
 import {
   ApiError,
@@ -40,7 +40,8 @@ type Stage =
   | { kind: 'checkout'; order: PaymentOrder; failedOnce: boolean }
   | { kind: 'confirming'; order: PaymentOrder; slow: boolean }
   | { kind: 'success'; order: PaymentOrder; credits: number; balance: number }
-  | { kind: 'failed' }
+  // `unknown`: the mock completion call itself failed, so the server may or may not have taken the payment.
+  | { kind: 'failed'; unknown?: boolean }
   | { kind: 'cancelled' }
 
 const TITLES: Record<Stage['kind'], string> = {
@@ -53,11 +54,20 @@ const TITLES: Record<Stage['kind'], string> = {
   cancelled: 'Payment cancelled',
 }
 
+/** A money amount that never breaks across lines; the words around it may wrap. */
+function Amount({ children }: { children: ReactNode }) {
+  return <span className={styles.amount}>{children}</span>
+}
+
 /** "You paid (₹1,000 plus ₹20 payment fee)": the parts are the order's own figures. */
-function paidLabel(order: PaymentOrder): string {
+function paidLabel(order: PaymentOrder): ReactNode {
   if (order.fee_paise <= 0) return 'You paid'
-  const gst = order.fee_gst_paise > 0 ? ` and ${formatRupees(order.fee_gst_paise)} GST` : ''
-  return `You paid (${formatRupees(order.price_paise)} plus ${formatRupees(order.fee_paise)} payment fee${gst})`
+  return (
+    <>
+      You paid (<Amount>{formatRupees(order.price_paise)}</Amount> plus <Amount>{formatRupees(order.fee_paise)}</Amount> payment fee
+      {order.fee_gst_paise > 0 && <> and <Amount>{formatRupees(order.fee_gst_paise)}</Amount> GST</>})
+    </>
+  )
 }
 
 export interface BuyCreditsDialogProps {
@@ -119,15 +129,16 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
 
   // The quote follows the amount: typing waits briefly, picking a quick amount asks at once.
   const [quoteFor, setQuoteFor] = useState<number | null>(null)
+  // Only while open: the page keeps a closed instance mounted, and a quote it fetched would be thrown away on the next open.
   useEffect(() => {
-    if (!valid) return
+    if (!open || !valid) return
     const t = setTimeout(() => setQuoteFor(parsed), quoteFor === null ? 0 : QUOTE_DEBOUNCE_MS)
     return () => clearTimeout(t)
-  }, [valid, parsed, quoteFor])
+  }, [open, valid, parsed, quoteFor])
   const quoteQuery = useQuery({
     queryKey: quoteFor === null ? ['payment-quote', 'none'] : quoteKey(quoteFor),
     queryFn: () => getQuote(quoteFor as number),
-    enabled: quoteFor !== null && valid && quoteFor === parsed,
+    enabled: open && quoteFor !== null && valid && quoteFor === parsed,
     staleTime: 0,
     gcTime: 0,
     retry: false,
@@ -138,6 +149,10 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
   const quoteFieldError = valid && quoteFor === parsed ? quoteError?.fields.credits : undefined
   const quoteOtherError = valid && quoteFor === parsed && quoteError && !quoteFieldError ? errMsg(quoteError) : null
   const error = serverError ?? localError ?? quoteFieldError
+  // A price for the amount in the field is on its way (debounce or request in flight).
+  const quoting = open && valid && !quote && !quoteFieldError && !quoteOtherError
+  // The GST row is kept in place while the price loads, so the dialog does not change height when it arrives.
+  const showGst = quote ? quote.fee_gst_paise > 0 : (config?.payment_fee_gst_bps ?? 0) > 0
 
   const changeAmount = (value: string) => {
     setTyped(value)
@@ -202,7 +217,14 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
       const id = run.current
       setStage({ kind: 'confirming', order, slow: false })
       try {
-        const res = await verifyPayment(order.order_id, proof.razorpay_payment_id, proof.razorpay_signature)
+        let res: Awaited<ReturnType<typeof verifyPayment>>
+        try {
+          res = await verifyPayment(order.order_id, proof.razorpay_payment_id, proof.razorpay_signature)
+        } finally {
+          // Closed (or unmounted) while the server was confirming: nothing below runs, so ask for a fresh
+          // balance and transaction list here. The query client outlives this component.
+          if (run.current !== id) void invalidateWallet(queryClient)
+        }
         if (run.current !== id) return
         if (res.status === 'paid') finishPaid(order, res.credits, res.wallet)
         else if (res.status === 'failed') setStage({ kind: 'failed' })
@@ -215,7 +237,7 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
         else poll(order)
       }
     },
-    [finishPaid, poll, setStage, stopPolling],
+    [finishPaid, poll, queryClient, setStage, stopPolling],
   )
 
   const pay = async (event?: FormEvent) => {
@@ -285,8 +307,14 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
       if (run.current !== id) return
       if (outcome === 'failed') setStage({ kind: 'failed' })
       else await verify(order, proof)
-    } catch {
-      if (run.current === id) setStage({ kind: 'failed' })
+    } catch (e) {
+      if (run.current !== id) return
+      // A refused request (4xx) took no payment. Anything else leaves the outcome unknown: never say "no credits".
+      const refused = e instanceof ApiError && e.status >= 400 && e.status < 500
+      if (outcome === 'captured' && !refused) {
+        void invalidateWallet(queryClient)
+        setStage({ kind: 'failed', unknown: true })
+      } else setStage({ kind: 'failed' })
     } finally {
       setBusy(false)
     }
@@ -310,47 +338,53 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
 
   const youGet = valid && parsed !== null ? parsed : null
   const balanceAfter = youGet !== null && wallet.data ? wallet.data.available_credits + youGet : null
+  const mockMode = config?.payments === 'mock'
+  const title = stage.kind === 'failed' && stage.unknown ? 'Payment not confirmed yet' : TITLES[stage.kind]
   const backLink = returnTo ? (
     <Link to={returnTo} onClick={close}>Back to your video</Link>
   ) : null
 
   return (
-    <Dialog open={open && stage.kind !== 'checkout'} onClose={close} title={TITLES[stage.kind]} dismissable={stage.kind === 'form'}>
+    <Dialog open={open && stage.kind !== 'checkout'} onClose={close} title={title} dismissable={stage.kind === 'form'}>
       {stage.kind === 'form' && (
         <form className={styles.stack} onSubmit={(e) => void pay(e)} noValidate>
-          <p className={styles.lead}>₹1 = 1 credit. Credits do not expire.</p>
-          <div role="group" aria-label="Quick amounts in credits" className={styles.picks}>
-            {QUICK_PICKS.filter((n) => n >= min && n <= max).map((n) => (
-              <Button
-                key={n}
-                variant="secondary"
-                aria-pressed={parsed === n}
-                className={styles.pick}
-                onClick={() => {
-                  changeAmount(String(n))
-                  setQuoteFor(n)
-                  setTouched(false)
-                }}
-              >
-                {credits.format(n)} credits
-              </Button>
-            ))}
+          <div className={styles.choose}>
+            <p className={styles.lead}>₹1 = 1 credit. Credits do not expire.</p>
+            <div role="group" aria-label="Quick amounts in credits" className={styles.picks}>
+              {QUICK_PICKS.filter((n) => n >= min && n <= max).map((n) => (
+                <Button
+                  key={n}
+                  variant="secondary"
+                  aria-pressed={parsed === n}
+                  className={styles.pick}
+                  onClick={() => {
+                    changeAmount(String(n))
+                    setQuoteFor(n)
+                    setTouched(false)
+                  }}
+                >
+                  {credits.format(n)} credits
+                </Button>
+              ))}
+            </div>
+            <div className={styles.amountField}>
+              <TextField
+                ref={inputRef}
+                label="Credits to buy"
+                type="number"
+                inputMode="numeric"
+                min={min}
+                max={max}
+                step={1}
+                value={amount}
+                hint={`Whole credits, from ${credits.format(min)} to ${credits.format(max)} credits.`}
+                error={error}
+                onChange={(e) => changeAmount(e.target.value)}
+                onBlur={() => setTouched(true)}
+              />
+            </div>
           </div>
-          <TextField
-            ref={inputRef}
-            label="Credits to buy"
-            type="number"
-            inputMode="numeric"
-            min={min}
-            max={max}
-            step={1}
-            value={amount}
-            hint={`Whole credits, from ${credits.format(min)} to ${credits.format(max)} credits.`}
-            error={error}
-            onChange={(e) => changeAmount(e.target.value)}
-            onBlur={() => setTouched(true)}
-          />
-          <dl className={styles.summary}>
+          <dl className={styles.summary} aria-busy={quoting || undefined}>
             <div className={styles.row}>
               <dt className={styles.strong}>You get</dt>
               <dd className={styles.strong}>{youGet !== null ? `${credits.format(youGet)} credits` : '—'}</dd>
@@ -363,10 +397,10 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
               <dt>Payment fee</dt>
               <dd>{quote ? formatRupees(quote.fee_paise) : '—'}</dd>
             </div>
-            {quote && quote.fee_gst_paise > 0 && (
+            {showGst && (
               <div className={styles.row}>
                 <dt>GST on the fee</dt>
-                <dd>{formatRupees(quote.fee_gst_paise)}</dd>
+                <dd>{quote ? formatRupees(quote.fee_gst_paise) : '—'}</dd>
               </div>
             )}
             <div className={styles.row}>
@@ -391,7 +425,15 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
             </Banner>
           )}
           {otherError && <p role="alert" className={styles.problem}>{otherError}</p>}
-          <Button type="submit" size="large" block busy={busy} busyLabel="Starting payment…" disabled={!config || !quote}>
+          <Button
+            type="submit"
+            size="large"
+            block
+            className={styles.pay}
+            busy={busy || quoting}
+            busyLabel={busy ? 'Starting payment…' : 'Getting the price…'}
+            disabled={!config || !quote}
+          >
             {quote ? `Pay ${formatRupees(quote.amount_paise)}` : 'Pay'}
           </Button>
           <p className={styles.fine}>Payment is handled by Razorpay. We never see your card details.</p>
@@ -401,7 +443,7 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
       {stage.kind === 'mock' && (
         <div className={styles.result}>
           <p className={styles.text}>
-            Mock mode: no real payment is made. Choose how this {formatRupees(stage.order.amount_paise)} payment should end.
+            Mock mode: no real payment is made. Choose how this <Amount>{formatRupees(stage.order.amount_paise)}</Amount> payment should end.
           </p>
           <div className={styles.actions}>
             <Button busy={busy} onClick={() => void mockComplete(stage.order, 'captured')}>Pay</Button>
@@ -428,11 +470,11 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
         <div className={styles.result}>
           <span className={`${styles.badge} ${styles.ok}`} aria-hidden="true"><CheckIcon size={26} /></span>
           <p className={styles.text}>
-            {credits.format(stage.credits)} credits were added to your wallet.
-            {returnTo && ` Your balance is now ${credits.format(stage.balance)} credits. You can approve your video.`}
+            <Amount>{credits.format(stage.credits)} credits</Amount> were added to your wallet.
+            {returnTo && <> Your balance is now <Amount>{credits.format(stage.balance)} credits</Amount>. You can approve your video.</>}
           </p>
           <dl className={styles.summary}>
-            <div className={styles.row}>
+            <div className={`${styles.row} ${styles.longRow}`}>
               <dt>{paidLabel(stage.order)}</dt>
               <dd>{formatRupees(stage.order.amount_paise)}</dd>
             </div>
@@ -449,7 +491,11 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
         <div className={styles.result}>
           <span className={`${styles.badge} ${styles.bad}`} aria-hidden="true"><AlertIcon size={24} /></span>
           <p role="alert" className={styles.text}>
-            No credits were added. Try again, or choose another way to pay in the Razorpay window.
+            {stage.unknown
+              ? 'We could not confirm this payment yet. If it went through, your balance will update on its own. Check your balance before trying again.'
+              : mockMode
+                ? 'No credits were added. Try again.'
+                : 'No credits were added. Try again, or choose another way to pay in the Razorpay window.'}
           </p>
           <div className={styles.actions}>
             <Button variant="secondary" onClick={close}>Close</Button>

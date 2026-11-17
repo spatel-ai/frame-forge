@@ -139,6 +139,28 @@ describe('wallet page', () => {
     await waitFor(() => expect(getTransactions).toHaveBeenCalledWith(2, 20))
   })
 
+  it('R-13 after a page change, scrolls the list into view and moves focus to the Transactions heading', async () => {
+    vi.mocked(getTransactions).mockResolvedValue(txs([entry({ id: 'a' })], { total: 45 }))
+    const scroll = vi.fn()
+    Element.prototype.scrollIntoView = scroll
+    renderAt()
+    await userEvent.click(await screen.findByRole('button', { name: /Next/ }))
+    const heading = screen.getByRole('heading', { name: 'Transactions' })
+    expect(document.activeElement).toBe(heading)
+    expect(heading.getAttribute('tabindex')).toBe('-1')
+    expect(scroll).toHaveBeenCalledWith(expect.objectContaining({ block: 'start' }))
+  })
+
+  it('R-13 gives the transactions table explicit table roles (kept when phones restyle it)', async () => {
+    vi.mocked(getTransactions).mockResolvedValue(txs([entry({ id: 'a' })]))
+    renderAt()
+    const table = await screen.findByRole('table')
+    expect(table.getAttribute('role')).toBe('table')
+    expect(within(table).getAllByRole('rowgroup')).toHaveLength(2)
+    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Date', 'What happened', 'Credits'])
+    expect(within(table).getAllByRole('cell')).toHaveLength(3)
+  })
+
   it('R-13 shows the empty state with a Create a video action', async () => {
     renderAt()
     expect(await screen.findByText('No transactions yet')).toBeTruthy()

@@ -94,9 +94,9 @@ describe('top-up loop (D-061)', () => {
     vi.mocked(getWallet).mockResolvedValue(wallet(1290)) // what the server will now report
     await userEvent.click(await d.findByRole('button', { name: 'Pay' }))
     expect(
-      await d.findByText(/1,000 credits were added to your wallet\. Your balance is now 1,290 credits\. You can approve your video\./),
+      await d.findByText((_, el) => el?.tagName === 'P' && /1,000 credits were added to your wallet\. Your balance is now 1,290 credits\. You can approve your video\./.test(el.textContent ?? '')),
     ).toBeTruthy()
-    expect(d.getByText('You paid (₹1,000 plus ₹20 payment fee)')).toBeTruthy()
+    expect(d.getByText((_, el) => el?.tagName === 'DT' && el.textContent === 'You paid (₹1,000 plus ₹20 payment fee)')).toBeTruthy()
     expect(d.queryByRole('button', { name: 'Done' })).toBeNull()
     await userEvent.click(d.getByRole('button', { name: 'Back to your video' }))
 

@@ -3,17 +3,26 @@
 .picks { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
 .pick { font-variant-numeric: tabular-nums; min-width: 0; }
 .pick[aria-pressed='true'] { border: 2px solid var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-strong); }
+.amountField { min-width: 0; }
+/* Groups the amount choice for the two-column short layout; elsewhere it adds no box of its own. */
+.choose { display: contents; }
 .summary {
   margin: 0; padding: var(--space-4); border-radius: var(--radius-card); background: var(--color-page);
   display: flex; flex-direction: column; gap: var(--space-2); font-variant-numeric: tabular-nums; width: 100%; box-sizing: border-box;
 }
-.row { display: flex; justify-content: space-between; gap: var(--space-4); }
-.row dt { min-width: 0; overflow-wrap: anywhere; }
-.row dd { margin: 0; min-width: 0; text-align: right; overflow-wrap: anywhere; }
+/* Amounts never break. The label wraps; when label and amount cannot share a line, the amount moves to its own
+   line, right-aligned. A short label needs 6em beside its amount; the long "You paid (…)" label needs 14em,
+   so on narrow screens it sits above its amount instead of being squeezed into a thin column. */
+.row { display: flex; flex-wrap: wrap; justify-content: space-between; column-gap: var(--space-4); row-gap: var(--space-1); }
+.row dt { flex: 1 1 6em; min-width: 0; overflow-wrap: break-word; }
+.longRow dt { flex-basis: 14em; }
+.row dd { flex: none; margin: 0 0 0 auto; text-align: right; white-space: nowrap; }
+.amount { white-space: nowrap; }
 .strong { font-weight: 700; color: var(--color-ink); }
 .problem { margin: 0; color: var(--color-danger); }
 .fine { margin: 0; color: var(--color-ink-muted); font-size: var(--text-caption-size); }
 .result { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); }
+.result > .summary { align-self: stretch; }
 .text { margin: 0; color: var(--color-ink-soft); }
 .actions { align-self: stretch; display: flex; flex-wrap: wrap; gap: var(--space-3); }
 .actions > * { flex: 1 1 96px; min-width: 0; }
@@ -26,9 +35,43 @@
   .picks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-/* Phone: the Pay button stays in view at the bottom of the scrolling sheet. */
-@media (max-width: 767.98px) {
-  .stack > button[type='submit'] {
+/* Phone with room (not a keyboard-shortened or sideways screen): the Pay button stays in view at the bottom of
+   the scrolling sheet. The pinned bar is the large button (48 px) plus its 12 px cover strip. A focused field
+   keeps that much room below it, so it is never scrolled underneath the bar: locally with scroll-margin on the
+   field, and through the shared Dialog's --dialog-footer-space when the Dialog supports it. */
+@media (max-width: 767.98px) and (min-height: 420.02px) {
+  .stack > .pay {
     position: sticky; bottom: 0; z-index: 1; box-shadow: 0 calc(-1 * var(--space-3)) 0 0 var(--color-surface);
   }
+  .stack :is(input, button:not(.pay)) { scroll-margin-bottom: calc(var(--space-7) + var(--space-3) + var(--space-2)); }
+  dialog:has(form.stack) { --dialog-footer-space: calc(var(--space-7) + var(--space-3)); }
+}
+
+/* Short screens (phone sideways, keyboard open): tighter spacing so the field, the price and Pay fit together. */
+@media (max-height: 500px) {
+  .stack { gap: var(--space-2); }
+  .summary { padding: var(--space-2) var(--space-3); gap: var(--space-1); }
+  .result { gap: var(--space-3); }
+}
+
+/* Short and wide enough for two columns (the phone sheet from 560 px, the 480 px centred dialog from 768 px):
+   quick amounts and the field on the left; the full price summary and Pay on the right. DOM order is unchanged,
+   so reading and tab order stay: amounts, field, summary, Pay. Notes and messages follow underneath. */
+@media (max-height: 500px) and (min-width: 560px) {
+  .stack {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: var(--space-4); row-gap: var(--space-2); align-items: start;
+  }
+  .stack > * { grid-column: 1 / -1; }
+  .stack > .choose { grid-column: 1; grid-row: 1 / span 2; display: flex; flex-direction: column; gap: var(--space-2); }
+  .stack > .summary { grid-column: 2; grid-row: 1; }
+  .stack > .pay { grid-column: 2; grid-row: 2; }
+  .pick { padding-inline: var(--space-2); }
+}
+
+/* A sideways phone at 768 px or wider gets the centred dialog, whose 480 px width is too narrow for two columns
+   in about 260 px of height: while this form is showing, the dialog widens to 720 px (both columns as wide as the
+   phone sheet's) so the field, the full summary and Pay fit without scrolling. */
+@media (max-height: 500px) and (min-width: 768px) {
+  dialog:has(form.stack) { width: min(calc(100vw - 2 * var(--space-4)), 720px); }
 }

@@ -1,11 +1,12 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useOutletContext, useSearchParams } from 'react-router'
 import { getTransactions, transactionsKey } from '../../api/client'
 import type { ShellContext } from '../../components/AppShell'
 import type { LedgerEntry } from '../../api/client'
 import { EmptyState, ErrorState, Skeleton, SkeletonGroup } from '../../components/feedback'
 import { Button } from '../../components/form'
+import { CoinIcon } from '../../components/icons'
 import { Card, Pagination } from '../../components/layout'
 import { errMsg } from '../../lib/util'
 import { BuyCreditsDialog } from './BuyCreditsDialog'
@@ -64,7 +65,10 @@ function Balance({ onBuy }: { onBuy: () => void }) {
       )}
       {data && (
         <>
-          <p className={styles.balance}>{credits.format(data.available_credits)} <span className={styles.unit}>credits available</span></p>
+          <p className={styles.balance}>
+            <span className={styles.coin} aria-hidden="true"><CoinIcon size={24} /></span>
+            {credits.format(data.available_credits)} <span className={styles.unit}>credits available</span>
+          </p>
           {data.reserved_credits > 0 && (
             <p className={styles.note}>Reserved for videos in progress: {credits.format(data.reserved_credits)}</p>
           )}
@@ -77,6 +81,16 @@ function Balance({ onBuy }: { onBuy: () => void }) {
 function Transactions() {
   const [page, setPage] = useState(1)
   const navigate = useNavigate()
+  const headingRef = useRef<HTMLHeadingElement>(null)
+  // After a page change, bring the top of the list into view and put focus on its heading.
+  const changePage = (next: number) => {
+    setPage(next)
+    const heading = headingRef.current
+    if (!heading) return
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+    heading.scrollIntoView?.({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
+    heading.focus({ preventScroll: true })
+  }
   const { data, isPending, isError, error, refetch } = useQuery({
     queryKey: transactionsKey(page, PAGE_SIZE),
     queryFn: () => getTransactions(page, PAGE_SIZE),
@@ -86,7 +100,7 @@ function Transactions() {
 
   return (
     <Card>
-      <h2 className={styles.heading}>Transactions</h2>
+      <h2 ref={headingRef} tabIndex={-1} className={`${styles.heading} ${styles.listHeading}`}>Transactions</h2>
       {isPending && (
         <SkeletonGroup label="Loading transactions">
           <div className={styles.skeletons}>
@@ -105,25 +119,26 @@ function Transactions() {
       )}
       {data && data.items.length > 0 && (
         <>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th scope="col">Date</th>
-                <th scope="col">What happened</th>
-                <th scope="col" className={styles.right}>Credits</th>
+          {/* Explicit roles: phones restyle these elements with CSS display, which can drop table semantics in Safari. */}
+          <table role="table" className={styles.table}>
+            <thead role="rowgroup">
+              <tr role="row">
+                <th role="columnheader" scope="col">Date</th>
+                <th role="columnheader" scope="col">What happened</th>
+                <th role="columnheader" scope="col" className={styles.right}>Credits</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody role="rowgroup">
               {data.items.map((e) => (
-                <tr key={e.id}>
-                  <td>{dateFormat.format(new Date(e.created_at))}</td>
-                  <td>{e.job_id ? <Link to={`/create/${e.job_id}`}>{DESCRIPTIONS[e.kind]}</Link> : DESCRIPTIONS[e.kind]}</td>
-                  <td className={`${styles.right} ${styles.change}`}><Change entry={e} /></td>
+                <tr role="row" key={e.id}>
+                  <td role="cell">{dateFormat.format(new Date(e.created_at))}</td>
+                  <td role="cell">{e.job_id ? <Link to={`/create/${e.job_id}`}>{DESCRIPTIONS[e.kind]}</Link> : DESCRIPTIONS[e.kind]}</td>
+                  <td role="cell" className={`${styles.right} ${styles.change}`}><Change entry={e} /></td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <Pagination page={data.page} pageSize={data.page_size} total={data.total} onPageChange={setPage} />
+          <Pagination page={data.page} pageSize={data.page_size} total={data.total} onPageChange={changePage} />
         </>
       )}
     </Card>
