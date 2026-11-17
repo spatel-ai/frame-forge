@@ -57,12 +57,13 @@
   background: var(--color-surface); border-top: var(--line-width) solid var(--color-line);
   padding-top: var(--space-3); padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
 }
+/* Full-width buttons on phones; the short-screen and tablet rules below make them auto width (so this comes first). */
+.actions > * { width: 100%; }
 @media (max-height: 500px) {
   .confirm textarea { max-height: 30dvh; }
   .actions { flex-direction: row; justify-content: flex-end; }
   .actions > * { width: auto; }
 }
-.actions > * { width: 100%; }
 /* Very short screens (sideways phone, keyboard open): the bar is not pinned, it follows the form, as in
    the shared Dialog footer. */
 @media (max-height: 420px) {
