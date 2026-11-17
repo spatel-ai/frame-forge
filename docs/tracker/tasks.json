@@ -580,9 +580,9 @@
     "starts_after": "T-211",
     "task": "Account page",
     "acceptance": "Change password; log out everywhere",
-    "status": "To do",
+    "status": "In progress",
     "verification": "",
-    "evidence": ""
+    "evidence": "Agent building in a worktree."
   },
   {
     "id": "T-300",
