@@ -139,11 +139,14 @@ ROWS: list[Row] = [
     # T-506, T-516). Replace these rows with real owner/other decisions when each is built.
     *[
         Row(method, path, actor, 501, "not_implemented")
-        for method, path in (
-            ("GET", "/api/v1/voices"),
-            ("GET", "/api/v1/templates"),
-            ("GET", "/api/v1/templates/{template_id}/preview"),
-        )
+        for method, path in (("GET", "/api/v1/voices"),)
+        for actor in ("owner", "other", "admin")
+    ],
+    # M5 banner templates (T-506; R-44, R-46, R-47): the company's, so any logged-in caller gets
+    # the list and the seeded template's preview; anonymous is 401.
+    *[
+        Row("GET", path, actor, 200)
+        for path in ("/api/v1/templates", "/api/v1/templates/{template_id}/preview")
         for actor in ("owner", "other", "admin")
     ],
     # T-501: the job list. Every logged-in caller gets 200 and only their own jobs
@@ -328,12 +331,27 @@ def ownerless_job(client: TestClient, owner_id: str) -> str:
     return job_id
 
 
+def seed_template(client: TestClient, settings: Settings) -> str:
+    """An active start template with a stand-in file; the preview route streams bytes and does not
+    probe them, so no ffmpeg is needed here."""
+    folder = settings.data_dir / "templates"
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "t0.mp4").write_bytes(b"not really a video")
+    run_sql(
+        client,
+        "INSERT INTO templates (id, name, kind, clip_file, preview_file, duration_ms, has_audio,"
+        " created_at) VALUES ('t0', 'Seed', 'start', 't0.mp4', 't0.mp4', 1000, false, now())",
+    )
+    return "t0"
+
+
 @dataclass
 class World:
     clients: dict[Actor, TestClient]
     jobs: dict[JobKey, str]
     order: str  # the owner's payment order (M4)
     script: str = ""  # the owner's saved script (M5, T-504)
+    template: str = ""  # a seeded active banner template (M5, T-506)
     emails: dict[str, str] = field(default_factory=lambda: dict(EMAILS))
 
 
@@ -374,9 +392,11 @@ def world(settings, make_user, grant) -> Iterator[World]:
         assert r.status_code == 201, r.text
         with engine_of(anon).begin() as conn:
             script = save_or_touch(conn, owner.user_id, "English", "The owner's saved script.")
+        template = seed_template(anon, settings)
         yield World(
             order=r.json()["order_id"],
             script=script,
+            template=template,
             clients={
                 "anonymous": anon,
                 "owner": owner,
@@ -405,8 +425,8 @@ def test_access_matrix(world: World, row: Row) -> None:
         path = row.path.format(job_id=world.jobs[row.job])
     if "{order_id}" in path:
         path = path.format(order_id=world.order)
-    # M5: the script id is the owner's real script (T-504); template ids arrive with T-506.
-    path = path.replace("{script_id}", world.script).replace("{template_id}", "t0")
+    # M5: the script id is the owner's real script (T-504); the template is the seeded one (T-506).
+    path = path.replace("{script_id}", world.script).replace("{template_id}", world.template)
     r = send(world.clients[row.actor], row.method, path, world.order)
     assert r.status_code == row.status, r.text
     if row.code is not None:

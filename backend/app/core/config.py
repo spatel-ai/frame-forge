@@ -53,6 +53,8 @@ class Settings:
     # Live MiniMax English runs measured about 14 characters a second, so 800
     # characters stays under 60 seconds instead of paying for unusable audio.
     max_script_chars: int = 800
+    # R-44: the longest start or end banner clip the company may add (D-058), in seconds.
+    max_template_seconds: float = 5.0
     max_image_mb: int = 10
     # D-056: Kling's documented photo rules (at least 300 px; shape between 1:2.5 and 2.5:1),
     # checked at upload so no voice is paid for a photo the video model would refuse.

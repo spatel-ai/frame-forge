@@ -11,6 +11,7 @@ import app.auth.models  # noqa: F401  (registers the auth tables on Base.metadat
 import app.jobs.models  # noqa: F401  (registers the jobs table)
 import app.payments.models  # noqa: F401  (registers payment_orders and webhook_events)
 import app.scripts.models  # noqa: F401  (registers the scripts table)
+import app.templates.models  # noqa: F401  (registers the templates table)
 import app.wallet.models  # noqa: F401  (registers wallets and ledger_entries)
 from app.core.config import Settings
 from app.core.database import Base
