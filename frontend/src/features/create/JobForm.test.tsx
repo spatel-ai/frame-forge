@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -158,6 +158,70 @@ describe('JobForm client validation', () => {
     await user.upload(photoInput(), photo(1024 * 1024 + 1))
     expect(screen.getByRole('alert').textContent).toContain('Choose one up to 1 MB')
     expect(createJob).not.toHaveBeenCalled()
+  })
+
+  it('R-79: after "Please choose a photo.", a rejected file shows its own reason instead', async () => {
+    const { user } = renderForm()
+    await user.click(consentBox())
+    await user.click(submit())
+    expect(screen.getAllByRole('alert')[0].textContent).toBe('Please choose a photo.')
+    await user.upload(photoInput(), photo(1024 * 1024 + 1))
+    const reason = screen.getAllByRole('alert')[0].textContent
+    expect(reason).toContain('That file is 1.0 MB')
+    expect(reason).not.toContain('Please choose a photo.')
+    // A wrong type also shows its own reason (fireEvent: user.upload drops files the accept list refuses).
+    fireEvent.change(photoInput(), { target: { files: [new File(['%PDF'], 'cv.pdf', { type: 'application/pdf' })] } })
+    expect(screen.getAllByRole('alert')[0].textContent).toBe('That file type is not supported. Choose a JPEG, PNG or WebP image.')
+    expect(createJob).not.toHaveBeenCalled()
+  })
+
+  it('R-79: a rejected file, then submit: the newest message, "Please choose a photo.", is shown once', async () => {
+    const { user } = renderForm()
+    await user.upload(photoInput(), photo(1024 * 1024 + 1))
+    expect(screen.getAllByRole('alert')[0].textContent).toContain('That file is 1.0 MB')
+    await user.click(consentBox())
+    await user.click(submit())
+    const alerts = screen.getAllByRole('alert').map((a) => a.textContent)
+    expect(alerts).toEqual(['Please choose a photo.', 'Please enter a script.'])
+    expect(document.activeElement).toBe(photoInput())
+    expect(createJob).not.toHaveBeenCalled()
+  })
+
+  it('R-79: emoji count as one character each, as the server counts them', async () => {
+    vi.mocked(createJob).mockResolvedValue(job)
+    const { user } = renderForm()
+    await user.upload(photoInput(), photo())
+    // 10 emoji are 20 UTF-16 units but 10 characters: exactly the limit of 10.
+    fireEvent.change(scriptBox(), { target: { value: '\u{1F600}'.repeat(10) } })
+    fireEvent.blur(scriptBox())
+    expect(screen.queryByRole('alert')).toBeNull()
+    await user.click(consentBox())
+    await user.click(submit())
+    expect(createJob).toHaveBeenCalledWith(expect.any(File), '\u{1F600}'.repeat(10), 'English', undefined, { consent: true, version: '2026-11-17' })
+  })
+
+  it('R-79: 11 emoji are 1 character too long', async () => {
+    const { user } = renderForm()
+    await user.upload(photoInput(), photo())
+    fireEvent.change(scriptBox(), { target: { value: '\u{1F600}'.repeat(11) } })
+    await user.click(consentBox())
+    await user.click(submit())
+    expect(screen.getByRole('alert').textContent).toBe('Your script is 1 character too long. Shorten it to continue.')
+    expect(createJob).not.toHaveBeenCalled()
+  })
+
+  it('R-79: spaces around a script at the limit are not counted, on blur and on submit', async () => {
+    vi.mocked(createJob).mockResolvedValue(job)
+    const { user } = renderForm()
+    await user.upload(photoInput(), photo())
+    await user.type(scriptBox(), '   ' + 'a'.repeat(10) + '   ')
+    await user.tab()
+    expect(screen.queryByRole('alert')).toBeNull()
+    await user.type(scriptBox(), ' ')
+    expect(screen.queryByRole('alert')).toBeNull()
+    await user.click(consentBox())
+    await user.click(submit())
+    expect(createJob).toHaveBeenCalledWith(expect.any(File), 'a'.repeat(10), 'English', undefined, { consent: true, version: '2026-11-17' })
   })
 })
 

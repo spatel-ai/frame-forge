@@ -4,7 +4,7 @@
 .controls > * { flex: 1 1 160px; min-width: 0; }
 .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
 /* On a phone the dialog is a full-height sheet that scrolls itself, so the list takes the room it has. */
-@media (min-width: 768px) {
+@media (min-width: 768px) and (min-height: 501px) {
   .list { max-height: 50vh; max-height: 50dvh; overflow-y: auto; }
 }
 .item {
@@ -33,4 +33,33 @@
   position: sticky; bottom: 0; z-index: 1;
   padding-block: var(--space-2);
   background: var(--color-surface);
+}
+.results { display: flex; flex-direction: column; min-width: 0; }
+/* A row focused with the keyboard scrolls fully into view above the pinned page controls
+   (--pager-room is their measured height, set by ScriptPickerDialog.tsx). */
+.item { scroll-margin-bottom: calc(var(--pager-room, calc(var(--target-min) + 2 * var(--space-2))) + var(--space-2)); }
+
+/*
+  A phone held sideways is short. The search and the language filter share one row, the lead is
+  read by screen readers only, the page controls follow the list instead of being pinned, and the
+  list with its page controls takes the remaining height and scrolls by itself.
+*/
+@media (max-height: 500px) {
+  .picker { gap: var(--space-2); }
+  .lead {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .controls { flex-wrap: nowrap; }
+  .controls > * { flex: 1 1 0; }
+  /* ScriptPickerDialog.tsx sets its max-height to the room left in the dialog body. */
+  .results {
+    overflow-y: auto; overscroll-behavior: contain;
+    /* Room for the focus ring of the first and last rows. */
+    padding: var(--space-1);
+  }
+  .list { gap: var(--space-2); max-height: none; overflow: visible; }
+  .item { padding: var(--space-2) var(--space-3); gap: var(--space-1); }
+  .item { scroll-margin-bottom: var(--space-1); }
+  .pager { position: static; padding-block: var(--space-2) 0; }
 }

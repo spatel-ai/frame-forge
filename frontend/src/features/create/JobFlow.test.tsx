@@ -360,6 +360,30 @@ describe('stepper and heading', () => {
     await screen.findByText('Listen to the voice')
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
   })
+
+  // Heading levels run h1, h2, h3 with none skipped, on every job screen (WCAG 1.3.1 heading order).
+  const screens: [string, Job][] = [
+    ['review', withStatus('audio_ready')],
+    ['progress', withStatus('video_generating')],
+    ['finished', withStatus('completed', { video_url: 'https://example.test/v.mp4' })],
+    ['finished, file missing', withStatus('completed', { video_url: null })],
+    ['finished, expired', withStatus('completed', { video_url: 'https://example.test/v.mp4', video_expired: true })],
+    ['failed video', withStatus('failed', { error: 'x' })],
+    ['failed voice', withStatus('failed', { error: 'x', audio_url: null })],
+    ['unknown state', withStatus('mystery' as Job['status'])],
+  ]
+  for (const [name, job] of screens) {
+    it(`R-76: the ${name} screen has one h1 and no skipped heading level`, async () => {
+      vi.mocked(getJob).mockResolvedValue(job)
+      renderAt('/create/job-1')
+      await vi.waitFor(() => expect(screen.getAllByRole('heading', { level: 2 }).length).toBeGreaterThan(0))
+      const levels = screen.getAllByRole('heading').map((h) => Number(h.tagName.slice(1)))
+      expect(levels.filter((l) => l === 1)).toHaveLength(1)
+      levels.forEach((level, i) => {
+        if (i > 0) expect(level - levels[i - 1]).toBeLessThanOrEqual(1)
+      })
+    })
+  }
 })
 
 describe('waiting and failure states', () => {

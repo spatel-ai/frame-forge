@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -117,5 +117,31 @@ describe('Review: choose a banner (D-067)', () => {
     await vi.waitFor(() => expect(listBanners).toHaveBeenCalledTimes(2))
     expect((screen.getByRole('radio', { name: /Logo/ }) as HTMLInputElement).checked).toBe(false)
     expect(screen.queryByText('We could not start your video')).toBeNull()
+  })
+
+  it('a double tap on approve sends one request', async () => {
+    let resolve!: (j: Job) => void
+    vi.mocked(approveJob).mockReturnValue(new Promise<Job>((r) => (resolve = r)))
+    const user = renderAt('/create/job-1')
+    await user.click(await screen.findByRole('radio', { name: /Logo/ }))
+    // Two taps in the same tick, before React re-renders with the pending state.
+    fireEvent.click(approve())
+    fireEvent.click(approve())
+    await vi.waitFor(() => expect(screen.getByRole('button', { name: 'Starting your video…' })).toBeTruthy())
+    expect(approveJob).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', { name: 'Starting your video…' }))
+    expect(approveJob).toHaveBeenCalledTimes(1)
+    resolve(job({ status: 'video_submitting' }))
+  })
+
+  it('after a failed approve, approving again sends a new request', async () => {
+    vi.mocked(approveJob).mockRejectedValueOnce(new ApiError(500, 'The server had a problem.', 'server_error'))
+    vi.mocked(approveJob).mockResolvedValueOnce(job({ status: 'video_submitting' }))
+    const user = renderAt('/create/job-1')
+    await user.click(await screen.findByRole('radio', { name: /Logo/ }))
+    await user.click(approve())
+    expect(await screen.findByText('The server had a problem.')).toBeTruthy()
+    await user.click(approve())
+    expect(approveJob).toHaveBeenCalledTimes(2)
   })
 })
