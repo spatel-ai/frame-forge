@@ -851,3 +851,51 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 **Trade-off:** Unused credits stay on the books indefinitely; a later change would need notice to customers.
 
 **Validation:** No expiry code exists; the Buy-credits board states it. The refund policy (rest of Q-05) is still open.
+
+---
+
+## D-053 — Bought credits are not refundable
+
+**Status:** Confirmed (owner answered Q-05, 2026-11-17) · 2026-11-17 · Area: both
+
+**Choice:** Credits a customer bought are not refunded as money. Credits go back to the wallet only when the platform did not deliver: a voice that failed or never arrived (D-038, D-048), a video that failed or was refused (hold released), or a flagged video found not to have been made (D-051). A refund issued in Razorpay's dashboard for an exceptional case (for example a disputed payment) still removes the credits once (T-603).
+
+**Alternatives:** Refund unused credits on request. Refund within a time window.
+
+**Why:** Owner's decision: credits are prepaid platform value; failures are already made good in credits.
+
+**Trade-off:** Must be stated in the terms before launch (T-707); customers may ask anyway.
+
+**Validation:** Terms text; T-603 test that a Razorpay refund removes the credits exactly once.
+
+---
+
+## D-054 — Customer media is kept for 30 days
+
+**Status:** Confirmed (owner answered Q-09, 2026-11-17) · 2026-11-17 · Area: backend
+
+**Choice:** Photos, voices (including saved voices from failed jobs, D-043) and videos are deleted automatically 30 days after the job was created. The job row, its script copy and its ledger entries stay. The customer is told to download within 30 days; a saved voice older than 30 days is no longer offered.
+
+**Alternatives:** Keep until the customer deletes them. 90 days.
+
+**Why:** Owner's decision: low storage cost and low privacy risk.
+
+**Trade-off:** Customers must download within 30 days; history shows expired media as no longer available.
+
+**Validation:** T-606: a cleanup task deletes media older than 30 days and is tested with an injected clock; the video page shows 'no longer available' after that.
+
+---
+
+## D-055 — The support email address is a setting
+
+**Status:** Confirmed (owner, 2026-11-17) · 2026-11-17 · Area: both
+
+**Choice:** Setting `AVATAR_SUPPORT_EMAIL` (empty by default). `GET /config` returns it as `support_email` (null when empty); the failure screens show it when set. The owner adds the real address to `backend/.env` before launch.
+
+**Alternatives:** Hard-code an address in the frontend.
+
+**Why:** Owner asked for it to be configurable in .env.
+
+**Trade-off:** Screens must read sensibly when it is empty.
+
+**Validation:** Config test: empty → null, set → returned; frontend shows the address only when present.

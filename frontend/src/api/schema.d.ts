@@ -477,6 +477,8 @@ export interface components {
             provider: "mock" | "fal";
             /** Razorpay Key Id */
             razorpay_key_id: string | null;
+            /** Support Email */
+            support_email: string | null;
             /** Voice Price Credits */
             voice_price_credits: number;
         };

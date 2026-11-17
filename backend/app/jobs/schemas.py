@@ -30,6 +30,8 @@ class ConfigOut(BaseModel):
     razorpay_key_id: str | None
     min_purchase_credits: int
     max_purchase_credits: int
+    # Where customers write for help (D-055); null until the owner sets AVATAR_SUPPORT_EMAIL.
+    support_email: str | None
 
 
 class JobOut(BaseModel):

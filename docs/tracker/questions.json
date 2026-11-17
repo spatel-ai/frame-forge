@@ -27,9 +27,10 @@
     "why_it_matters": "It changes what the customer pays for 100 credits and what records each payment must keep. This needs your accountant; engineering cannot decide it.",
     "default_if_unanswered": "Build charges exactly ₹N for N credits with no tax line. Launch waits for the answer.",
     "escalation": "Cost",
-    "handling": "Needs your answer",
+    "handling": "Answered",
     "blocks": "M7",
-    "status": "Open"
+    "status": "Answered",
+    "answer": "Not applicable: no GST on credit purchases; ₹N buys N credits with no tax line. Owner, 2026-11-17."
   },
   {
     "id": "Q-04",
@@ -39,7 +40,8 @@
     "escalation": "None",
     "handling": "Default applies unless you object",
     "blocks": "M7",
-    "status": "Open"
+    "status": "Open",
+    "answer": "Owner, 2026-11-17: decide together with hosting (Q-07). Emails stay in the server log until then."
   },
   {
     "id": "Q-05",
@@ -47,10 +49,10 @@
     "why_it_matters": "Decides how refunds are handled in M6 and what the terms say. The approved Buy-credits design says \"Credits do not expire\", marked as a placeholder until this is answered.",
     "default_if_unanswered": "Credits do not expire and cannot be cashed out. Failed videos return credits automatically. Payment refunds are done by an admin in Razorpay and reverse the credits.",
     "escalation": "Cost",
-    "handling": "Needs your answer",
+    "handling": "Answered",
     "blocks": "M6",
-    "status": "Open",
-    "answer": "Partly answered (owner, 2026-11-17): credits never expire (D-052). Still open: the refund policy."
+    "status": "Answered",
+    "answer": "Credits never expire (D-052). Bought credits are not refundable; credits are returned to the wallet only for failed or unproven videos (D-048, D-051, D-053). Owner, 2026-11-17."
   },
   {
     "id": "Q-06",
@@ -71,7 +73,8 @@
     "escalation": "Privacy",
     "handling": "Needs your answer",
     "blocks": "M7",
-    "status": "Open"
+    "status": "Open",
+    "answer": "Owner, 2026-11-17: decide near M7; Fable prepares a short comparison (cost, India region, effort) before launch."
   },
   {
     "id": "Q-08",
@@ -90,9 +93,10 @@
     "why_it_matters": "Photos of people are personal data; storage also costs money.",
     "default_if_unanswered": "Keep until the customer deletes them. Launch waits for a retention period.",
     "escalation": "Privacy",
-    "handling": "Needs your answer",
+    "handling": "Answered",
     "blocks": "M6",
-    "status": "Open"
+    "status": "Answered",
+    "answer": "Photos, voices and videos are kept for 30 days, then deleted automatically, saved voices included (D-054). Owner, 2026-11-17."
   },
   {
     "id": "Q-10",
@@ -111,10 +115,10 @@
     "why_it_matters": "The consent text is stored with every video; admins can change balances.",
     "default_if_unanswered": "A plain statement that the customer is the person shown or has their permission. Admins are set by a command, not in the interface.",
     "escalation": "Consent",
-    "handling": "Needs your answer",
+    "handling": "Answered",
     "blocks": "M5",
-    "status": "Open",
-    "answer": "Partly answered (owner, 2026-11-17): consent wording is \"I am the person in this photo, or I have their permission to use it.\" (D-045; a legal review may replace it later; the version is stored on each job). Still open: who the first admins are."
+    "status": "Answered",
+    "answer": "Consent wording: \"I am the person in this photo, or I have their permission to use it.\" (D-045; a legal review may replace it). First admin: the owner only, set by a command the owner runs. Owner, 2026-11-17."
   },
   {
     "id": "Q-12",
@@ -132,9 +136,10 @@
     "why_it_matters": "The README says the fal.ai integration has not been run live end to end. No paid call is made without your approval.",
     "default_if_unanswered": "No live run; everything stays MOCK-VERIFIED.",
     "escalation": "Cost",
-    "handling": "Needs your answer",
+    "handling": "Answered",
     "blocks": "M7",
-    "status": "Open"
+    "status": "Answered",
+    "answer": "No live fal.ai run until the owner says so; documentation checks are allowed. Everything stays MOCK-VERIFIED meanwhile. Owner, 2026-11-17."
   },
   {
     "id": "Q-14",
@@ -142,9 +147,10 @@
     "why_it_matters": "The template picker needs real clips to show. Clips are converted to match each AI video, so any common MP4 works.",
     "default_if_unanswered": "You provide MP4 clips of 2 to 3 seconds; the build uses plain placeholder clips until then.",
     "escalation": "None",
-    "handling": "Default applies unless you object",
+    "handling": "Answered",
     "blocks": "M5",
-    "status": "Open"
+    "status": "Answered",
+    "answer": "Fable makes simple branded start and end clips with ffmpeg (logo text and brand colours, 2–3 seconds) as the first templates; the owner can replace them later. Owner, 2026-11-17."
   },
   {
     "id": "Q-15",
@@ -152,9 +158,10 @@
     "why_it_matters": "Decides whether the picker offers 'None' and whether the company's branding appears on every video.",
     "default_if_unanswered": "Optional: none, start only, end only, or both.",
     "escalation": "Core behaviour",
-    "handling": "Needs your answer",
+    "handling": "Answered",
     "blocks": "M5",
-    "status": "Open"
+    "status": "Answered",
+    "answer": "Banners are optional: none, start only, end only, or both; always free. Owner, 2026-11-17."
   },
   {
     "id": "Q-16",
@@ -162,9 +169,10 @@
     "why_it_matters": "Decides how clips are prepared and whether the video starts with music or silence.",
     "default_if_unanswered": "The clip's sound plays if it has any; otherwise that part is silent.",
     "escalation": "None",
-    "handling": "Default applies unless you object",
+    "handling": "Answered",
     "blocks": "M5",
-    "status": "Open"
+    "status": "Answered",
+    "answer": "A banner clip's own sound plays; a clip without sound is silent. Owner, 2026-11-17."
   },
   {
     "id": "Q-17",

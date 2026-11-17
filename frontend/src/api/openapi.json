@@ -103,6 +103,17 @@
             ],
             "title": "Razorpay Key Id"
           },
+          "support_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Support Email"
+          },
           "voice_price_credits": {
             "title": "Voice Price Credits",
             "type": "integer"
@@ -119,7 +130,8 @@
           "payments",
           "razorpay_key_id",
           "min_purchase_credits",
-          "max_purchase_credits"
+          "max_purchase_credits",
+          "support_email"
         ],
         "title": "ConfigOut",
         "type": "object"

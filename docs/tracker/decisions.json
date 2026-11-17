@@ -570,5 +570,38 @@
     "trade_off": "Unused credits stay on the books indefinitely; a later change would need notice to customers.",
     "validation": "No expiry code exists; the Buy-credits board states it. The refund policy (rest of Q-05) is still open.",
     "date": "2026-11-17"
+  },
+  {
+    "id": "D-053",
+    "decision": "Bought credits are not refundable",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Both",
+    "choice": "Credits a customer bought are not refunded as money. Credits go back to the wallet only when the platform did not deliver: a voice that failed or never arrived (D-038, D-048), a video that failed or was refused (hold released), or a flagged video found not to have been made (D-051). A refund issued in Razorpay's dashboard for an exceptional case (for example a disputed payment) still removes the credits once (T-603).",
+    "trade_off": "Must be stated in the terms before launch (T-707); customers may ask anyway.",
+    "validation": "Terms text; T-603 test that a Razorpay refund removes the credits exactly once.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-054",
+    "decision": "Customer media is kept for 30 days",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Backend",
+    "choice": "Photos, voices (including saved voices from failed jobs, D-043) and videos are deleted automatically 30 days after the job was created. The job row, its script copy and its ledger entries stay. The customer is told to download within 30 days; a saved voice older than 30 days is no longer offered.",
+    "trade_off": "Customers must download within 30 days; history shows expired media as no longer available.",
+    "validation": "T-606: a cleanup task deletes media older than 30 days and is tested with an injected clock; the video page shows 'no longer available' after that.",
+    "date": "2026-11-17"
+  },
+  {
+    "id": "D-055",
+    "decision": "The support email address is a setting",
+    "status": "Confirmed",
+    "waiting_on": "",
+    "area": "Both",
+    "choice": "Setting `AVATAR_SUPPORT_EMAIL` (empty by default). `GET /config` returns it as `support_email` (null when empty); the failure screens show it when set. The owner adds the real address to `backend/.env` before launch.",
+    "trade_off": "Screens must read sensibly when it is empty.",
+    "validation": "Config test: empty → null, set → returned; frontend shows the address only when present.",
+    "date": "2026-11-17"
   }
 ]

@@ -183,3 +183,21 @@ def test_config_hides_the_key_id_in_mock_mode(tmp_path, database_url):
     assert (body["payments"], body["razorpay_key_id"]) == ("mock", None)
     assert (body["min_purchase_credits"], body["max_purchase_credits"]) == (500, 10_000)
     assert "TOP-SECRET" not in r.text
+
+
+def test_support_email_comes_from_the_setting(tmp_path, database_url):
+    """D-055: config returns the support address when set, and null when it is empty."""
+    from fastapi.testclient import TestClient
+
+    for value, expected in (("", None), ("help@example.com", "help@example.com")):
+        settings = replace(
+            Settings(),
+            provider="mock",
+            data_dir=tmp_path,
+            database_url=database_url,
+            support_email=value,
+        )
+        with TestClient(
+            create_app(settings, start_poller=False), base_url="https://testserver"
+        ) as c:
+            assert c.get("/api/v1/config").json()["support_email"] == expected

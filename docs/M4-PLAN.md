@@ -60,7 +60,8 @@ The parent CLAUDE.md wins on any conflict and is never edited.
 | Class | Item |
 | --- | --- |
 | Confirmed | D-016 flow; paise integers; 500–10,000 credits per purchase (D-047); credit only on a valid signature, `captured` and an amount equal to the order; one crediting routine |
-| Assumed | ₹1 buys 1 credit with no GST on top (Q-03 is open for M7). Reconciliation looks at orders older than 30 minutes, every 5 minutes, for up to 3 days. Quick picks 500 / 1,000 / 2,500 / 5,000 credits |
+| Confirmed | ₹1 buys 1 credit with no GST (Q-03 answered: not applicable). Bought credits are not refundable (D-053) |
+| Assumed | Reconciliation looks at orders older than 30 minutes, every 5 minutes, for up to 3 days. Quick picks 500 / 1,000 / 2,500 / 5,000 credits |
 | Needs Verification | Key prefixes, the order-payments list, retry intervals and the webhook digest encoding (hex). All in T-407 |
 | Deferred | Refunds (M6), GST invoices (Q-03, M7), live keys (M7) |
 | Out of Scope | Saved cards, subscriptions, other payment providers |
@@ -107,7 +108,7 @@ definite failure, and a later capture still credits.
 | 4 | T-405 (Sonnet) | Reconciliation in the background loop | Paid but unconfirmed → credited once |
 | 5 | T-406 (Sonnet) | Signed-fixture tests | The five cases, plus repeat and race cases; balance = ledger sum |
 | 6 | Gates B and D (Fable) | Merge, checks, browser check in mock mode, report | MOCK-VERIFIED |
-| 7 | T-407 (Fable) | One run in Razorpay test mode | Only with the owner's approval for that run |
+| 7 | T-407 (Fable) | One run in Razorpay test mode; the webhook reaches the local backend through a temporary tunnel opened only for that run (owner, 2026-11-17; the tool is confirmed then) | Only with the owner's approval for that run |
 
 Phase 1 and later start after M3 is done (its build is done; the M3 browser check and report remain).
 

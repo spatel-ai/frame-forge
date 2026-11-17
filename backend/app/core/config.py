@@ -96,6 +96,10 @@ class Settings:
     # Purchase limits in whole credits (owner, Q-06; D-047). ₹1 = 1 credit (D-007).
     min_purchase_credits: int = 500
     max_purchase_credits: int = 10_000
+    # Shown on failure screens when set (D-055); the owner adds it before launch.
+    support_email: str = field(
+        default_factory=lambda: os.getenv("AVATAR_SUPPORT_EMAIL", "").strip()
+    )
 
     def __post_init__(self) -> None:
         if self.voice not in ("minimax", "kokoro"):
