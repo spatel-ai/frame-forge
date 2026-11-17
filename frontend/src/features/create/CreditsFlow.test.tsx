@@ -144,7 +144,7 @@ describe('review price card', () => {
     renderAt('/create/job-1')
     expect(await screen.findByText('This video costs 240 credits. You have 100.')).toBeTruthy()
     expect(approveButton().disabled).toBe(true)
-    expect(screen.getByRole('link', { name: 'View wallet' }).getAttribute('href')).toBe('/wallet')
+    expect(screen.getByRole('link', { name: 'Add credits' }).getAttribute('href')).toBe('/wallet?buy=1&return=%2Fcreate%2Fjob-1')
   })
 
   it('R-09 a null price shows "Price not available yet" and keeps Approve disabled', async () => {

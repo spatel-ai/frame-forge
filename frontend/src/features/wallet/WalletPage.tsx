@@ -9,6 +9,7 @@ import { Button } from '../../components/form'
 import { Card, Pagination } from '../../components/layout'
 import { errMsg } from '../../lib/util'
 import { BuyCreditsDialog } from './BuyCreditsDialog'
+import { safeReturnPath } from '../../lib/returnPath'
 import { useWallet } from '../../lib/wallet'
 import styles from './WalletPage.module.css'
 
@@ -132,22 +133,25 @@ function Transactions() {
 export default function WalletPage() {
   const { config } = useOutletContext<ShellContext>()
   // A new key per opening gives the dialog a fresh start; closing keeps it mounted so focus returns to the button.
-  const [buy, setBuy] = useState({ open: false, n: 0 })
+  const [buy, setBuy] = useState<{ open: boolean; n: number; returnTo: string | null }>({ open: false, n: 0, returnTo: null })
   // The top bar's "Buy credits" link arrives as /wallet?buy=1: open the dialog, then drop the parameter.
   const [params, setParams] = useSearchParams()
   const wantsBuy = params.get('buy') === '1'
   useEffect(() => {
     if (!wantsBuy) return
+    // `return` counts only when it is exactly a job page path; anything else is ignored.
+    const returnTo = safeReturnPath(params.get('return'))
     // oxlint-disable-next-line react/set-state-in-effect -- the address is the external trigger; it is consumed once here
-    setBuy((b) => ({ open: true, n: b.n + 1 }))
-    setParams((p) => { p.delete('buy'); return p }, { replace: true })
-  }, [wantsBuy, setParams])
+    setBuy((b) => ({ open: true, n: b.n + 1, returnTo }))
+    setParams((p) => { p.delete('buy'); p.delete('return'); return p }, { replace: true })
+  }, [wantsBuy, params, setParams])
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>Wallet</h1>
-      <Balance onBuy={() => setBuy((b) => ({ open: true, n: b.n + 1 }))} />
+      {buy.returnTo && <p><Link to={buy.returnTo}>Back to your video</Link></p>}
+      <Balance onBuy={() => setBuy((b) => ({ open: true, n: b.n + 1, returnTo: b.returnTo }))} />
       <Transactions />
-      <BuyCreditsDialog key={buy.n} open={buy.open} onClose={() => setBuy((b) => ({ ...b, open: false }))} config={config} />
+      <BuyCreditsDialog key={buy.n} open={buy.open} onClose={() => setBuy((b) => ({ ...b, open: false }))} config={config} returnTo={buy.returnTo} />
     </div>
   )
 }

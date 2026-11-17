@@ -1,31 +1,34 @@
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import {
   ApiError,
   createOrder,
   getOrder,
+  getQuote,
   getWallet,
   mockCompletePayment,
+  quoteKey,
   verifyPayment,
   walletKey,
 } from '../../api/client'
-import type { Config, PaymentOrder } from '../../api/client'
+import type { Config, PaymentOrder, Wallet } from '../../api/client'
 import { Banner, Dialog } from '../../components/feedback'
 import { Button, Spinner, TextField } from '../../components/form'
 import { AlertIcon, CheckIcon, CloseIcon } from '../../components/icons'
 import { openCheckout } from '../../lib/checkout'
+import { formatRupees } from '../../lib/money'
 import { errMsg } from '../../lib/util'
 import { invalidateWallet, useWallet } from '../../lib/wallet'
 import styles from './BuyCreditsDialog.module.css'
 
-const QUICK_PICKS = [500, 1000, 2500, 5000]
+const QUICK_PICKS = [1000, 2500, 5000, 10000]
+const QUOTE_DEBOUNCE_MS = 300
 const POLL_MS = 2000
 const POLL_LIMIT = 30 // 30 x 2 s = 60 s, then "still confirming" (UX.md section 7)
 
 const credits = new Intl.NumberFormat('en-IN')
-const rupees = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })
 
 type Proof = { razorpay_payment_id: string; razorpay_signature: string }
 type Stage =
@@ -45,11 +48,20 @@ const TITLES: Record<Stage['kind'], string> = {
   cancelled: 'Payment cancelled',
 }
 
+/** "You paid (₹1,000 plus ₹20 payment fee)": the parts are the order's own figures. */
+function paidLabel(order: PaymentOrder): string {
+  if (order.fee_paise <= 0) return 'You paid'
+  const gst = order.fee_gst_paise > 0 ? ` and ${formatRupees(order.fee_gst_paise)} GST` : ''
+  return `You paid (${formatRupees(order.price_paise)} plus ${formatRupees(order.fee_paise)} payment fee${gst})`
+}
+
 export interface BuyCreditsDialogProps {
   open: boolean
   onClose: () => void
   /** From GET /config: payment mode and purchase limits. */
   config: Config | null
+  /** A safe `/create/<jobId>` path to go back to after a confirmed payment (D-061). Null or absent: no way back. */
+  returnTo?: string | null
 }
 
 /**
@@ -57,10 +69,11 @@ export interface BuyCreditsDialogProps {
  * confirms every payment; this component shows what the server returned and never "credits added" from
  * its own state. Remount it (new `key`) for a fresh start on each open.
  */
-export function BuyCreditsDialog({ open, onClose, config }: BuyCreditsDialogProps) {
+export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: BuyCreditsDialogProps) {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const wallet = useWallet()
-  const min = config?.min_purchase_credits ?? 500
+  const min = config?.min_purchase_credits ?? 1000
   const max = config?.max_purchase_credits ?? 10000
 
   const [stage, setStageState] = useState<Stage>({ kind: 'form' })
@@ -72,7 +85,9 @@ export function BuyCreditsDialog({ open, onClose, config }: BuyCreditsDialogProp
   const run = useRef(0) // bumped to ignore results that arrive after a close or a restart
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const [amount, setAmount] = useState('500')
+  // Until the customer types or picks, the amount is the minimum from config (it may arrive after the dialog mounts).
+  const [typed, setTyped] = useState<string | null>(null)
+  const amount = typed ?? String(min)
   const [touched, setTouched] = useState(false)
   const [serverError, setServerError] = useState<string | undefined>()
   const [notVerified, setNotVerified] = useState<string | null>(null)
@@ -95,19 +110,42 @@ export function BuyCreditsDialog({ open, onClose, config }: BuyCreditsDialogProp
     return undefined
   }
   const localError = touched ? validate() : undefined
-  const error = serverError ?? localError
   const valid = validate() === undefined
 
+  // The quote follows the amount: typing waits briefly, picking a quick amount asks at once.
+  const [quoteFor, setQuoteFor] = useState<number | null>(null)
+  useEffect(() => {
+    if (!valid) return
+    const t = setTimeout(() => setQuoteFor(parsed), quoteFor === null ? 0 : QUOTE_DEBOUNCE_MS)
+    return () => clearTimeout(t)
+  }, [valid, parsed, quoteFor])
+  const quoteQuery = useQuery({
+    queryKey: quoteFor === null ? ['payment-quote', 'none'] : quoteKey(quoteFor),
+    queryFn: () => getQuote(quoteFor as number),
+    enabled: quoteFor !== null && valid && quoteFor === parsed,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  })
+  // Only a quote for the amount now in the field counts.
+  const quote = valid && quoteQuery.data && quoteQuery.data.credits === parsed ? quoteQuery.data : null
+  const quoteError = quoteQuery.error instanceof ApiError ? quoteQuery.error : null
+  const quoteFieldError = valid && quoteFor === parsed ? quoteError?.fields.credits : undefined
+  const quoteOtherError = valid && quoteFor === parsed && quoteError && !quoteFieldError ? errMsg(quoteError) : null
+  const error = serverError ?? localError ?? quoteFieldError
+
   const changeAmount = (value: string) => {
-    setAmount(value)
+    setTyped(value)
     setServerError(undefined)
     setNotVerified(null)
     setOtherError(null)
   }
 
   const finishPaid = useCallback(
-    (order: PaymentOrder, creditsAdded: number, balance: number) => {
+    (order: PaymentOrder, creditsAdded: number, serverWallet: Wallet) => {
       stopPolling()
+      const balance = serverWallet.available_credits
+      queryClient.setQueryData(walletKey, serverWallet) // the job page then opens with the new balance
       void invalidateWallet(queryClient) // the credits pill and the page refetch from the server
       setStage({ kind: 'success', order, credits: creditsAdded, balance })
     },
@@ -161,7 +199,7 @@ export function BuyCreditsDialog({ open, onClose, config }: BuyCreditsDialogProp
       try {
         const res = await verifyPayment(order.order_id, proof.razorpay_payment_id, proof.razorpay_signature)
         if (run.current !== id) return
-        if (res.status === 'paid') finishPaid(order, res.credits, res.wallet.available_credits)
+        if (res.status === 'paid') finishPaid(order, res.credits, res.wallet)
         else if (res.status === 'failed') setStage({ kind: 'failed' })
         else poll(order)
       } catch (e) {
@@ -242,6 +280,12 @@ export function BuyCreditsDialog({ open, onClose, config }: BuyCreditsDialogProp
     if (stageRef.current.kind === 'confirming') void invalidateWallet(queryClient)
     onClose()
   }
+  const backToVideo = () => {
+    stopPolling()
+    void invalidateWallet(queryClient)
+    onClose()
+    if (returnTo) void navigate(returnTo)
+  }
   const tryAgain = () => {
     stopPolling()
     setStage({ kind: 'form' })
@@ -249,6 +293,10 @@ export function BuyCreditsDialog({ open, onClose, config }: BuyCreditsDialogProp
 
   const youGet = valid && parsed !== null ? parsed : null
   const balanceAfter = youGet !== null && wallet.data ? wallet.data.available_credits + youGet : null
+  const feePercent = config ? `${config.payment_fee_bps / 100}%` : null
+  const backLink = returnTo ? (
+    <Link to={returnTo} onClick={close}>Back to your video</Link>
+  ) : null
 
   return (
     <Dialog open={open} onClose={close} title={TITLES[stage.kind]} dismissable={stage.kind === 'form'}>
@@ -256,7 +304,7 @@ export function BuyCreditsDialog({ open, onClose, config }: BuyCreditsDialogProp
         <form className={styles.stack} onSubmit={(e) => void pay(e)} noValidate>
           <p className={styles.lead}>₹1 = 1 credit. Credits do not expire.</p>
           <div role="group" aria-label="Quick amounts in credits" className={styles.picks}>
-            {QUICK_PICKS.map((n) => (
+            {QUICK_PICKS.filter((n) => n >= min && n <= max).map((n) => (
               <Button
                 key={n}
                 variant="secondary"
@@ -264,6 +312,7 @@ export function BuyCreditsDialog({ open, onClose, config }: BuyCreditsDialogProp
                 className={styles.pick}
                 onClick={() => {
                   changeAmount(String(n))
+                  setQuoteFor(n)
                   setTouched(false)
                 }}
               >
@@ -291,14 +340,31 @@ export function BuyCreditsDialog({ open, onClose, config }: BuyCreditsDialogProp
               <dd className={styles.strong}>{youGet !== null ? `${credits.format(youGet)} credits` : '—'}</dd>
             </div>
             <div className={styles.row}>
-              <dt>You pay</dt>
-              <dd>{youGet !== null ? rupees.format(youGet) : '—'}</dd>
+              <dt>Price</dt>
+              <dd>{quote ? formatRupees(quote.price_paise) : '—'}</dd>
+            </div>
+            <div className={styles.row}>
+              <dt>{feePercent ? `Payment fee (${feePercent})` : 'Payment fee'}</dt>
+              <dd>{quote ? formatRupees(quote.fee_paise) : '—'}</dd>
+            </div>
+            {quote && quote.fee_gst_paise > 0 && (
+              <div className={styles.row}>
+                <dt>GST on the fee</dt>
+                <dd>{formatRupees(quote.fee_gst_paise)}</dd>
+              </div>
+            )}
+            <div className={styles.row}>
+              <dt className={styles.strong}>You pay</dt>
+              <dd className={styles.strong}>{quote ? formatRupees(quote.amount_paise) : '—'}</dd>
             </div>
             <div className={styles.row}>
               <dt>Balance after</dt>
               <dd>{balanceAfter !== null ? `${credits.format(balanceAfter)} credits` : '—'}</dd>
             </div>
           </dl>
+          <p className={styles.fine}>The payment fee covers the card or UPI charge.</p>
+          {returnTo && <p className={styles.fine}>After paying you'll come back to this video.</p>}
+          {quoteOtherError && <p role="alert" className={styles.problem}>{quoteOtherError} Nothing was charged.</p>}
           {notVerified && (
             <Banner
               tone="warning"
@@ -309,8 +375,8 @@ export function BuyCreditsDialog({ open, onClose, config }: BuyCreditsDialogProp
             </Banner>
           )}
           {otherError && <p role="alert" className={styles.problem}>{otherError}</p>}
-          <Button type="submit" size="large" block busy={busy} busyLabel="Starting payment…" disabled={!config}>
-            {youGet !== null ? `Pay ${rupees.format(youGet)}` : 'Pay'}
+          <Button type="submit" size="large" block busy={busy} busyLabel="Starting payment…" disabled={!config || !quote}>
+            {quote ? `Pay ${formatRupees(quote.amount_paise)}` : 'Pay'}
           </Button>
           <p className={styles.fine}>Payment is handled by Razorpay. We never see your card details.</p>
         </form>
@@ -319,7 +385,7 @@ export function BuyCreditsDialog({ open, onClose, config }: BuyCreditsDialogProp
       {stage.kind === 'mock' && (
         <div className={styles.result}>
           <p className={styles.text}>
-            Mock mode: no real payment is made. Choose how this {rupees.format(stage.order.amount_paise / 100)} payment should end.
+            Mock mode: no real payment is made. Choose how this {formatRupees(stage.order.amount_paise)} payment should end.
           </p>
           <div className={styles.actions}>
             <Button busy={busy} onClick={() => void mockComplete(stage.order, 'captured')}>Pay</Button>
@@ -338,24 +404,28 @@ export function BuyCreditsDialog({ open, onClose, config }: BuyCreditsDialogProp
               : 'This usually takes a few seconds. Please keep this window open.'}
           </p>
           <Button variant="secondary" block onClick={close}>Close</Button>
+          {backLink}
         </div>
       )}
 
       {stage.kind === 'success' && (
         <div className={styles.result}>
           <span className={`${styles.badge} ${styles.ok}`} aria-hidden="true"><CheckIcon size={26} /></span>
-          <p className={styles.text}>{credits.format(stage.credits)} credits were added to your wallet.</p>
+          <p className={styles.text}>
+            {credits.format(stage.credits)} credits were added to your wallet.
+            {returnTo && ` Your balance is now ${credits.format(stage.balance)} credits. You can approve your video.`}
+          </p>
           <dl className={styles.summary}>
             <div className={styles.row}>
-              <dt>You paid</dt>
-              <dd>{rupees.format(stage.order.amount_paise / 100)}</dd>
+              <dt>{paidLabel(stage.order)}</dt>
+              <dd>{formatRupees(stage.order.amount_paise)}</dd>
             </div>
             <div className={styles.row}>
               <dt className={styles.strong}>Balance now</dt>
               <dd className={styles.strong}>{credits.format(stage.balance)} credits</dd>
             </div>
           </dl>
-          <Button block size="large" onClick={close}>Done</Button>
+          <Button block size="large" onClick={returnTo ? backToVideo : close}>{returnTo ? 'Back to your video' : 'Done'}</Button>
         </div>
       )}
 
@@ -369,6 +439,7 @@ export function BuyCreditsDialog({ open, onClose, config }: BuyCreditsDialogProp
             <Button variant="secondary" onClick={close}>Close</Button>
             <Button onClick={tryAgain}>Try again</Button>
           </div>
+          {backLink}
         </div>
       )}
 
@@ -383,6 +454,7 @@ export function BuyCreditsDialog({ open, onClose, config }: BuyCreditsDialogProp
             <Button variant="secondary" onClick={close}>Close</Button>
             <Button onClick={tryAgain}>Try again</Button>
           </div>
+          {backLink}
         </div>
       )}
     </Dialog>

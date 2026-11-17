@@ -91,11 +91,11 @@ export function ReviewScreen({ job, onReset }: { job: Job; onReset: () => void }
               )}
             </dl>
             {notEnough && wallet && price !== null ? (
-              <NotEnoughCredits>
+              <NotEnoughCredits jobId={job.id}>
                 {`This video costs ${formatCredits(price)} credits. You have ${formatCredits(wallet.available_credits)}.`}
               </NotEnoughCredits>
             ) : (
-              creditsError && <NotEnoughCredits>{creditsError}</NotEnoughCredits>
+              creditsError && <NotEnoughCredits jobId={job.id}>{creditsError}</NotEnoughCredits>
             )}
             {approveError && <Banner tone="danger" title="We could not start your video">{approveError}</Banner>}
             <div className={styles.actions}>
