@@ -81,9 +81,50 @@ class Settings:
     credits_per_second: int = 20
     voice_price_credits: int = 10
 
+    # Payments (M4, D-042). "mock" makes no network call and moves no money; "razorpay" calls
+    # Razorpay and needs the owner's approval for that run (D-021, Gate C).
+    payments: str = field(default_factory=lambda: os.getenv("AVATAR_PAYMENTS", "mock"))
+    # The key id is public (sent to the browser); the two secrets never leave the server and are
+    # kept out of repr() so they cannot reach a log or a traceback.
+    razorpay_key_id: str = field(default_factory=lambda: os.getenv("RAZORPAY_KEY_ID", "").strip())
+    razorpay_key_secret: str = field(
+        default_factory=lambda: os.getenv("RAZORPAY_KEY_SECRET", "").strip(), repr=False
+    )
+    razorpay_webhook_secret: str = field(
+        default_factory=lambda: os.getenv("RAZORPAY_WEBHOOK_SECRET", "").strip(), repr=False
+    )
+    # Purchase limits in whole rupees; ₹1 = 1 credit (owner, Q-06; D-007).
+    min_purchase_rupees: int = 500
+    max_purchase_rupees: int = 10_000
+
     def __post_init__(self) -> None:
         if self.voice not in ("minimax", "kokoro"):
             raise ValueError(f"Unknown AVATAR_VOICE {self.voice!r}; use 'minimax' or 'kokoro'.")
+        if self.payments not in ("mock", "razorpay"):
+            raise ValueError(
+                f"Unknown AVATAR_PAYMENTS {self.payments!r}; use 'mock' or 'razorpay'."
+            )
+        if self.payments == "razorpay":
+            missing = [
+                name
+                for name, value in (
+                    ("RAZORPAY_KEY_ID", self.razorpay_key_id),
+                    ("RAZORPAY_KEY_SECRET", self.razorpay_key_secret),
+                    ("RAZORPAY_WEBHOOK_SECRET", self.razorpay_webhook_secret),
+                )
+                if not value
+            ]
+            if missing:
+                raise ValueError(f"AVATAR_PAYMENTS=razorpay needs {', '.join(missing)}.")
+            # D-042: fail closed. Outside production only a test key may run, so no real money
+            # moves before launch. The prefix is confirmed in the test-mode run (T-407).
+            if self.environment != "production" and not self.razorpay_key_id.startswith(
+                "rzp_test_"
+            ):
+                raise ValueError(
+                    "Refusing a Razorpay key that is not a test key (rzp_test_...) outside "
+                    "production. Use test keys until launch."
+                )
 
     @property
     def jobs_dir(self) -> Path:

@@ -93,6 +93,19 @@
         "title": "ConfigOut",
         "type": "object"
       },
+      "CreateOrderIn": {
+        "properties": {
+          "rupees": {
+            "title": "Rupees",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rupees"
+        ],
+        "title": "CreateOrderIn",
+        "type": "object"
+      },
       "ErrorOut": {
         "properties": {
           "code": {
@@ -346,6 +359,133 @@
         "title": "LoginIn",
         "type": "object"
       },
+      "MockCompleteIn": {
+        "properties": {
+          "order_id": {
+            "title": "Order Id",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "captured",
+              "failed"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id",
+          "outcome"
+        ],
+        "title": "MockCompleteIn",
+        "type": "object"
+      },
+      "MockCompleteOut": {
+        "description": "What Razorpay Checkout's handler would give the browser, signed with the mock secret.",
+        "properties": {
+          "razorpay_order_id": {
+            "title": "Razorpay Order Id",
+            "type": "string"
+          },
+          "razorpay_payment_id": {
+            "title": "Razorpay Payment Id",
+            "type": "string"
+          },
+          "razorpay_signature": {
+            "title": "Razorpay Signature",
+            "type": "string"
+          }
+        },
+        "required": [
+          "razorpay_order_id",
+          "razorpay_payment_id",
+          "razorpay_signature"
+        ],
+        "title": "MockCompleteOut",
+        "type": "object"
+      },
+      "OrderOut": {
+        "properties": {
+          "amount_paise": {
+            "title": "Amount Paise",
+            "type": "integer"
+          },
+          "credits": {
+            "title": "Credits",
+            "type": "integer"
+          },
+          "key_id": {
+            "title": "Key Id",
+            "type": "string"
+          },
+          "order_id": {
+            "title": "Order Id",
+            "type": "string"
+          },
+          "razorpay_order_id": {
+            "title": "Razorpay Order Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "created",
+              "paid",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id",
+          "razorpay_order_id",
+          "amount_paise",
+          "credits",
+          "key_id",
+          "status"
+        ],
+        "title": "OrderOut",
+        "type": "object"
+      },
+      "OrderStatusOut": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "credits": {
+            "title": "Credits",
+            "type": "integer"
+          },
+          "order_id": {
+            "title": "Order Id",
+            "type": "string"
+          },
+          "rupees": {
+            "title": "Rupees",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "created",
+              "paid",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id",
+          "status",
+          "rupees",
+          "credits",
+          "created_at"
+        ],
+        "title": "OrderStatusOut",
+        "type": "object"
+      },
       "ResetCheckOut": {
         "description": "Shown on the reset page as \"For <email>\".",
         "properties": {
@@ -486,6 +626,65 @@
           "active_sessions"
         ],
         "title": "UserOut",
+        "type": "object"
+      },
+      "VerifyIn": {
+        "properties": {
+          "order_id": {
+            "title": "Order Id",
+            "type": "string"
+          },
+          "razorpay_payment_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Razorpay Payment Id",
+            "type": "string"
+          },
+          "razorpay_signature": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Razorpay Signature",
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id",
+          "razorpay_payment_id",
+          "razorpay_signature"
+        ],
+        "title": "VerifyIn",
+        "type": "object"
+      },
+      "VerifyOut": {
+        "properties": {
+          "credits": {
+            "title": "Credits",
+            "type": "integer"
+          },
+          "order_id": {
+            "title": "Order Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "created",
+              "paid",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "wallet": {
+            "$ref": "#/components/schemas/WalletOut"
+          }
+        },
+        "required": [
+          "order_id",
+          "status",
+          "credits",
+          "wallet"
+        ],
+        "title": "VerifyOut",
         "type": "object"
       },
       "WalletOut": {
@@ -1314,6 +1513,291 @@
         "summary": "Get Video"
       }
     },
+    "/api/v1/payments/mock/complete": {
+      "post": {
+        "operationId": "mock_complete_api_v1_payments_mock_complete_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MockCompleteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MockCompleteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "Development and mock mode only: act as Razorpay Checkout",
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/api/v1/payments/orders": {
+      "post": {
+        "operationId": "create_order_api_v1_payments_orders_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          }
+        },
+        "summary": "Start buying credits: create a Razorpay order for whole rupees",
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/api/v1/payments/orders/{order_id}": {
+      "get": {
+        "operationId": "get_order_api_v1_payments_orders__order_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "title": "Order Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderStatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        },
+        "summary": "One of the caller's orders, for the 'still confirming' screen",
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/api/v1/payments/verify": {
+      "post": {
+        "operationId": "verify_payment_api_v1_payments_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          }
+        },
+        "summary": "Confirm a payment after Checkout closes; credits the wallet once",
+        "tags": [
+          "payments"
+        ]
+      }
+    },
     "/api/v1/wallet": {
       "get": {
         "operationId": "get_wallet_api_v1_wallet_get",
@@ -1408,6 +1892,41 @@
         "summary": "The caller's ledger, newest first",
         "tags": [
           "wallet"
+        ]
+      }
+    },
+    "/api/v1/webhooks/razorpay": {
+      "post": {
+        "operationId": "razorpay_webhook_api_v1_webhooks_razorpay_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Razorpay Webhook Api V1 Webhooks Razorpay Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Bad Request"
+          }
+        },
+        "summary": "Razorpay webhook (signed raw body; deduped on the event id)",
+        "tags": [
+          "payments"
         ]
       }
     },

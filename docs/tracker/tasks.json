@@ -732,7 +732,7 @@
     "acceptance": "Routes, bodies and error codes written into the OpenAPI document",
     "status": "In progress",
     "verification": "",
-    "evidence": "Contract in docs/M4-PLAN.md; schemas and stubs next."
+    "evidence": "Payment routes as schemas and 501 stubs (app/payments/), settings AVATAR_PAYMENTS and the three Razorpay values with start-up refusals (D-042), access-matrix rows for anonymous callers, tests/test_payments_contract.py; check.sh 313 passed; frontend types regenerated, npm run check 352 passed. Left: ConfigOut additions (payments, razorpay_key_id, limits), after T-303/T-304 merges because they live in app/jobs/."
   },
   {
     "id": "T-401",

@@ -20,6 +20,7 @@ from .jobs import routes as job_routes
 from .jobs.db import JobStore
 from .jobs.errors import register_job_error_handlers
 from .jobs.service import JobService
+from .payments import routes as payment_routes
 from .providers import Provider, build_provider
 from .wallet import routes as wallet_routes
 
@@ -68,5 +69,10 @@ def create_app(
     app.include_router(auth_routes.router)
     app.include_router(job_routes.router)
     app.include_router(wallet_routes.router)
+    app.include_router(payment_routes.router)
+    app.include_router(payment_routes.webhook_router)
+    # D-042: the stand-in for Razorpay Checkout exists only in mock mode during development.
+    if settings.payments == "mock" and settings.environment == "development":
+        app.include_router(payment_routes.mock_router)
     app.include_router(health.router)
     return app

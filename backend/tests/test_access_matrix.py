@@ -127,6 +127,15 @@ ROWS: list[Row] = [
     # stop answering 501.
     Row("GET", "/api/v1/wallet", "anonymous", 401, "not_authenticated"),
     Row("GET", "/api/v1/wallet/transactions", "anonymous", 401, "not_authenticated"),
+    # M4 payments (T-400 contract). Owner, other-user and unconfirmed rows arrive with T-402/T-403,
+    # when the routes stop answering 501.
+    Row("POST", "/api/v1/payments/orders", "anonymous", 401, "not_authenticated"),
+    Row("GET", "/api/v1/payments/orders/{order_id}", "anonymous", 401, "not_authenticated"),
+    Row("POST", "/api/v1/payments/verify", "anonymous", 401, "not_authenticated"),
+    Row("POST", "/api/v1/payments/mock/complete", "anonymous", 401, "not_authenticated"),
+    # The webhook has no session: Razorpay's signature is its only proof. Until T-404 it is a stub;
+    # T-404 changes this row to 400 webhook_signature_invalid for an unsigned call.
+    Row("POST", "/api/v1/webhooks/razorpay", "anonymous", 501, "not_implemented"),
     # A job with no owner (made before accounts) is shown to nobody who is logged in (R-12).
     *[
         Row(method, path, actor, 404, "job_not_found", job="ownerless")
