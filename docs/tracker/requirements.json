@@ -43,7 +43,7 @@
     "id": "R-06",
     "class": "Confirmed",
     "area": "Project",
-    "requirement": "Free mock-mode tests may run during development. Any call to fal.ai, or to Razorpay beyond its free test mode, needs the owner's approval each time.",
+    "requirement": "Free mock-mode tests may run during development. Any call to fal.ai, and any call to Razorpay including its free test mode, needs the owner's approval each time.",
     "source": "Owner, 2026-11-17 (replaces the earlier 'no tests' instruction of the same day)",
     "discovery_item": ""
   },
