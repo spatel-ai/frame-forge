@@ -89,6 +89,13 @@ describe('AppShell', () => {
     expect(screen.queryByText(/Mock mode/)).toBeNull()
   })
 
+  it('R-77 with mock video but Razorpay payments, the badge does not claim "no cost"', async () => {
+    vi.mocked(getConfig).mockResolvedValueOnce({ ...(await getConfig()), provider: 'mock', payments: 'razorpay' })
+    renderAt('/create', 'mock')
+    expect(await screen.findByText('Mock video — payments go through Razorpay')).toBeTruthy()
+    expect(screen.queryByText(/no cost/)).toBeNull()
+  })
+
   it('R-77 keeps the AI-generated and consent notice', () => {
     renderAt('/create')
     expect(screen.getByText(/The output is AI-generated/)).toBeTruthy()

@@ -36,7 +36,7 @@ export default function AppShell() {
       <a href="#content" className={styles.skip}>Skip to content</a>
       <Sidebar />
       <div className={styles.column}>
-        <TopBar mockMode={config?.provider === 'mock'}>
+        <TopBar mockMode={config?.provider === 'mock'} razorpayPayments={config?.payments === 'razorpay'}>
           {me && !wallet.isError && (
             <>
               <Link to="/wallet" className={styles.pillLink}>

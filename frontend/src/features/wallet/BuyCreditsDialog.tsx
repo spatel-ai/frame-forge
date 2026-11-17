@@ -34,6 +34,10 @@ type Proof = { razorpay_payment_id: string; razorpay_signature: string }
 type Stage =
   | { kind: 'form' }
   | { kind: 'mock'; order: PaymentOrder }
+  // Razorpay's own window is open. Our dialog is closed meanwhile: a modal <dialog> sits in the
+  // browser's top layer and makes the rest of the page inert, which would put Checkout's iframe
+  // underneath it and make it unusable.
+  | { kind: 'checkout'; order: PaymentOrder; failedOnce: boolean }
   | { kind: 'confirming'; order: PaymentOrder; slow: boolean }
   | { kind: 'success'; order: PaymentOrder; credits: number; balance: number }
   | { kind: 'failed' }
@@ -42,6 +46,7 @@ type Stage =
 const TITLES: Record<Stage['kind'], string> = {
   form: 'Buy credits',
   mock: 'Mock payment',
+  checkout: 'Paying with Razorpay',
   confirming: 'Confirming your payment',
   success: 'Payment received',
   failed: "The payment didn't go through",
@@ -233,19 +238,31 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
       if (config?.payments === 'mock') {
         setStage({ kind: 'mock', order })
       } else {
-        await openCheckout({
-          order,
-          onSuccess: (r) => {
-            if (run.current === id) void verify(order, r)
-          },
-          onFailed: () => {
-            if (run.current === id && stageRef.current.kind === 'form') setStage({ kind: 'failed' })
-          },
-          onDismiss: () => {
-            // Closing the window after paying or failing is not a cancel.
-            if (run.current === id && stageRef.current.kind === 'form') setStage({ kind: 'cancelled' })
-          },
-        })
+        const inCheckout = () => run.current === id && stageRef.current.kind === 'checkout'
+        setStage({ kind: 'checkout', order, failedOnce: false })
+        try {
+          await openCheckout({
+            order,
+            onSuccess: (r) => {
+              if (run.current === id) void verify(order, r)
+            },
+            onFailed: () => {
+              // Razorpay keeps its window open so the customer can retry there; remember the
+              // failure and show it only when the window closes without a success.
+              if (inCheckout()) setStage({ kind: 'checkout', order, failedOnce: true })
+            },
+            onDismiss: () => {
+              // Closing the window after paying is not a cancel (verify has moved the stage on).
+              const now = stageRef.current
+              if (inCheckout() && now.kind === 'checkout') {
+                setStage({ kind: now.failedOnce ? 'failed' : 'cancelled' })
+              }
+            },
+          })
+        } catch (e) {
+          if (run.current === id) setStage({ kind: 'form' })
+          throw e
+        }
       }
     } catch (e) {
       if (run.current !== id) return
@@ -298,7 +315,7 @@ export function BuyCreditsDialog({ open, onClose, config, returnTo = null }: Buy
   ) : null
 
   return (
-    <Dialog open={open} onClose={close} title={TITLES[stage.kind]} dismissable={stage.kind === 'form'}>
+    <Dialog open={open && stage.kind !== 'checkout'} onClose={close} title={TITLES[stage.kind]} dismissable={stage.kind === 'form'}>
       {stage.kind === 'form' && (
         <form className={styles.stack} onSubmit={(e) => void pay(e)} noValidate>
           <p className={styles.lead}>₹1 = 1 credit. Credits do not expire.</p>
