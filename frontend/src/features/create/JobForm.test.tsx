@@ -268,6 +268,26 @@ describe('JobForm submit', () => {
     expect(onCreated).toHaveBeenCalledTimes(1)
   })
 
+  it('R-80: two presses in one task, before the busy state can render, send one create request', async () => {
+    let resolve!: (j: Job) => void
+    vi.mocked(createJob).mockReturnValue(new Promise<Job>((r) => (resolve = r)))
+    const { onCreated, user } = renderForm()
+    await user.upload(photoInput(), photo())
+    await user.type(scriptBox(), 'Hello')
+    await user.click(consentBox())
+    // Two native presses in one task, so React cannot render the pending state between them
+    // (a real browser sends two create requests this way without the guard).
+    const button = submit()
+    act(() => {
+      button.click()
+      button.click()
+    })
+    await screen.findByRole('button', { name: 'Making your voice…' })
+    expect(createJob).toHaveBeenCalledTimes(1)
+    await act(async () => resolve(job))
+    expect(onCreated).toHaveBeenCalledTimes(1)
+  })
+
   it('R-79: a server 422 with fields.script shows under the script field and keeps what was typed', async () => {
     vi.mocked(createJob).mockRejectedValue(
       new ApiError(422, 'Invalid input', 'validation_error', { script: 'This script is written in Hindi.' }),

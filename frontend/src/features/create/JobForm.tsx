@@ -88,9 +88,15 @@ export function JobForm({
   const languageRef = useRef<HTMLSelectElement>(null)
   const consentRef = useRef<HTMLInputElement>(null)
 
+  // isPending reaches the component only after a render, so two presses in one task could send two
+  // create requests. This ref is set synchronously by the first and cleared when that request settles.
+  const createSent = useRef(false)
   const create = useMutation({
     mutationFn: (v: { file: File; text: string; language: string; scriptId?: string }) =>
       createJob(v.file, v.text, v.language, v.scriptId, { consent: true, version: config.consent_version }),
+    onSettled: () => {
+      createSent.current = false
+    },
   })
   const busy = create.isPending
 
@@ -141,7 +147,7 @@ export function JobForm({
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
-    if (busy || !consent) return
+    if (busy || createSent.current || !consent) return
     setFormError(null)
     setCreditsError(null)
     const errors: FieldErrors = {
@@ -155,6 +161,7 @@ export function JobForm({
       focusFirst(errors)
       return
     }
+    createSent.current = true
     create.mutate(
       { file, text: script.trim(), language, scriptId: unchanged && saved ? saved.id : undefined },
       {
