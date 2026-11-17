@@ -15,6 +15,7 @@ vi.mock('../../api/client', async (importOriginal) => ({
   getScript: vi.fn(),
 }))
 
+const CONSENT = { consent: true, version: '2026-11-17' }
 const config: Config = {
   provider: 'mock', max_audio_seconds: 60, max_script_chars: 800, max_image_mb: 1, languages: ['English', 'Hindi'],
   credits_per_second: 20, voice_price_credits: 10, payments: 'mock', razorpay_key_id: null,
@@ -174,8 +175,9 @@ describe('Submitting a saved script', () => {
     const file = photo()
     await user.upload(screen.getByLabelText(/upload a photo/i), file)
     await choose(user, english.text)
+    await user.click(screen.getByRole('checkbox', { name: 'I have permission.' }))
     await user.click(screen.getByRole('button', { name: 'Generate voice' }))
-    expect(createJob).toHaveBeenCalledWith(file, english.text, 'English', 's1')
+    expect(createJob).toHaveBeenCalledWith(file, english.text, 'English', 's1', CONSENT)
     await vi.waitFor(() => expect(onCreated).toHaveBeenCalledWith(job))
   })
 
@@ -186,8 +188,9 @@ describe('Submitting a saved script', () => {
     await user.upload(screen.getByLabelText(/upload a photo/i), file)
     await choose(user, english.text)
     await user.type(scriptBox(), ' More.')
+    await user.click(screen.getByRole('checkbox', { name: 'I have permission.' }))
     await user.click(screen.getByRole('button', { name: 'Generate voice' }))
-    expect(createJob).toHaveBeenCalledWith(file, `${english.text} More.`, 'English')
+    expect(createJob).toHaveBeenCalledWith(file, `${english.text} More.`, 'English', undefined, CONSENT)
   })
 
   it('R-43: a script deleted meanwhile (404 script_not_found) keeps the text and goes as new next time', async () => {
@@ -196,10 +199,11 @@ describe('Submitting a saved script', () => {
     const file = photo()
     await user.upload(screen.getByLabelText(/upload a photo/i), file)
     await choose(user, english.text)
+    await user.click(screen.getByRole('checkbox', { name: 'I have permission.' }))
     await user.click(screen.getByRole('button', { name: 'Generate voice' }))
     expect(await screen.findByText(/no longer exists/)).toBeTruthy()
     expect(scriptBox().value).toBe(english.text)
     await user.click(screen.getByRole('button', { name: 'Generate voice' }))
-    expect(createJob).toHaveBeenLastCalledWith(file, english.text, 'English')
+    expect(createJob).toHaveBeenLastCalledWith(file, english.text, 'English', undefined, CONSENT)
   })
 })

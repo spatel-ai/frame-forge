@@ -74,12 +74,22 @@ export const approveJob = (id: string) =>
  * Start a job. `scriptId` is sent instead of the text, only for a saved script the customer did not
  * change (the server fills in the text); otherwise the text is sent. The language always goes.
  */
-export function createJob(image: File, script: string, language: string, scriptId?: string): Promise<Job> {
+export function createJob(
+  image: File,
+  script: string,
+  language: string,
+  scriptId?: string,
+  consent?: { consent: boolean; version: string },
+): Promise<Job> {
   const body = new FormData()
   body.append('image', image)
   if (scriptId) body.append('script_id', scriptId)
   else body.append('script', script)
   body.append('language', language)
+  if (consent?.consent) {
+    body.append('consent', 'true')
+    body.append('consent_version', consent.version)
+  }
   return request<Job>('/api/v1/jobs', { method: 'POST', body })
 }
 
