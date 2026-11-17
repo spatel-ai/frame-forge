@@ -30,6 +30,7 @@ for (const screen of screens) {
       const opts = { phone, dialog: !!screen.dialog }
       const results: CheckResult[] = []
 
+      await screen.prepare?.(page)
       await page.goto(screen.path(seed))
       // Hard guard on every logged-in screen: the paid provider must never be behind it.
       if (screen.auth) await expect(page.getByText(/Mock mode/).first()).toBeVisible({ timeout: 20_000 })

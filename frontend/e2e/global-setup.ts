@@ -1,8 +1,8 @@
 // Runs once before the suite. Refuses to go on unless the backend behind BASE_URL is in mock mode,
 // then logs the seeded account in (saved as the logged-in state) and finds the seeded videos.
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
 import { chromium } from '@playwright/test'
-import { call, json, linkFromLog, login, SESSION_COOKIE } from './support/api.ts'
+import { call, login, SESSION_COOKIE } from './support/api.ts'
 import { ACCOUNT, BASE_URL, LOGIN_STATE, SEED_STATE, STATE_DIR } from './support/env.ts'
 import type { SeedState } from './config/screens.ts'
 
@@ -58,24 +58,8 @@ export default async function globalSetup() {
     abort(`the account is missing seeded videos (found: ${jobs.map((j) => j.status).join(', ') || 'none'}). Run e2e/scripts/e2e-backend.sh up.`)
   }
 
-  // 4. A reset-password link (development emails are written to the backend log). Reused for 20 minutes
-  //    because the backend allows three reset emails an hour per address.
-  let resetToken: string | null = null
-  let previous: { resetToken?: string | null; at?: number } = {}
-  try {
-    previous = JSON.parse(readFileSync(SEED_STATE, 'utf8'))
-  } catch {}
-  if (previous.resetToken && previous.at && Date.now() - previous.at < 20 * 60_000) {
-    resetToken = previous.resetToken
-  } else {
-    await call('/api/v1/auth/password/forgot', json({ email: ACCOUNT.email }))
-    await new Promise((r) => setTimeout(r, 500))
-    resetToken = linkFromLog('reset-password')
-  }
-  const seed: SeedState & { at: number } = {
-    reviewJobId, progressJobId, finishedJobId, failedJobId, resetToken,
-    at: resetToken === previous.resetToken && previous.at ? previous.at : Date.now(),
-  }
+  // 4. Seed state. (The reset-password-form screen needs no token from the backend: see config/screens.ts.)
+  const seed: SeedState = { reviewJobId, progressJobId, finishedJobId, failedJobId }
   writeFileSync(SEED_STATE, JSON.stringify(seed))
 
   // 5. The "Mock mode" pill must be on screen for the logged-in account (frontend/CLAUDE.md).

@@ -54,11 +54,9 @@ docker compose up -d db                     # the local Postgres (container avat
 
    Variables (all optional): `E2E_BASE_URL` (default `http://127.0.0.1:5171`), `E2E_BACKEND_PORT` (8010),
    `E2E_DB_CONTAINER` (`avatar-db-1`), `E2E_DB_NAME` (`frameforge_e2e`), `E2E_DATABASE_URL`.
-   The backend allows origins on ports 5171 to 5179. From another worktree, point the suite at this worktree's
-   backend log (it is where the reset link is read from) and its address:
-   `E2E_BACKEND_LOG=<path to the e2e worktree>/frontend/e2e/.state/backend.log E2E_BASE_URL=http://127.0.0.1:5172 npm run e2e`
-   (and start your dev server with `API_TARGET=http://127.0.0.1:8010`). Without the log the
-   `reset-password-form` screen is skipped, with the reason in the summary.
+   The backend allows origins on ports 5171 to 5179. From another worktree, point the suite at its address:
+   `E2E_BASE_URL=http://127.0.0.1:5172 npm run e2e` (and start your dev server with
+   `API_TARGET=http://127.0.0.1:8010`). The suite no longer reads the backend log.
 
 ### What the seed makes (through the app's own API and the developer grant command)
 
@@ -110,8 +108,10 @@ See `config/screens.ts`. Notes on what is not exactly the screen a customer reac
 - `forgot-password-sent` is opened on the forgot-password form and moved to the sent page with the router
   state that the form's own navigation sets (submitting would send a reset email per run and hit the
   3-an-hour limit). No network response is faked.
-- `reset-password-form` uses a real reset link read from the backend log (the setup requests one; reused
-  for 20 minutes). It is skipped, with a reason in the summary, if the log cannot be read.
+- `reset-password-form` opens the real page with a placeholder token; only the reset-token check response
+  (`POST /api/v1/auth/password/reset/check`, which supplies the "For <email>" line) is answered by Playwright
+  routing. A real token is single use and the backend allows three reset emails an hour, so a real one is not
+  always available. The form, its validation and its layout are the real ones. No email, no password change.
 - `verify-email-expired` is the no-token state. The "confirmed" state needs a single-use token and is not
   covered. The "checking" state is momentary and not covered.
 - `create-banner-picker` is today a section of the review screen, not a dialog. It is kept as its own entry

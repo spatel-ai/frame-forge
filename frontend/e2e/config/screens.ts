@@ -8,8 +8,6 @@ export type SeedState = {
   progressJobId: string
   finishedJobId: string
   failedJobId: string
-  /** A reset-password link token read from the backend log; null when the log was not available. */
-  resetToken: string | null
 }
 
 export type Screen = {
@@ -17,6 +15,8 @@ export type Screen = {
   id: string
   /** Where it appears in the summary. */
   group: 'auth' | 'app' | 'create' | 'dialog'
+  /** Runs before the address is opened (for example, to route one network call). */
+  prepare?: (page: Page) => Promise<void>
   /** The address to open. */
   path: (seed: SeedState) => string
   /** Logged-out screens run without the saved login. */
@@ -77,10 +77,16 @@ export const SCREENS: Screen[] = [
   },
   {
     id: 'reset-password-form', group: 'auth', auth: false,
-    path: (s) => `/reset-password?token=${s.resetToken}`,
+    path: () => '/reset-password?token=e2e-layout-check-token',
+    // Only the token check is answered here (the form's own "For <email>" line); a real token is single use
+    // and the backend allows three reset emails an hour, so a fresh one is not always available. The page,
+    // form, validation and layout are the real ones; no email is sent and no password is changed.
+    prepare: async (p) => {
+      await p.route('**/api/v1/auth/password/reset/check', (route) =>
+        route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ email: 'e2e-layout@example.com' }) }))
+    },
     ready: async (p) => { await p.locator('input[type="password"]').first().waitFor({ state: 'visible', timeout: 15_000 }) },
-    unavailable: (s) => (s.resetToken ? null : 'no reset link: the backend log was not readable (set E2E_BACKEND_LOG)'),
-    note: 'real token from the backend log (development emails are logged)',
+    note: 'the reset-token check answer is shaped by Playwright routing (nothing else is faked)',
   },
   {
     id: 'verify-email-expired', group: 'auth', auth: false, path: () => '/verify-email',
