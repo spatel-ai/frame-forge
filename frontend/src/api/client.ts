@@ -132,7 +132,7 @@ export type PaymentQuote = components['schemas']['QuoteOut']
 export const quoteKey = (credits: number) => ['payment-quote', credits] as const
 export const getQuote = (credits: number) => request<PaymentQuote>(`/api/v1/payments/quote?credits=${credits}`)
 
-export const createOrder =(credits: number) => request<PaymentOrder>('/api/v1/payments/orders', json({ credits }))
+export const createOrder = (credits: number) => request<PaymentOrder>('/api/v1/payments/orders', json({ credits }))
 export const getOrder = (orderId: string) =>
   request<PaymentOrderStatus>(`/api/v1/payments/orders/${encodeURIComponent(orderId)}`)
 export const verifyPayment = (orderId: string, razorpayPaymentId: string, razorpaySignature: string) =>

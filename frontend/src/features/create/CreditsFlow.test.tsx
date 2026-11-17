@@ -22,11 +22,14 @@ const config: Config = {
   languages: ['English'], credits_per_second: 20, voice_price_credits: 10,
   payments: 'mock', razorpay_key_id: null, min_purchase_credits: 1000, max_purchase_credits: 10000,
   payment_fee_bps: 200, payment_fee_gst_bps: 0, support_email: null,
+  consent_version: '2026-11-17', consent_text: 'I have permission.', daily_video_limit: 50,
 }
 const wallet = (available: number): Wallet => ({ available_credits: available, reserved_credits: 0, balance_credits: available })
 const baseJob: Job = {
   id: 'job-1', status: 'audio_ready', language: 'English', script: 'Hello', audio_duration_seconds: 12,
-  price_credits: 240, charged_credits: 10, audio_url: 'https://example.test/a.mp3', video_url: null, error: null,
+  price_credits: 240, charged_credits: 10,
+  voice_credits: 10, video_credits: 0, failure_kind: null, voice_reusable: false, needs_review: false,
+  consent_at: null, script_id: null, voice_from_job_id: null, start_template: null, end_template: null, banners_applied: null, audio_url: 'https://example.test/a.mp3', video_url: null, error: null,
   created_at: '2026-11-17T00:00:00Z', updated_at: '2026-11-17T00:00:00Z',
 }
 const job = (extra: Partial<Job>): Job => ({ ...baseJob, ...extra })

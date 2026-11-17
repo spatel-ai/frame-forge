@@ -215,7 +215,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** The caller's jobs, newest first (T-501) */
+        get: operations["list_jobs_api_v1_jobs_get"];
         put?: never;
         /** Create Job */
         post: operations["create_job_api_v1_jobs_post"];
@@ -378,6 +379,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/scripts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The caller's saved scripts, most recently used first; optional search and language */
+        get: operations["list_scripts_api_v1_scripts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/scripts/{script_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One of the caller's saved scripts */
+        get: operations["get_script_api_v1_scripts__script_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete one of the caller's saved scripts; videos made with it are unchanged */
+        delete: operations["delete_script_api_v1_scripts__script_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Active banner templates for the Create banners step (D-058) */
+        get: operations["list_templates_api_v1_templates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/templates/{template_id}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A template's preview clip (video/mp4) */
+        get: operations["get_preview_api_v1_templates__template_id__preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/voices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Voices from the caller's failed jobs that can start a new job (T-516, D-043) */
+        get: operations["list_saved_voices_api_v1_voices_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/wallet": {
         parameters: {
             query?: never;
@@ -452,12 +539,24 @@ export interface components {
     schemas: {
         /** Body_create_job_api_v1_jobs_post */
         Body_create_job_api_v1_jobs_post: {
+            /** Consent */
+            consent?: boolean | null;
+            /** Consent Version */
+            consent_version?: string | null;
+            /** End Template Id */
+            end_template_id?: string | null;
             /** Image */
             image: string;
             /** Language */
             language: string;
             /** Script */
             script: string;
+            /** Script Id */
+            script_id?: string | null;
+            /** Start Template Id */
+            start_template_id?: string | null;
+            /** Voice From Job Id */
+            voice_from_job_id?: string | null;
         };
         /** ChangePasswordIn */
         ChangePasswordIn: {
@@ -468,8 +567,14 @@ export interface components {
         };
         /** ConfigOut */
         ConfigOut: {
+            /** Consent Text */
+            consent_text: string;
+            /** Consent Version */
+            consent_version: string;
             /** Credits Per Second */
             credits_per_second: number;
+            /** Daily Video Limit */
+            daily_video_limit: number | null;
             /** Languages */
             languages: string[];
             /** Max Audio Seconds */
@@ -535,29 +640,85 @@ export interface components {
             audio_duration_seconds: number | null;
             /** Audio Url */
             audio_url: string | null;
+            /** Banners Applied */
+            banners_applied: boolean | null;
             /** Charged Credits */
             charged_credits: number;
+            /** Consent At */
+            consent_at: string | null;
             /** Created At */
             created_at: string;
+            end_template: components["schemas"]["TemplateRef"] | null;
             /** Error */
             error: string | null;
+            /** Failure Kind */
+            failure_kind: ("voice_failed" | "voice_unknown" | "voice_too_long" | "video_failed" | "video_unknown") | null;
             /** Id */
             id: string;
             /** Language */
             language: string;
+            /** Needs Review */
+            needs_review: boolean;
             /** Price Credits */
             price_credits: number | null;
             /** Script */
             script: string;
+            /** Script Id */
+            script_id: string | null;
+            start_template: components["schemas"]["TemplateRef"] | null;
             /**
              * Status
              * @enum {string}
              */
-            status: "audio_generating" | "audio_ready" | "video_submitting" | "video_generating" | "completed" | "failed";
+            status: "audio_generating" | "audio_ready" | "video_submitting" | "video_generating" | "video_assembling" | "completed" | "failed";
             /** Updated At */
             updated_at: string;
+            /** Video Credits */
+            video_credits: number;
             /** Video Url */
             video_url: string | null;
+            /** Voice Credits */
+            voice_credits: number;
+            /** Voice From Job Id */
+            voice_from_job_id: string | null;
+            /** Voice Reusable */
+            voice_reusable: boolean;
+        };
+        /**
+         * JobSummaryOut
+         * @description One row of the Videos list and Home (T-501).
+         */
+        JobSummaryOut: {
+            /** Audio Duration Seconds */
+            audio_duration_seconds: number | null;
+            /** Created At */
+            created_at: string;
+            /** Failure Kind */
+            failure_kind: ("voice_failed" | "voice_unknown" | "voice_too_long" | "video_failed" | "video_unknown") | null;
+            /** Id */
+            id: string;
+            /** Language */
+            language: string;
+            /** Script Excerpt */
+            script_excerpt: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "audio_generating" | "audio_ready" | "video_submitting" | "video_generating" | "video_assembling" | "completed" | "failed";
+            /** Updated At */
+            updated_at: string;
+        };
+        /** JobsOut */
+        JobsOut: {
+            /** Items */
+            items: components["schemas"]["JobSummaryOut"][];
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Total */
+            total: number;
         };
         /** LedgerEntryOut */
         LedgerEntryOut: {
@@ -681,6 +842,55 @@ export interface components {
             /** Token */
             token: string;
         };
+        /**
+         * SavedVoiceOut
+         * @description A voice from one of the caller's failed jobs that can start a new job (D-043, D-050).
+         */
+        SavedVoiceOut: {
+            /** Audio Duration Seconds */
+            audio_duration_seconds: number;
+            /** Audio Url */
+            audio_url: string;
+            /** Created At */
+            created_at: string;
+            /** Job Id */
+            job_id: string;
+            /** Language */
+            language: string;
+            /** Price Credits */
+            price_credits: number;
+            /** Script */
+            script: string;
+        };
+        /** SavedVoicesOut */
+        SavedVoicesOut: {
+            /** Items */
+            items: components["schemas"]["SavedVoiceOut"][];
+        };
+        /** ScriptOut */
+        ScriptOut: {
+            /** Created At */
+            created_at: string;
+            /** Id */
+            id: string;
+            /** Language */
+            language: string;
+            /** Last Used At */
+            last_used_at: string;
+            /** Text */
+            text: string;
+        };
+        /** ScriptsOut */
+        ScriptsOut: {
+            /** Items */
+            items: components["schemas"]["ScriptOut"][];
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Total */
+            total: number;
+        };
         /** SignupIn */
         SignupIn: {
             /** Email */
@@ -689,6 +899,36 @@ export interface components {
             name: string;
             /** Password */
             password: string;
+        };
+        /** TemplateOut */
+        TemplateOut: {
+            /** Duration Ms */
+            duration_ms: number;
+            /** Has Audio */
+            has_audio: boolean;
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "start" | "end";
+            /** Name */
+            name: string;
+            /** Preview Url */
+            preview_url: string;
+        };
+        /** TemplateRef */
+        TemplateRef: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /** TemplatesOut */
+        TemplatesOut: {
+            /** Items */
+            items: components["schemas"]["TemplateOut"][];
         };
         /**
          * TokenIn
@@ -1203,6 +1443,58 @@ export interface operations {
             };
         };
     };
+    list_jobs_api_v1_jobs_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                status?: "all" | "ready" | "in_progress" | "failed";
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobsOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Implemented */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
     create_job_api_v1_jobs_post: {
         parameters: {
             query?: never;
@@ -1252,8 +1544,35 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorOut"];
                 };
             };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
             /** @description Unprocessable Content */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Implemented */
+            501: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1379,6 +1698,15 @@ export interface operations {
             };
             /** @description Unprocessable Content */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1751,6 +2079,304 @@ export interface operations {
             };
             /** @description Bad Gateway */
             502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    list_scripts_api_v1_scripts_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                q?: string | null;
+                language?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScriptsOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Implemented */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    get_script_api_v1_scripts__script_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                script_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScriptOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Implemented */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    delete_script_api_v1_scripts__script_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                script_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Implemented */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    list_templates_api_v1_templates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplatesOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Implemented */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    get_preview_api_v1_templates__template_id__preview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Implemented */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+        };
+    };
+    list_saved_voices_api_v1_voices_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedVoicesOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorOut"];
+                };
+            };
+            /** @description Not Implemented */
+            501: {
                 headers: {
                     [name: string]: unknown;
                 };

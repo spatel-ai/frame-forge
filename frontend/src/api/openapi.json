@@ -3,6 +3,39 @@
     "schemas": {
       "Body_create_job_api_v1_jobs_post": {
         "properties": {
+          "consent": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consent"
+          },
+          "consent_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consent Version"
+          },
+          "end_template_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Template Id"
+          },
           "image": {
             "contentMediaType": "application/octet-stream",
             "title": "Image",
@@ -15,6 +48,39 @@
           "script": {
             "title": "Script",
             "type": "string"
+          },
+          "script_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Id"
+          },
+          "start_template_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Template Id"
+          },
+          "voice_from_job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voice From Job Id"
           }
         },
         "required": [
@@ -45,9 +111,28 @@
       },
       "ConfigOut": {
         "properties": {
+          "consent_text": {
+            "title": "Consent Text",
+            "type": "string"
+          },
+          "consent_version": {
+            "title": "Consent Version",
+            "type": "string"
+          },
           "credits_per_second": {
             "title": "Credits Per Second",
             "type": "integer"
+          },
+          "daily_video_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Video Limit"
           },
           "languages": {
             "items": {
@@ -141,7 +226,10 @@
           "max_purchase_credits",
           "payment_fee_bps",
           "payment_fee_gst_bps",
-          "support_email"
+          "support_email",
+          "consent_version",
+          "consent_text",
+          "daily_video_limit"
         ],
         "title": "ConfigOut",
         "type": "object"
@@ -241,13 +329,45 @@
             ],
             "title": "Audio Url"
           },
+          "banners_applied": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Banners Applied"
+          },
           "charged_credits": {
             "title": "Charged Credits",
             "type": "integer"
           },
+          "consent_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consent At"
+          },
           "created_at": {
             "title": "Created At",
             "type": "string"
+          },
+          "end_template": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TemplateRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "error": {
             "anyOf": [
@@ -260,6 +380,24 @@
             ],
             "title": "Error"
           },
+          "failure_kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "voice_failed",
+                  "voice_unknown",
+                  "voice_too_long",
+                  "video_failed",
+                  "video_unknown"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Kind"
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -267,6 +405,10 @@
           "language": {
             "title": "Language",
             "type": "string"
+          },
+          "needs_review": {
+            "title": "Needs Review",
+            "type": "boolean"
           },
           "price_credits": {
             "anyOf": [
@@ -283,12 +425,34 @@
             "title": "Script",
             "type": "string"
           },
+          "script_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Id"
+          },
+          "start_template": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TemplateRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "status": {
             "enum": [
               "audio_generating",
               "audio_ready",
               "video_submitting",
               "video_generating",
+              "video_assembling",
               "completed",
               "failed"
             ],
@@ -298,6 +462,10 @@
           "updated_at": {
             "title": "Updated At",
             "type": "string"
+          },
+          "video_credits": {
+            "title": "Video Credits",
+            "type": "integer"
           },
           "video_url": {
             "anyOf": [
@@ -309,6 +477,25 @@
               }
             ],
             "title": "Video Url"
+          },
+          "voice_credits": {
+            "title": "Voice Credits",
+            "type": "integer"
+          },
+          "voice_from_job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voice From Job Id"
+          },
+          "voice_reusable": {
+            "title": "Voice Reusable",
+            "type": "boolean"
           }
         },
         "required": [
@@ -319,13 +506,134 @@
           "audio_duration_seconds",
           "price_credits",
           "charged_credits",
+          "voice_credits",
+          "video_credits",
           "audio_url",
           "video_url",
           "error",
+          "failure_kind",
+          "voice_reusable",
+          "needs_review",
+          "consent_at",
+          "script_id",
+          "voice_from_job_id",
+          "start_template",
+          "end_template",
+          "banners_applied",
           "created_at",
           "updated_at"
         ],
         "title": "JobOut",
+        "type": "object"
+      },
+      "JobSummaryOut": {
+        "description": "One row of the Videos list and Home (T-501).",
+        "properties": {
+          "audio_duration_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audio Duration Seconds"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "failure_kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "voice_failed",
+                  "voice_unknown",
+                  "voice_too_long",
+                  "video_failed",
+                  "video_unknown"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Kind"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "script_excerpt": {
+            "title": "Script Excerpt",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "audio_generating",
+              "audio_ready",
+              "video_submitting",
+              "video_generating",
+              "video_assembling",
+              "completed",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "language",
+          "script_excerpt",
+          "audio_duration_seconds",
+          "failure_kind",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "JobSummaryOut",
+        "type": "object"
+      },
+      "JobsOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/JobSummaryOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "JobsOut",
         "type": "object"
       },
       "LedgerEntryOut": {
@@ -615,6 +923,130 @@
         "title": "ResetPasswordIn",
         "type": "object"
       },
+      "SavedVoiceOut": {
+        "description": "A voice from one of the caller's failed jobs that can start a new job (D-043, D-050).",
+        "properties": {
+          "audio_duration_seconds": {
+            "title": "Audio Duration Seconds",
+            "type": "number"
+          },
+          "audio_url": {
+            "title": "Audio Url",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "price_credits": {
+            "title": "Price Credits",
+            "type": "integer"
+          },
+          "script": {
+            "title": "Script",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "language",
+          "script",
+          "audio_duration_seconds",
+          "price_credits",
+          "audio_url",
+          "created_at"
+        ],
+        "title": "SavedVoiceOut",
+        "type": "object"
+      },
+      "SavedVoicesOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SavedVoiceOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "SavedVoicesOut",
+        "type": "object"
+      },
+      "ScriptOut": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "last_used_at": {
+            "title": "Last Used At",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "language",
+          "text",
+          "created_at",
+          "last_used_at"
+        ],
+        "title": "ScriptOut",
+        "type": "object"
+      },
+      "ScriptsOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ScriptOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "ScriptsOut",
+        "type": "object"
+      },
       "SignupIn": {
         "properties": {
           "email": {
@@ -636,6 +1068,82 @@
           "password"
         ],
         "title": "SignupIn",
+        "type": "object"
+      },
+      "TemplateOut": {
+        "properties": {
+          "duration_ms": {
+            "title": "Duration Ms",
+            "type": "integer"
+          },
+          "has_audio": {
+            "title": "Has Audio",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "start",
+              "end"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "preview_url": {
+            "title": "Preview Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "duration_ms",
+          "has_audio",
+          "preview_url"
+        ],
+        "title": "TemplateOut",
+        "type": "object"
+      },
+      "TemplateRef": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "TemplateRef",
+        "type": "object"
+      },
+      "TemplatesOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TemplateOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "TemplatesOut",
         "type": "object"
       },
       "TokenIn": {
@@ -1291,6 +1799,110 @@
       }
     },
     "/api/v1/jobs": {
+      "get": {
+        "operationId": "list_jobs_api_v1_jobs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "enum": [
+                "all",
+                "ready",
+                "in_progress",
+                "failed"
+              ],
+              "title": "Status",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Implemented"
+          }
+        },
+        "summary": "The caller's jobs, newest first (T-501)"
+      },
       "post": {
         "operationId": "create_job_api_v1_jobs_post",
         "requestBody": {
@@ -1344,6 +1956,16 @@
             },
             "description": "Forbidden"
           },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -1353,6 +1975,26 @@
               }
             },
             "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Implemented"
           }
         },
         "summary": "Create Job"
@@ -1501,6 +2143,16 @@
               }
             },
             "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Too Many Requests"
           }
         },
         "summary": "Approve"
@@ -1945,6 +2597,395 @@
         "tags": [
           "payments"
         ]
+      }
+    },
+    "/api/v1/scripts": {
+      "get": {
+        "operationId": "list_scripts_api_v1_scripts_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "language",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 16,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Language"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Implemented"
+          }
+        },
+        "summary": "The caller's saved scripts, most recently used first; optional search and language",
+        "tags": [
+          "scripts"
+        ]
+      }
+    },
+    "/api/v1/scripts/{script_id}": {
+      "delete": {
+        "operationId": "delete_script_api_v1_scripts__script_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "script_id",
+            "required": true,
+            "schema": {
+              "title": "Script Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Implemented"
+          }
+        },
+        "summary": "Delete one of the caller's saved scripts; videos made with it are unchanged",
+        "tags": [
+          "scripts"
+        ]
+      },
+      "get": {
+        "operationId": "get_script_api_v1_scripts__script_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "script_id",
+            "required": true,
+            "schema": {
+              "title": "Script Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Implemented"
+          }
+        },
+        "summary": "One of the caller's saved scripts",
+        "tags": [
+          "scripts"
+        ]
+      }
+    },
+    "/api/v1/templates": {
+      "get": {
+        "operationId": "list_templates_api_v1_templates_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplatesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Implemented"
+          }
+        },
+        "summary": "Active banner templates for the Create banners step (D-058)",
+        "tags": [
+          "templates"
+        ]
+      }
+    },
+    "/api/v1/templates/{template_id}/preview": {
+      "get": {
+        "operationId": "get_preview_api_v1_templates__template_id__preview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template_id",
+            "required": true,
+            "schema": {
+              "title": "Template Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Implemented"
+          }
+        },
+        "summary": "A template's preview clip (video/mp4)",
+        "tags": [
+          "templates"
+        ]
+      }
+    },
+    "/api/v1/voices": {
+      "get": {
+        "operationId": "list_saved_voices_api_v1_voices_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedVoicesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "501": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorOut"
+                }
+              }
+            },
+            "description": "Not Implemented"
+          }
+        },
+        "summary": "Voices from the caller's failed jobs that can start a new job (T-516, D-043)"
       }
     },
     "/api/v1/wallet": {
