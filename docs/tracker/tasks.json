@@ -760,9 +760,9 @@
     "starts_after": "T-350, T-158",
     "task": "Browser check harness (Playwright) in `frontend/e2e/`, kept out of the unit-test run, with a logged-in mock account that has ledger rows, long script titles, banners, and videos in review, progress, finished and failed states",
     "acceptance": "Per screen and width it checks sideways scroll, 44 px controls, 16 px inputs on phones and the bottom bar, and saves a screenshot; stops without the \"Mock mode\" pill; site address read from the environment; one screen can run alone; `npm run check` still passes; today's failures saved as the baseline",
-    "status": "In progress",
+    "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "Merged into `responsive` (fix round 2 at 3ea979f); unit tests pass (48 files, 524 tests); browser matrix in mock mode reported 0 faults in all four checks before the round-2 merges; full re-run and real-device check pending."
+    "evidence": "Merged into `responsive` (a21fdcb). Unit tests pass (48 files, 524 tests). Browser matrix in mock mode, 2026-11-17: 702 runs (27 screens x 13 widths x Chromium and WebKit), 0 faults in all four checks, 0 not ready; screenshots reviewed. Not yet checked on real devices (T-364)."
   },
   {
     "id": "T-352",
@@ -775,9 +775,9 @@
     "starts_after": "T-351",
     "task": "Global files: `viewport-fit=cover` in `index.html`; phone heading sizes in `styles/`",
     "acceptance": "No regression in the harness; unit tests pass",
-    "status": "In progress",
+    "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "Merged into `responsive` (fix round 2 at 3ea979f); unit tests pass (48 files, 524 tests); browser matrix in mock mode reported 0 faults in all four checks before the round-2 merges; full re-run and real-device check pending."
+    "evidence": "Merged into `responsive` (a21fdcb). Unit tests pass (48 files, 524 tests). Browser matrix in mock mode, 2026-11-17: 702 runs (27 screens x 13 widths x Chromium and WebKit), 0 faults in all four checks, 0 not ready; screenshots reviewed. Not yet checked on real devices (T-364)."
   },
   {
     "id": "T-353",
@@ -790,9 +790,9 @@
     "starts_after": "T-351",
     "task": "App frame: `dvh` in place of `100vh`; phone bottom bar with Home, Create, Videos, Wallet and a \"More\" sheet (Scripts, Banners, Account); compact top bar on phones; landscape and tablet",
     "acceptance": "Frame checks pass at every width; unit tests pass",
-    "status": "In progress",
+    "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "Merged into `responsive` (fix round 2 at 3ea979f); unit tests pass (48 files, 524 tests); browser matrix in mock mode reported 0 faults in all four checks before the round-2 merges; full re-run and real-device check pending."
+    "evidence": "Merged into `responsive` (a21fdcb). Unit tests pass (48 files, 524 tests). Browser matrix in mock mode, 2026-11-17: 702 runs (27 screens x 13 widths x Chromium and WebKit), 0 faults in all four checks, 0 not ready; screenshots reviewed. Not yet checked on real devices (T-364)."
   },
   {
     "id": "T-354",
@@ -805,9 +805,9 @@
     "starts_after": "T-351",
     "task": "Shared components: 16 px input text on phones; dialogs become full-height scrolling sheets on phones; hover styles only on devices that hover; touch wording on the file drop zone; 44 px text buttons; pagination",
     "acceptance": "Component checks pass at every width; unit tests pass",
-    "status": "In progress",
+    "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "Merged into `responsive` (fix round 2 at 3ea979f); unit tests pass (48 files, 524 tests); browser matrix in mock mode reported 0 faults in all four checks before the round-2 merges; full re-run and real-device check pending."
+    "evidence": "Merged into `responsive` (a21fdcb). Unit tests pass (48 files, 524 tests). Browser matrix in mock mode, 2026-11-17: 702 runs (27 screens x 13 widths x Chromium and WebKit), 0 faults in all four checks, 0 not ready; screenshots reviewed. Not yet checked on real devices (T-364)."
   },
   {
     "id": "T-355",
@@ -820,9 +820,9 @@
     "starts_after": "T-352, T-353, T-354, T-210",
     "task": "Log in, sign up, forgot, sent, reset and confirm-email screens: the brand panel becomes a header band on phones",
     "acceptance": "Harness passes for these screens at every width in both engines; screenshots looked at; `npm run check` passes",
-    "status": "In progress",
+    "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "Merged into `responsive` (fix round 2 at 3ea979f); unit tests pass (48 files, 524 tests); browser matrix in mock mode reported 0 faults in all four checks before the round-2 merges; full re-run and real-device check pending."
+    "evidence": "Merged into `responsive` (a21fdcb). Unit tests pass (48 files, 524 tests). Browser matrix in mock mode, 2026-11-17: 702 runs (27 screens x 13 widths x Chromium and WebKit), 0 faults in all four checks, 0 not ready; screenshots reviewed. Not yet checked on real devices (T-364)."
   },
   {
     "id": "T-356",
@@ -835,9 +835,9 @@
     "starts_after": "T-352, T-353, T-354, T-510",
     "task": "Home on phones and tablets",
     "acceptance": "Same bar as T-355",
-    "status": "In progress",
+    "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "Merged into `responsive` (fix round 2 at 3ea979f); unit tests pass (48 files, 524 tests); browser matrix in mock mode reported 0 faults in all four checks before the round-2 merges; full re-run and real-device check pending."
+    "evidence": "Merged into `responsive` (a21fdcb). Unit tests pass (48 files, 524 tests). Browser matrix in mock mode, 2026-11-17: 702 runs (27 screens x 13 widths x Chromium and WebKit), 0 faults in all four checks, 0 not ready; screenshots reviewed. Not yet checked on real devices (T-364)."
   },
   {
     "id": "T-357",
@@ -850,9 +850,9 @@
     "starts_after": "T-352, T-353, T-354, T-511",
     "task": "Videos list and video detail on phones and tablets",
     "acceptance": "Same bar as T-355",
-    "status": "In progress",
+    "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "Merged into `responsive` (fix round 2 at 3ea979f); unit tests pass (48 files, 524 tests); browser matrix in mock mode reported 0 faults in all four checks before the round-2 merges; full re-run and real-device check pending."
+    "evidence": "Merged into `responsive` (a21fdcb). Unit tests pass (48 files, 524 tests). Browser matrix in mock mode, 2026-11-17: 702 runs (27 screens x 13 widths x Chromium and WebKit), 0 faults in all four checks, 0 not ready; screenshots reviewed. Not yet checked on real devices (T-364)."
   },
   {
     "id": "T-358",
@@ -865,9 +865,9 @@
     "starts_after": "T-352, T-353, T-354",
     "task": "Scripts and its dialogs on phones and tablets",
     "acceptance": "Same bar as T-355",
-    "status": "In progress",
+    "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "Merged into `responsive` (fix round 2 at 3ea979f); unit tests pass (48 files, 524 tests); browser matrix in mock mode reported 0 faults in all four checks before the round-2 merges; full re-run and real-device check pending."
+    "evidence": "Merged into `responsive` (a21fdcb). Unit tests pass (48 files, 524 tests). Browser matrix in mock mode, 2026-11-17: 702 runs (27 screens x 13 widths x Chromium and WebKit), 0 faults in all four checks, 0 not ready; screenshots reviewed. Not yet checked on real devices (T-364)."
   },
   {
     "id": "T-359",
@@ -880,9 +880,9 @@
     "starts_after": "T-352, T-353, T-354",
     "task": "Banners and its dialogs on phones and tablets",
     "acceptance": "Same bar as T-355",
-    "status": "In progress",
+    "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "Merged into `responsive` (fix round 2 at 3ea979f); unit tests pass (48 files, 524 tests); browser matrix in mock mode reported 0 faults in all four checks before the round-2 merges; full re-run and real-device check pending."
+    "evidence": "Merged into `responsive` (a21fdcb). Unit tests pass (48 files, 524 tests). Browser matrix in mock mode, 2026-11-17: 702 runs (27 screens x 13 widths x Chromium and WebKit), 0 faults in all four checks, 0 not ready; screenshots reviewed. Not yet checked on real devices (T-364)."
   },
   {
     "id": "T-360",
@@ -895,9 +895,9 @@
     "starts_after": "T-352, T-353, T-354, T-412",
     "task": "Wallet (the table becomes stacked rows on phones) and the Buy credits dialog",
     "acceptance": "Same bar as T-355",
-    "status": "In progress",
+    "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "Merged into `responsive` (fix round 2 at 3ea979f); unit tests pass (48 files, 524 tests); browser matrix in mock mode reported 0 faults in all four checks before the round-2 merges; full re-run and real-device check pending."
+    "evidence": "Merged into `responsive` (a21fdcb). Unit tests pass (48 files, 524 tests). Browser matrix in mock mode, 2026-11-17: 702 runs (27 screens x 13 widths x Chromium and WebKit), 0 faults in all four checks, 0 not ready; screenshots reviewed. Not yet checked on real devices (T-364)."
   },
   {
     "id": "T-361",
@@ -910,9 +910,9 @@
     "starts_after": "T-352, T-353, T-354, T-212",
     "task": "Account on phones and tablets",
     "acceptance": "Same bar as T-355",
-    "status": "In progress",
+    "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "Merged into `responsive` (fix round 2 at 3ea979f); unit tests pass (48 files, 524 tests); browser matrix in mock mode reported 0 faults in all four checks before the round-2 merges; full re-run and real-device check pending."
+    "evidence": "Merged into `responsive` (a21fdcb). Unit tests pass (48 files, 524 tests). Browser matrix in mock mode, 2026-11-17: 702 runs (27 screens x 13 widths x Chromium and WebKit), 0 faults in all four checks, 0 not ready; screenshots reviewed. Not yet checked on real devices (T-364)."
   },
   {
     "id": "T-362",
@@ -925,9 +925,9 @@
     "starts_after": "T-352, T-353, T-354, T-513",
     "task": "Create flow: tablet and landscape pass, script picker, banner picker",
     "acceptance": "Same bar as T-355; the M1.5 phone layouts still pass",
-    "status": "In progress",
+    "status": "Done",
     "verification": "MOCK-VERIFIED",
-    "evidence": "Merged into `responsive` (fix round 2 at 3ea979f); unit tests pass (48 files, 524 tests); browser matrix in mock mode reported 0 faults in all four checks before the round-2 merges; full re-run and real-device check pending."
+    "evidence": "Merged into `responsive` (a21fdcb). Unit tests pass (48 files, 524 tests). Browser matrix in mock mode, 2026-11-17: 702 runs (27 screens x 13 widths x Chromium and WebKit), 0 faults in all four checks, 0 not ready; screenshots reviewed. Not yet checked on real devices (T-364)."
   },
   {
     "id": "T-363",
@@ -940,9 +940,9 @@
     "starts_after": "T-355, T-356, T-357, T-358, T-359, T-360, T-361, T-362",
     "task": "Merge one branch at a time, run the full device matrix, a 200% zoom and keyboard pass, and write the milestone report",
     "acceptance": "No failure across the matrix; report written with the parent file's statuses",
-    "status": "To do",
-    "verification": "",
-    "evidence": ""
+    "status": "In progress",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "All branches merged; full matrix 0 faults over 702 runs at a21fdcb; milestone report written in M3.5-PLAN.md. Still to do: 200% zoom and keyboard pass."
   },
   {
     "id": "T-364",
