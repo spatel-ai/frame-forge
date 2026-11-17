@@ -208,7 +208,7 @@
       "x": 0,
       "y": 8400,
       "w": 1440,
-      "h": 960,
+      "h": 1400,
       "title": "After payment: confirmed, confirming, failed, cancelled",
       "expand": "fill"
     },
@@ -307,6 +307,14 @@
       "h": 960,
       "title": "Create 2: banners switched off (default)",
       "expand": "fill"
+    },
+    "Create-3b-Review-Top-Up.dc.html": {
+      "x": 11240,
+      "y": 8400,
+      "w": 1440,
+      "h": 1800,
+      "title": "Short of credits: add credits and come back (D-061)",
+      "expand": "fill"
     }
   },
   "createdOnFiles": {
@@ -335,7 +343,8 @@
     "n-m5fail",
     "t-m5lib",
     "n-m5lib",
-    "n-banners"
+    "n-banners",
+    "n-topup"
   ],
   "notes": {
     "n-brand": {
@@ -417,7 +426,7 @@
     },
     "n-payment": {
       "fill": "green",
-      "text": "New in M4, approved by the owner on 2026-11-17. Customers buy 500 to 10,000 credits (₹1 = 1 credit; D-047), with quick picks of 500, 1,000, 2,500 and 5,000. This board shows the four endings after Razorpay closes. Credits are added only when our server confirms the payment. Desktop only (D-033).",
+      "text": "M4, approved by the owner on 2026-11-17 and updated by the owner's change requests: customers buy 1,000 to 10,000 credits (D-059), quick picks 1,000 / 2,500 / 5,000 / 10,000, and pay a 2% payment fee on top (D-060). This board shows the endings after Razorpay closes, including \"Back to your video\" (D-061). Credits are added only when our server confirms the payment. Desktop only (D-033).",
       "w": 420,
       "x": 1520,
       "y": 8400
@@ -473,6 +482,13 @@
       "w": 420,
       "x": 9640,
       "y": 10860
+    },
+    "n-topup": {
+      "fill": "orange",
+      "text": "Owner change request, 2026-11-17 (D-061), awaiting approval: when the voice is ready but credits are short, \"Add credits\" opens Buy credits at 1,000; after paying, \"Back to your video\" returns here with Approve enabled.",
+      "w": 420,
+      "x": 12760,
+      "y": 8400
     }
   },
   "order": [
@@ -514,7 +530,8 @@
     "Failure-Results-Video.dc.html",
     "Video-Detail.dc.html",
     "Scripts-Delete-Dialog.dc.html",
-    "Empty-States.dc.html"
+    "Empty-States.dc.html",
+    "Create-3b-Review-Top-Up.dc.html"
   ],
   "pages": [
     {
