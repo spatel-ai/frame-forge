@@ -74,7 +74,7 @@ export function ReviewScreen({ job, onReset }: { job: Job; onReset: () => void }
   }
 
   return (
-    <div className={styles.grid}>
+    <div className={`${styles.grid} ${styles.review}`}>
       <div className={styles.panel}>
         <Card padding="lg">
           <section className={styles.cardBody} aria-labelledby="h-voice">
@@ -96,7 +96,7 @@ export function ReviewScreen({ job, onReset }: { job: Job; onReset: () => void }
         </Card>
       </div>
 
-      <div className={styles.panel}>
+      <div className={`${styles.panel} ${styles.reviewSide}`}>
         {bannersOn && (
           <Card padding="lg">
             <BannerPicker

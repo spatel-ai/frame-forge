@@ -28,3 +28,9 @@
 .status { margin: 0; font-weight: var(--text-title-weight); color: var(--color-ink-soft); }
 .edited { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; }
 .editedNote { margin: 0; color: var(--color-ink-soft); font-size: var(--text-caption-size); }
+/* The page controls stay in view at the bottom of the scrolling dialog body, over the list. */
+.pager {
+  position: sticky; bottom: 0; z-index: 1;
+  padding-block: var(--space-2);
+  background: var(--color-surface);
+}

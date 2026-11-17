@@ -1,10 +1,31 @@
 .preview { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: var(--color-page); }
 .manage { align-self: flex-start; }
-/* Two columns on phones; the shared card group already fills as many as fit from tablet up. */
 .grid { min-width: 0; }
 .grid fieldset { min-width: 0; }
-.grid fieldset > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.grid label { min-width: 0; overflow-wrap: anywhere; }
+.grid label { min-width: 0; }
+/*
+  The card's parts, in the shared SelectableCard's order: the hidden radio, then
+  1 the preview, 2 the name, 3 the "Selected" mark.
+*/
+.grid label > span:nth-of-type(2) {
+  min-width: 0; width: 100%; text-align: start; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+/* Phone: one banner per row, a small preview on the left and the name beside it. */
+.grid fieldset > div { grid-template-columns: minmax(0, 1fr); }
+.grid label {
+  display: grid; grid-template-columns: calc(var(--space-7) * 2) minmax(0, 1fr);
+  /* The empty first and last rows share the spare height, so the name sits level with the preview's middle. */
+  grid-template-rows: 1fr auto auto 1fr; column-gap: var(--space-3); row-gap: 0;
+}
+.grid label > span:nth-of-type(1) { grid-column: 1; grid-row: 1 / -1; align-self: center; }
+.grid label > span:nth-of-type(2) { grid-column: 2; grid-row: 2; }
+.grid label > span:nth-of-type(3) { grid-column: 2; grid-row: 3; margin-top: var(--space-1); }
+/* Tablet and desktop: small cards in as many columns as fit, every card the same height. */
 @media (min-width: 768px) {
-  .grid fieldset > div { grid-template-columns: repeat(auto-fill, minmax(calc(var(--space-7) * 4), 1fr)); }
+  .grid fieldset > div {
+    grid-template-columns: repeat(auto-fill, minmax(calc(var(--space-7) * 3), 1fr));
+    grid-auto-rows: 1fr;
+  }
+  .grid label { display: flex; flex-direction: column; justify-content: flex-start; }
 }

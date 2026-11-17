@@ -3,15 +3,17 @@
 .section { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: var(--space-4); }
 .heading { margin: 0; font-family: var(--font-heading); font-size: var(--text-section-size); font-weight: var(--text-section-weight); }
 .tips { margin: 0; padding-left: var(--space-5); color: var(--color-ink-soft); font-size: var(--text-caption-size); }
+/* Tablet: Photo above Script, each the full width, so no half-empty column beside the long Script card. */
 @media (min-width: 768px) and (max-width: 1023px) {
-  .section { flex-basis: 280px; }
+  .section { flex-basis: 100%; }
 }
 .footer { display: flex; flex-direction: column; gap: var(--space-3); }
 .footer > button { width: 100%; }
 .footer > div { align-self: stretch; }
+/* Tablet and desktop: the notes and the button line up with the cards' left edge; the button keeps a solid width. */
 @media (min-width: 768px) {
-  .footer { align-items: flex-end; }
-  .footer > button { width: auto; }
+  .footer { align-items: flex-start; }
+  .footer > button { width: auto; min-width: calc(var(--space-7) * 7); }
 }
 .cardBody { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
 .unconfirmed { margin: 0; color: var(--color-ink-soft); }

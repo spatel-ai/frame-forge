@@ -41,12 +41,55 @@
 /* Portrait or landscape output sits in a fixed 16:9 frame, as in the design, instead of growing with the file. */
 .video { aspect-ratio: 16 / 9; object-fit: contain; background: var(--color-ink); }
 /* A phone held sideways is short: keep the 16:9 frame but never taller than the screen. */
+/* Left-aligned with the AI-generated badge and the card below it. */
 @media (max-height: 500px) {
-  .video { width: min(100%, calc(75vh * 16 / 9)); width: min(100%, calc(75dvh * 16 / 9)); margin-inline: auto; }
+  .video { width: min(100%, calc(75vh * 16 / 9)); width: min(100%, calc(75dvh * 16 / 9)); }
 }
 /* Tablet (768 to 1023, icon sidebar): two columns where they fit, 280 px minimum each. */
 @media (min-width: 768px) and (max-width: 1023px) {
   .panel { flex-basis: 280px; }
   .wide { flex-basis: 280px; }
 }
-.centered { width: 100%; max-width: calc(var(--space-7) * 15); margin: 0 auto; }
+/* Left-aligned with the page heading and the stepper, one max-width at every size. */
+.centered { width: 100%; max-width: calc(var(--space-7) * 15); }
+
+/* Review: listen, then choose a banner, then approve. */
+/* Tablet: one column, so the banner choices get the full width in a grid of small cards. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .review > .panel { flex-basis: 100%; }
+}
+/* Desktop: Listen and Approve on the left, the banner choice on the right, both columns filled. */
+@media (min-width: 1024px) {
+  .review {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto 1fr;
+    gap: var(--space-5); align-items: start;
+  }
+  .reviewSide { display: contents; }
+  .review > .panel:first-child { grid-column: 1; grid-row: 1; }
+  .reviewSide > :first-child { grid-column: 2; grid-row: 1 / span 2; }
+  .reviewSide > :last-child { grid-column: 1; grid-row: 2; }
+  /* Without banners there is only the Approve card: it keeps the right column. */
+  .reviewSide > :only-child { grid-column: 2; grid-row: 1; }
+}
+
+/* Failed job: the saved voice and the actions sit centred under the centred message. */
+.failActions {
+  display: flex; flex-direction: column; align-items: stretch; gap: var(--space-3);
+  width: 100%; max-width: calc(var(--space-7) * 10); margin-inline: auto; text-align: center;
+}
+.failActions > p { margin: 0; color: var(--color-ink); }
+.failButtons { display: flex; flex-direction: column; gap: var(--space-3); }
+.failButtons > button, .failButtons > a { width: 100%; }
+@media (min-width: 768px) {
+  .failButtons { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  .failButtons > button, .failButtons > a { width: auto; }
+}
+/* On phones the message box's own side padding would double the page margin: use the full width. */
+@media (max-width: 767px) {
+  .failActions { width: calc(100% + 2 * var(--space-4)); max-width: none; margin-inline: calc(-1 * var(--space-4)); }
+}
+.linkSecondary { background: var(--color-surface); color: var(--color-ink); box-shadow: inset 0 0 0 var(--line-width) var(--color-line); }
+@media (hover: hover) {
+  .linkSecondary:hover { background: var(--color-primary-soft); }
+}
+.linkSecondary:active { background: var(--color-primary-soft); }

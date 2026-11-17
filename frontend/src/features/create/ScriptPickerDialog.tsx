@@ -69,7 +69,9 @@ function PickerBody({
             </li>
           ))}
         </ul>
-        <Pagination page={data.page} pageSize={data.page_size} total={data.total} onPageChange={f.setPage} />
+        <div className={styles.pager}>
+          <Pagination page={data.page} pageSize={data.page_size} total={data.total} onPageChange={f.setPage} />
+        </div>
       </>
     )
   }
