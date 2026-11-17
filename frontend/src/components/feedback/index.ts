@@ -5,6 +5,6 @@ export { Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonGroupProps } 
 export { ProgressSteps, type ProgressStep, type ProgressStepState } from './ProgressSteps'
 export { EmptyState, type EmptyStateProps } from './EmptyState'
 export { ErrorState, type ErrorStateProps } from './ErrorState'
-export { Dialog, type DialogProps } from './Dialog'
+export { Dialog, DialogActions, type DialogProps } from './Dialog'
 export { CreditsPill, type CreditsPillProps } from './CreditsPill'
 export type { Tone } from './tone'
