@@ -685,9 +685,9 @@
     "starts_after": "T-302",
     "task": "Wallet routes and a developer-only credit command",
     "acceptance": "Command refuses to run outside development",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent building in a worktree (T-303/T-304 together on Opus; T-306 in parallel)."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "Merged into development. GET /wallet and /wallet/transactions read the caller's own ledger only; app/wallet/cli.py grant <email> <credits> goes through ledger.grant, refuses unless AVATAR_ENV=development (exit 2), unknown email exit 1. tests/test_wallet_routes.py (17 tests, R-13); check.sh 293 passed. Not run: the command by hand against the dev database."
   },
   {
     "id": "T-310",

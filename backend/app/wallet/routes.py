@@ -1,7 +1,6 @@
 """Wallet routes, mounted under /api/v1/wallet: the M3 contract (task T-300).
 
-Both need a
-session (401 `not_authenticated`) and only ever show the caller's own wallet.
+Both need a session (401 `not_authenticated`) and only ever show the caller's own wallet.
 
 Charging errors live on the job routes: 402 `insufficient_credits` on POST /jobs (fewer than the
 voice price available) and on approve (fewer than the video price available). The 402 `detail`
