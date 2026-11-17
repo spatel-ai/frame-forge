@@ -14,9 +14,17 @@
 .neutral .icon { color: var(--color-ink-soft); }
 .icon { display: inline-flex; flex: none; padding-top: 2px; }
 .content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
-.title { margin: 0; font-weight: var(--text-title-weight); font-size: var(--text-title-size); }
+.title { margin: 0; min-width: 0; overflow-wrap: anywhere; font-weight: var(--text-title-weight); font-size: var(--text-title-size); }
 .body { color: var(--color-ink-soft); overflow-wrap: anywhere; }
 .action { margin-top: var(--space-2); }
+/* A plain link in the action slot gets a full 44 px tap height; the negative margins keep the
+   banner from growing by the extra height (the link's box reaches into the gap and padding). */
+.action:has(> a) { margin-top: 0; }
+.action > a {
+  display: inline-flex; align-items: center; min-height: var(--target-min);
+  margin-block: calc(-1 * var(--space-1)) calc(-1 * var(--space-3));
+  overflow-wrap: anywhere;
+}
 .dismiss {
   flex: none; display: inline-flex; align-items: center; justify-content: center;
   min-width: var(--target-min); min-height: var(--target-min);

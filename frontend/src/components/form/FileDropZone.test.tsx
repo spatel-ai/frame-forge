@@ -80,6 +80,12 @@ describe('FileDropZone', () => {
     expect(onChange).toHaveBeenLastCalledWith(null)
   })
 
+  it('rounds an over-limit size up, so it never reads as equal to the limit', async () => {
+    const { user, input } = setup()
+    await user.upload(input(), png('big.png', 10 * MB + 2000))
+    expect(screen.getByRole('alert').textContent).toBe('That file is 10.1 MB. Choose one up to 10 MB.')
+  })
+
   it('Remove clears the file, the preview and calls onChange(null); preview URL is revoked', async () => {
     const { user, input, onChange } = setup()
     await user.upload(input(), png())

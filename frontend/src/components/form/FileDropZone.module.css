@@ -62,6 +62,16 @@
   min-width: 0;
 }
 
+/* Short screens (a phone held sideways, or the keyboard open): a compact one-line zone, so it is
+   not hidden behind a dialog's pinned buttons. */
+@media (max-height: 500px) {
+  .zone {
+    flex-direction: row;
+    min-height: calc(var(--space-7) * 1.5);
+    padding: var(--space-3) var(--space-4);
+  }
+}
+
 .promptTouch {
   display: none;
 }
@@ -96,7 +106,9 @@
   max-width: 100%;
   width: calc(var(--space-7) * 2);
   height: calc(var(--space-7) * 2);
-  object-fit: cover;
+  /* The whole image, letterboxed on a neutral ground, so a very wide or tall picture shows its real shape. */
+  object-fit: contain;
+  background: var(--color-page);
   border-radius: var(--radius-control);
   border: var(--line-width) solid var(--color-line);
 }

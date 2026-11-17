@@ -41,6 +41,9 @@
 .body {
   flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  /* Dialog.tsx sets --dialog-footer-space to the height of a pinned footer and scrolls a focused
+     field clear of it. Not used as scroll-padding-bottom on purpose: with it, Chromium and WebKit
+     scroll the content whenever a button inside the pinned footer itself gets focus. */
   color: var(--color-ink-soft);
 }
 .fade {
@@ -60,6 +63,11 @@
   display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3);
   padding-block: var(--space-3) 0;
   background: var(--color-surface);
+}
+/* Very short screens (sideways phone, keyboard open): a pinned bar would take too much of the
+   screen, so the row scrolls with the content and the fade shows that it is below. */
+@media (max-height: 420px) {
+  .actions { position: static; }
 }
 
 @keyframes pop { from { opacity: 0; transform: translateY(var(--space-2)); } to { opacity: 1; transform: none; } }

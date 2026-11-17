@@ -43,9 +43,10 @@ function matchesAccept(file: File, accept: string): boolean {
   })
 }
 
+/** "5 MB", or rounded UP to one decimal ("5.1 MB"), so a file over the limit never reads as equal to it. */
 function formatMb(bytes: number): string {
   const mb = bytes / (1024 * 1024)
-  return `${Number.isInteger(mb) ? mb : mb.toFixed(1)} MB`
+  return `${Number.isInteger(mb) ? mb : (Math.ceil(mb * 10) / 10).toFixed(1)} MB`
 }
 
 export const FileDropZone = forwardRef<HTMLInputElement, FileDropZoneProps>(function FileDropZone(
