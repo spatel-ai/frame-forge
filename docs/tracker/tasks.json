@@ -715,9 +715,9 @@
     "starts_after": "T-155, T-211, T-300",
     "task": "Show the price before approval; handle \"not enough credits\"",
     "acceptance": "Approval disabled with the shortfall shown",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent building in a worktree."
+    "status": "Done",
+    "verification": "IMPLEMENTED, UNVERIFIED",
+    "evidence": "Voice price line and Generate disabled below the voice price; review price card (video price, available) with Approve disabled below the price or when unpriced; 402 insufficient_credits shows the server's detail and refetches the wallet; wallet invalidated after create, after approve and on the change to completed/failed; result shows Charged; 'Nothing was charged' only when charged_credits is 0. No client arithmetic on money; 'Balance after' omitted. 16 tests; npm run check 352 passed. Needs the backend (T-303/T-304) to fill price_credits and charged_credits; not yet seen in a browser."
   },
   {
     "id": "T-400",
