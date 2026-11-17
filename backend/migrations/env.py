@@ -8,6 +8,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 import app.auth.models  # noqa: F401  (registers the auth tables on Base.metadata)
+import app.banners.models  # noqa: F401  (registers the banners table)
 import app.jobs.models  # noqa: F401  (registers the jobs table)
 import app.payments.models  # noqa: F401  (registers payment_orders and webhook_events)
 import app.scripts.models  # noqa: F401  (registers the scripts table)

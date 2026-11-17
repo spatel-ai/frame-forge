@@ -467,3 +467,31 @@ def test_0012_adds_the_banner_and_storage_columns(empty_schema):
         assert not names & {*new, "assembly_attempts"}
     finally:
         engine.dispose()
+
+
+def test_0013_builds_the_banners_table(empty_schema, admin_engine):
+    """D-067 (R-12): 0013 creates banners with a plain user foreign key, nullable deleted_at and a
+    (user_id, created_at DESC) index; downgrade removes the table."""
+    cfg = empty_schema.alembic_config()
+    schema = empty_schema.name
+    command.upgrade(cfg, "head")
+    insp = inspect(admin_engine)
+    cols = {c["name"]: c for c in insp.get_columns("banners", schema)}
+    assert set(cols) == {
+        "id",
+        "user_id",
+        "name",
+        "image_file",
+        "width",
+        "height",
+        "created_at",
+        "deleted_at",
+    }
+    assert cols["deleted_at"]["nullable"] and not cols["user_id"]["nullable"]
+    assert str(cols["width"]["type"]) == "INTEGER"
+    index = {i["name"]: i for i in insp.get_indexes("banners", schema)}["ix_banners_user_created"]
+    assert index["column_names"][0] == "user_id"
+    (fk,) = insp.get_foreign_keys("banners", schema)
+    assert fk["referred_table"] == "users" and not fk.get("options", {}).get("ondelete")
+    command.downgrade(cfg, "0012")
+    assert not inspect(admin_engine).has_table("banners", schema=schema)

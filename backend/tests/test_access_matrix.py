@@ -180,15 +180,19 @@ ROWS: list[Row] = [
         Row(method, "/api/v1/scripts/{script_id}", "anonymous", 401, "not_authenticated")
         for method in ("GET", "DELETE")
     ],
-    # Banners contract stubs (D-067): a session, then 501 until built.
+    # Customer banner library (D-067; R-12). The list is always the caller's own; uploading goes
+    # into the caller's own library; the owner's banner is 404 banner_not_found to everyone else.
+    *[Row("GET", "/api/v1/banners", actor, 200) for actor in ("owner", "other", "admin")],
+    *[Row("POST", "/api/v1/banners", actor, 201) for actor in ("owner", "other", "admin")],
+    Row("GET", "/api/v1/banners/{banner_id}/image", "owner", 200),
+    Row("DELETE", "/api/v1/banners/{banner_id}", "owner", 204),
     *[
-        Row(method, path, actor, 501, "not_implemented")
+        Row(method, path, actor, 404, "banner_not_found")
         for method, path in (
-            ("GET", "/api/v1/banners"),
             ("GET", "/api/v1/banners/{banner_id}/image"),
             ("DELETE", "/api/v1/banners/{banner_id}"),
         )
-        for actor in ("owner", "other", "admin")
+        for actor in ("other", "admin")
     ],
     *[
         Row(method, path, "anonymous", 401, "not_authenticated")
@@ -199,7 +203,6 @@ ROWS: list[Row] = [
             ("DELETE", "/api/v1/banners/{banner_id}"),
         )
     ],
-    Row("POST", "/api/v1/banners", "owner", 422, "validation_error"),
     # M4 payments (T-402 to T-404; R-03). Creating an order needs a confirmed email (D-049); the
     # quote needs only a session. The owner's order ({order_id}, or `order_id` in the body) is
     # 404 order_not_found to everyone else, admin included.
@@ -296,6 +299,12 @@ def png() -> bytes:
     return out.getvalue()
 
 
+def banner_png() -> bytes:
+    out = BytesIO()
+    Image.new("RGBA", (300, 300), (10, 20, 30, 255)).save(out, "PNG")
+    return out.getvalue()
+
+
 def post_job(client: TestClient) -> httpx.Response:
     return client.post(
         "/api/v1/jobs",
@@ -326,6 +335,12 @@ def send(client: TestClient, method: str, path: str, order_id: str = "") -> http
         return client.post(path, json={"order_id": order_id, "outcome": "captured"})
     if path == "/api/v1/webhooks/razorpay":
         return client.post(path, content=b'{"event": "payment.captured"}')  # unsigned
+    if method == "POST" and path == "/api/v1/banners":
+        return client.post(
+            path,
+            data={"name": "Matrix banner"},
+            files={"image": ("b.png", banner_png(), "image/png")},
+        )
     if method == "POST" and path == "/api/v1/scripts":
         return client.post(path, json={"language": "English", "text": "Matrix script."})
     return client.request(method, path)
@@ -377,6 +392,7 @@ class World:
     jobs: dict[JobKey, str]
     order: str  # the owner's payment order (M4)
     script: str = ""  # the owner's saved script (M5, T-504)
+    banner: str = ""  # the owner's saved banner (D-067)
     template: str = ""  # a seeded active banner template (M5, T-506)
     emails: dict[str, str] = field(default_factory=lambda: dict(EMAILS))
 
@@ -419,7 +435,10 @@ def world(settings, make_user, grant) -> Iterator[World]:
         with engine_of(anon).begin() as conn:
             script = save_or_touch(conn, owner.user_id, "English", "The owner's saved script.")
         template = seed_template(anon, settings)
+        made = send(owner, "POST", "/api/v1/banners")
+        assert made.status_code == 201, made.text
         yield World(
+            banner=made.json()["id"],
             order=r.json()["order_id"],
             script=script,
             template=template,
@@ -453,6 +472,7 @@ def test_access_matrix(world: World, row: Row) -> None:
         path = path.format(order_id=world.order)
     # M5: the script id is the owner's real script (T-504); the template is the seeded one (T-506).
     path = path.replace("{script_id}", world.script).replace("{template_id}", world.template)
+    path = path.replace("{banner_id}", world.banner)
     r = send(world.clients[row.actor], row.method, path, world.order)
     assert r.status_code == row.status, r.text
     if row.code is not None:
