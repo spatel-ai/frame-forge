@@ -1060,9 +1060,9 @@
     "starts_after": "T-310, T-500",
     "task": "Home screen",
     "acceptance": "Balance, create, in progress, recent",
-    "status": "In progress",
-    "verification": "",
-    "evidence": "Agent working in its own worktree (M5 phase 1), launched 2026-11-17."
+    "status": "Done",
+    "verification": "MOCK-VERIFIED",
+    "evidence": "features/home/HomePage.tsx: In progress (status=in_progress, polls every 5 s only while non-empty, step label from lib/jobStatus.ts), Recent videos (status=ready, 6), empty, loading and error states; / renders Home; Home nav enabled. npm run check 419 passed (10 new R-13 tests). Real-browser check pending until T-501 merges (GET /jobs)."
   },
   {
     "id": "T-511",
