@@ -82,7 +82,10 @@ app/core/              config, database engine, error shape, request-id logging,
 app/auth/              users, sessions, email links, passwords, rate limits, current_user dependency
 app/jobs/              db.py (store), service.py (lifecycle and charging), routes.py, schemas.py, errors.py, models.py
 app/wallet/            ledger.py (the only writer of wallets and ledger_entries), routes, cli.py (grant)
-app/payments/          Razorpay orders, verify, webhook (M4; contract stubs today)
+app/payments/          Razorpay orders, quote and fee, verify, webhook, reconciliation (M4)
+app/media/             ffprobe measuring and ffmpeg joining of banners (M5, T-507)
+app/scripts/           script library (M5; contract stubs until T-504)
+app/templates/         banner templates (M5; contract stubs until T-506)
 app/providers.py       fal and mock
 app/export_openapi.py  prints the API contract
 migrations/            Alembic; one chain, ordered by the BE-Core lane

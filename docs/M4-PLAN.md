@@ -154,3 +154,30 @@ At the end of the milestone, the report covers the seven points of the template 
 7. the next justified action.
 
 Each is given an honest status. Then ask whether to refresh the tracker dashboard.
+
+### M4 report, 2026-11-17
+
+1. **Implemented.** Payments backend (T-402 to T-406): orders with a server quote and a 2%
+   payment fee the customer pays (D-059, D-060), verify on our stored order id with a server-side
+   fetch, a raw-body signed webhook deduped on the event id, reconciliation every 5 minutes, one
+   crediting routine under a row lock, migration 0006. Frontend (T-410 to T-412): Buy credits from
+   1,000 to 10,000 with price, fee and total from the server, the four after-payment endings, and
+   "Add credits" from a short review that returns to the same video (D-061).
+2. **Why.** R-02, R-03: customers must be able to buy credits, and each payment must credit
+   exactly once whatever order the browser, webhook and reconciliation arrive in.
+3. **Verified (MOCK-VERIFIED).** Browser run in mock mode at 1440 and 1024 px, 30 of 30 checks
+   (`scratchpad/browser/m4.mjs`): ₹1,020 for 1,000 credits; purchase +1,000 in the ledger, fee
+   not credited; 999 and 10,001 refused by the dialog and the server; failed and cancelled credit
+   nothing; short video → Add credits → pay → Back to your video → Approve enabled → video
+   delivered, charged 10 + price; an unsafe return address ignored; no request left the machine.
+4. **Tests.** Backend `./check.sh` 532 passed (five purchase cases, five race tests, signatures,
+   fee rounding, limits, access matrix). Frontend `npm run check` 409 passed.
+5. **Unverified.** Anything against Razorpay itself: Checkout, the webhook signature's hex
+   encoding, whether the order-payments list includes captured payments. These need T-407, a
+   test-mode run the owner approves.
+6. **Risks and limits.** The mock gateway forgets orders on restart (mock only). Reconciliation
+   takes the 200 oldest due orders per run. Changing ₹1 = 1 credit needs a migration. The
+   Razorpay fee rate itself was not verified on Razorpay's pricing page (owner to check).
+7. **Next.** T-407 when the owner approves a test-mode run through a tunnel. M5 phase 1 starts now.
+
+**Status: M4 MOCK-VERIFIED.** Live payments: BLOCKED on the owner's approval for T-407.

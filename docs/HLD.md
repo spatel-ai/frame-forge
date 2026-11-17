@@ -130,7 +130,7 @@ All money columns are integers: credits as whole credits, rupee amounts in paise
 | `email_tokens` | id, user_id, purpose (`verify`/`reset`), token_hash, expires_at, used_at | Single use |
 | `wallets` | user_id, balance_credits, reserved_credits | `CHECK (reserved_credits >= 0 AND balance_credits >= reserved_credits)` |
 | `ledger_entries` | id, user_id, kind, credits (balance change), reserved_delta, balance_after, reserved_after, ref_type, ref_id, created_by, created_at | Append-only. `UNIQUE (kind, ref_type, ref_id)`. Hold, capture and release use the reference `job_id#attempt` (D-039) |
-| `payment_orders` | id, user_id, razorpay_order_id (unique), amount_paise, credits, status, razorpay_payment_id (unique) | |
+| `payment_orders` | id, user_id, razorpay_order_id (unique), amount_paise, price_paise, fee_paise, fee_gst_paise, credits, status (`created`/`paid`/`failed`), razorpay_payment_id (unique), created_at, updated_at, paid_at | Database checks: price = credits × 100; amount = price + fee + GST on the fee (D-060); a paid order names its payment |
 | `webhook_events` | event_id (primary key), event_type, payload, received_at, processed_at | Dedupes Razorpay deliveries |
 | `scripts` | id, user_id, language, text, text_hash, created_at, last_used_at, deleted_at | One live row per `(user_id, language, text_hash)` |
 | `templates` | id, name, kind (`start`/`end`), clip_file, preview_file, duration_ms, has_audio, active, created_by | Company-supplied. Retired, never deleted, so past jobs keep their reference |
@@ -167,7 +167,7 @@ sequenceDiagram
     participant A as Backend
     participant R as Razorpay
     B->>A: POST /payments/orders {credits: 1000}
-    A->>R: Create order (amount 50000 paise, INR)
+    A->>R: Create order (amount 102000 paise = ₹1,000 + ₹20 fee, INR)
     A-->>B: our order id, Razorpay order id, public key id
     B->>R: Checkout popup, customer pays
     R-->>B: payment id, order id, signature
@@ -200,7 +200,7 @@ Rules, each traced to Razorpay's documentation (checked 2026-11-17):
   amount. The browser's word is never enough.
 - If the customer closes the tab before `/payments/verify` runs, the webhook still credits them. If
   the webhook is also missed, a reconciliation task asks Razorpay about orders still marked
-  `created` after 30 minutes (every 5 minutes, for up to 3 days; M4-PLAN).
+  `created` or `failed` after 30 minutes (every 5 minutes, for up to 3 days; M4-PLAN).
 
 ### 5.2 Generating a video and charging for it
 

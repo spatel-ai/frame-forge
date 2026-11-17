@@ -682,7 +682,7 @@ When a decision changes, add a new entry that supersedes the old one; do not rew
 
 **Status:** Proposed · 2026-11-17 · Area: backend
 
-**Choice:** Setting `AVATAR_PAYMENTS` is `mock` (default) or `razorpay`. Mock mode makes no network call; a development-only route signs a fake payment with a fixed mock secret so the real verify and crediting code runs. In `razorpay` mode the backend refuses to start if any key or secret is missing, or if `AVATAR_ENV` is not `production` and the key id does not start with `rzp_test_`. The key id is the only Razorpay value sent to the browser.
+**Choice:** Setting `AVATAR_PAYMENTS` is `mock` (default) or `razorpay`. Mock mode makes no network call; a development-only route signs a fake payment with a fixed mock secret so the real verify and crediting code runs. In `razorpay` mode the backend refuses to start if any key or secret is missing, or if `AVATAR_ENV` is not `production` and the key id does not start with `rzp_test_`. Production refuses to start in mock mode (added at the M4 review, 2026-11-17: the mock secret is public). The key id is the only Razorpay value sent to the browser.
 
 **Alternatives:** One switch for test and live (a pasted live key could move real money during development). Trusting the owner to paste only test keys.
 

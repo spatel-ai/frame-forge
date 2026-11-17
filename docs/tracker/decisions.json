@@ -456,7 +456,7 @@
     "status": "Proposed",
     "waiting_on": "",
     "area": "Backend",
-    "choice": "Setting `AVATAR_PAYMENTS` is `mock` (default) or `razorpay`. Mock mode makes no network call; a development-only route signs a fake payment with a fixed mock secret so the real verify and crediting code runs. In `razorpay` mode the backend refuses to start if any key or secret is missing, or if `AVATAR_ENV` is not `production` and the key id does not start with `rzp_test_`. The key id is the only Razorpay value sent to the browser.",
+    "choice": "Setting `AVATAR_PAYMENTS` is `mock` (default) or `razorpay`. Mock mode makes no network call; a development-only route signs a fake payment with a fixed mock secret so the real verify and crediting code runs. In `razorpay` mode the backend refuses to start if any key or secret is missing, or if `AVATAR_ENV` is not `production` and the key id does not start with `rzp_test_`. Production refuses to start in mock mode (added at the M4 review, 2026-11-17: the mock secret is public). The key id is the only Razorpay value sent to the browser.",
     "trade_off": "If Razorpay's test key ids do not start with `rzp_test_`, the owner must report it and the check is corrected before T-407.",
     "validation": "Config tests: missing values, a non-test key in development, and a test key in development; the T-407 run confirms the prefix.",
     "date": "2026-11-17"

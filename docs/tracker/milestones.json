@@ -53,7 +53,7 @@
     "milestone": "Product completeness",
     "outcome": "Scripts, banners, history, consent: a product a customer can use unaided",
     "depends_on": "M4, Q-11, Q-15, Q-17",
-    "status": "Planned"
+    "status": "In progress"
   },
   {
     "id": "M6",
