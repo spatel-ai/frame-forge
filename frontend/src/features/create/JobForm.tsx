@@ -1,14 +1,16 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useRef, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ApiError, createJob, meKey, NetworkError } from '../../api/client'
-import type { Config, Job } from '../../api/client'
+import { ApiError, createJob, getScript, meKey, NetworkError, scriptKey, scriptsKey } from '../../api/client'
+import type { Config, Job, SavedScript } from '../../api/client'
 import { Banner } from '../../components/feedback'
-import { Button, FileDropZone, Select, TextArea } from '../../components/form'
+import { Button, FileDropZone, Select, SelectableCard, SelectableCardGroup, TextArea } from '../../components/form'
 import { Card } from '../../components/layout'
 import { invalidateWallet, useWallet } from '../../lib/wallet'
 import { formatCredits } from './credits'
 import { NotEnoughCredits } from './NotEnoughCredits'
+import { ScriptPickerDialog } from './ScriptPickerDialog'
+import picker from './ScriptPicker.module.css'
 import styles from './JobForm.module.css'
 
 type FieldName = 'image' | 'script' | 'language'
@@ -41,11 +43,14 @@ export function JobForm({
   config,
   onCreated,
   canGenerate = true,
+  initialScriptId = null,
 }: {
   config: Config
   onCreated: (j: Job) => void
   /** False while the email is not confirmed: the form stays usable but Generate is off. */
   canGenerate?: boolean
+  /** From `?script=<id>`: a saved script to choose when the form opens. */
+  initialScriptId?: string | null
 }) {
   const queryClient = useQueryClient()
   const [file, setFile] = useState<File | null>(null)
@@ -58,7 +63,19 @@ export function JobForm({
   const [formError, setFormError] = useState<string | null>(null)
   // The server's own sentence for a 402; it already states the amounts.
   const [creditsError, setCreditsError] = useState<string | null>(null)
+  // The saved script the text came from, while the customer is working from one (frontend rule: script).
+  const [saved, setSaved] = useState<SavedScript | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const unchanged = saved !== null && script === saved.text && language === saved.language
   const { data: wallet } = useWallet()
+
+  const preselect = useQuery({
+    queryKey: scriptKey(initialScriptId ?? ''),
+    queryFn: () => getScript(initialScriptId as string),
+    enabled: !!initialScriptId,
+    retry: false,
+  })
+  const preselected = useRef(false)
   const notEnough = !!wallet && wallet.available_credits < config.voice_price_credits
 
   const imageRef = useRef<HTMLInputElement>(null)
@@ -66,7 +83,8 @@ export function JobForm({
   const languageRef = useRef<HTMLSelectElement>(null)
 
   const create = useMutation({
-    mutationFn: (v: { file: File; text: string; language: string }) => createJob(v.file, v.text, v.language),
+    mutationFn: (v: { file: File; text: string; language: string; scriptId?: string }) =>
+      v.scriptId ? createJob(v.file, v.text, v.language, v.scriptId) : createJob(v.file, v.text, v.language),
   })
   const busy = create.isPending
 
@@ -81,6 +99,24 @@ export function JobForm({
     const first = FIELD_ORDER.find((f) => errors[f])
     if (first) refs[first].current?.focus()
   }
+
+  // Choosing a saved script fills the text and the language; both stay editable.
+  const applySaved = (s: SavedScript) => {
+    setSaved(s)
+    setScript(s.text)
+    setLanguage(s.language)
+    clearServer('script')
+    clearServer('language')
+    setClient('script', undefined)
+    setPickerOpen(false)
+  }
+
+  useEffect(() => {
+    if (preselect.data && !preselected.current) {
+      preselected.current = true
+      applySaved(preselect.data)
+    }
+  }, [preselect.data])
 
   const onImageChange = (next: File | null) => {
     setFile(next)
@@ -113,10 +149,11 @@ export function JobForm({
       return
     }
     create.mutate(
-      { file, text: script.trim(), language },
+      { file, text: script.trim(), language, scriptId: unchanged && saved ? saved.id : undefined },
       {
         onSuccess: (j) => {
           void invalidateWallet(queryClient)
+          void queryClient.invalidateQueries({ queryKey: scriptsKey })
           onCreated(j)
         },
         onError: (err) => {
@@ -128,6 +165,13 @@ export function JobForm({
           if (err instanceof ApiError && err.code === 'insufficient_credits') {
             setCreditsError(err.message)
             void invalidateWallet(queryClient)
+            return
+          }
+          if (err instanceof ApiError && err.code === 'script_not_found') {
+            // The saved script was deleted meanwhile: keep the text; it goes as a new script next time.
+            setSaved(null)
+            void queryClient.invalidateQueries({ queryKey: scriptsKey })
+            setFormError('That saved script no longer exists. Your text is kept and will be saved as a new script.')
             return
           }
           const fields: FieldErrors = {}
@@ -180,6 +224,42 @@ export function JobForm({
           <Card padding="lg">
           <section className={styles.cardBody} aria-labelledby="h-script">
           <h2 id="h-script" className={styles.heading}>Script</h2>
+          <SelectableCardGroup legend="Where does the script come from?" hint={saved ? undefined : 'Choose a saved script to fill in the text and language.'}>
+            <SelectableCard
+              label="Write a new script"
+              checked={!saved && !pickerOpen}
+              onChange={() => {
+                setSaved(null)
+                setPickerOpen(false)
+              }}
+            />
+            <SelectableCard
+              label="Choose from my scripts"
+              checked={!!saved || pickerOpen}
+              onChange={() => setPickerOpen(true)}
+            />
+          </SelectableCardGroup>
+          {preselect.isError && (
+            <Banner tone="warning" title="We could not open that saved script">
+              It may have been deleted. You can write a new script or choose another one.
+            </Banner>
+          )}
+          {saved && (
+            <div className={picker.choice}>
+              {unchanged ? (
+                <p className={picker.status}>Saved script · used as it is</p>
+              ) : (
+                <div className={picker.edited}>
+                  <p className={picker.status}>Edited from a saved script</p>
+                  <p className={picker.editedNote}>
+                    You changed this saved script. Your saved script stays as it was. The new text is saved as a separate script when you continue.
+                  </p>
+                  <Button variant="quiet" onClick={() => applySaved(saved)}>Go back to the saved text</Button>
+                </div>
+              )}
+              <Button variant="secondary" onClick={() => setPickerOpen(true)}>Choose a different script</Button>
+            </div>
+          )}
           <Select
             ref={languageRef}
             label="Language"
@@ -191,7 +271,7 @@ export function JobForm({
               clearServer('language')
             }}
           >
-            {config.languages.map((l) => (
+            {(config.languages.includes(language) ? config.languages : [...config.languages, language]).map((l) => (
               <option key={l} value={l}>{l}</option>
             ))}
           </Select>
@@ -213,6 +293,18 @@ export function JobForm({
           </Card>
         </div>
       </div>
+
+      <ScriptPickerDialog
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        languages={config.languages}
+        onChoose={applySaved}
+        onWriteNew={() => {
+          setSaved(null)
+          setPickerOpen(false)
+          scriptRef.current?.focus()
+        }}
+      />
 
       <div className={styles.footer}>
         {formError && (
