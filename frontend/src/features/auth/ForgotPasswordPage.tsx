@@ -8,7 +8,7 @@ import { Button, TextField } from '../../components/form'
 import { ChevronLeftIcon, KeyIcon } from '../../components/icons'
 import { AuthLayout } from './AuthLayout'
 import styles from './auth.module.css'
-import { useFields, validateEmail } from './validation'
+import { useFields, validateEmail } from '../../lib/validation'
 
 /** Ask for a reset link (R-01). The answer is the same for unknown emails, so the next screen never confirms an account. */
 export function ForgotPasswordPage() {

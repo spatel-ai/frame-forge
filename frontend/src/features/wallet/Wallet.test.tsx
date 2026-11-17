@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getConfig, getMe, getTransactions, getWallet, transactionsKey, walletKey } from '../../api/client'
 import type { Config, LedgerEntry, Transactions, User, Wallet } from '../../api/client'
 import { routes } from '../../routes'
-import { invalidateWallet } from './invalidate'
+import { invalidateWallet } from '../../lib/wallet'
 
 vi.mock('../../api/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../api/client')>()),
@@ -167,6 +167,34 @@ describe('wallet page', () => {
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
     expect(screen.getAllByRole('button', { name: 'Buy credits' })).toHaveLength(1)
     expect(screen.queryByRole('dialog')).toBeNull() // closed until asked
+  })
+})
+
+describe('top bar Buy credits link', () => {
+  it('R-02 shows a Buy credits link in the top bar that points to /wallet?buy=1', async () => {
+    renderAt('/create')
+    const link = await within(await screen.findByRole('banner')).findByRole('link', { name: 'Buy credits' })
+    expect(link.getAttribute('href')).toBe('/wallet?buy=1')
+  })
+
+  it('R-02 opens the Buy-credits dialog from the link, then removes buy=1 from the address', async () => {
+    renderAt('/create')
+    await userEvent.click(await within(await screen.findByRole('banner')).findByRole('link', { name: 'Buy credits' }))
+    expect(await screen.findByRole('dialog')).toBeTruthy()
+    await waitFor(() => expect(router.state.location.search).toBe(''))
+    expect(router.state.location.pathname).toBe('/wallet')
+  })
+
+  it('R-02 opens the dialog when /wallet?buy=1 is loaded directly', async () => {
+    renderAt('/wallet?buy=1')
+    expect(await screen.findByRole('dialog')).toBeTruthy()
+    await waitFor(() => expect(router.state.location.search).toBe(''))
+  })
+
+  it('R-02 does not open the dialog on plain /wallet', async () => {
+    renderAt('/wallet')
+    await screen.findByText('No transactions yet')
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 })
 

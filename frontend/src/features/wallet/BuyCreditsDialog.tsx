@@ -17,8 +17,7 @@ import { Button, Spinner, TextField } from '../../components/form'
 import { AlertIcon, CheckIcon, CloseIcon } from '../../components/icons'
 import { openCheckout } from '../../lib/checkout'
 import { errMsg } from '../../lib/util'
-import { invalidateWallet } from './invalidate'
-import { useWallet } from './useWallet'
+import { invalidateWallet, useWallet } from '../../lib/wallet'
 import styles from './BuyCreditsDialog.module.css'
 
 const QUICK_PICKS = [500, 1000, 2500, 5000]

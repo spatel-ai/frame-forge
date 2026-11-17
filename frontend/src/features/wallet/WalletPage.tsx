@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
-import { Link, useNavigate, useOutletContext } from 'react-router'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useOutletContext, useSearchParams } from 'react-router'
 import { getTransactions, transactionsKey } from '../../api/client'
 import type { ShellContext } from '../../components/AppShell'
 import type { LedgerEntry } from '../../api/client'
@@ -9,7 +9,7 @@ import { Button } from '../../components/form'
 import { Card, Pagination } from '../../components/layout'
 import { errMsg } from '../../lib/util'
 import { BuyCreditsDialog } from './BuyCreditsDialog'
-import { useWallet } from './useWallet'
+import { useWallet } from '../../lib/wallet'
 import styles from './WalletPage.module.css'
 
 const PAGE_SIZE = 20
@@ -133,6 +133,15 @@ export default function WalletPage() {
   const { config } = useOutletContext<ShellContext>()
   // A new key per opening gives the dialog a fresh start; closing keeps it mounted so focus returns to the button.
   const [buy, setBuy] = useState({ open: false, n: 0 })
+  // The top bar's "Buy credits" link arrives as /wallet?buy=1: open the dialog, then drop the parameter.
+  const [params, setParams] = useSearchParams()
+  const wantsBuy = params.get('buy') === '1'
+  useEffect(() => {
+    if (!wantsBuy) return
+    // oxlint-disable-next-line react/set-state-in-effect -- the address is the external trigger; it is consumed once here
+    setBuy((b) => ({ open: true, n: b.n + 1 }))
+    setParams((p) => { p.delete('buy'); return p }, { replace: true })
+  }, [wantsBuy, setParams])
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>Wallet</h1>
